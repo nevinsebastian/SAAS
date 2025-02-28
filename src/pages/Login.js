@@ -5,7 +5,6 @@ import {
   Box, Button, TextField, Typography, Paper, Checkbox, FormControlLabel, Container, createTheme, ThemeProvider, CssBaseline
 } from '@mui/material';
 
-// Create the dark theme with the bluish gradient
 const darkTheme = createTheme({
   palette: {
     mode: 'dark',
