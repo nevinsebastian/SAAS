@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import {
   Box, Button, TextField, Typography, Paper, Checkbox, FormControlLabel, Container, createTheme, ThemeProvider, CssBaseline
 } from '@mui/material';
@@ -9,10 +8,10 @@ const darkTheme = createTheme({
   palette: {
     mode: 'dark',
     background: {
-      default: 'linear-gradient(135deg, #1f1f2e, #282846)', // Dark bluish gradient background
+      default: 'linear-gradient(135deg, #1f1f2e, #282846)',
     },
     primary: {
-      main: '#1db954', // Green button color
+      main: '#1db954',
     },
     text: {
       primary: '#eaeaea',
@@ -21,53 +20,42 @@ const darkTheme = createTheme({
   },
 });
 
-export default function Login({ setToken }) {
+export default function Login({ setUserRole }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
-    e.preventDefault(); // Prevent form submission from reloading the page
-    setIsLoading(true); // Start loading
+  const handleLogin = (e) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-    try {
-      const params = new URLSearchParams();
-      params.append('grant_type', '');
-      params.append('username', username);
-      params.append('password', password);
-      params.append('scope', '');
-      params.append('client_id', '');
-      params.append('client_secret', '');
+    // Hardcoded credentials
+    const users = [
+      { username: "admin", password: "test", role: "admin" },
+      { username: "sales", password: "test", role: "sales" },
+      { username: "accounts", password: "test", role: "accounts" },
+      { username: "rto", password: "test", role: "rto" },
+      { username: "manager", password: "test", role: "manager" },
+      { username: "stock", password: "test", role: "stock_person" }
+    ];
 
-      const response = await axios.post('https://api.tophaventvs.com:8000/login', params, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      });
+    // Check if credentials match
+    const user = users.find(u => u.username === username && u.password === password);
 
-      if (response.status === 200) {
-        const { access_token, user } = response.data;
-        localStorage.setItem('token', access_token);
-        localStorage.setItem('user', JSON.stringify(user));
+    if (user) {
+      // Store user in local storage
+      localStorage.setItem('user', JSON.stringify(user));
+      setUserRole(user.role);
 
-        // Update the token in App.js state
-        setToken(access_token);
-
-        // Add a small delay to ensure token is saved before navigation
-        setTimeout(() => {
-          navigateToRole(user.role_name);
-        }, 100); // 100 ms delay to ensure the token is set
-      } else {
-        setError('Login failed. Please check your credentials.');
-      }
-    } catch (error) {
-      console.error('Error logging in:', error);
-      setError('Login failed. Please check your credentials.');
-    } finally {
-      setIsLoading(false); // Stop loading
+      // Navigate to dashboard
+      navigateToRole(user.role);
+    } else {
+      setError('Invalid username or password.');
     }
+
+    setIsLoading(false);
   };
 
   const navigateToRole = (role) => {
@@ -101,7 +89,7 @@ export default function Login({ setToken }) {
       <Box
         sx={{
           backgroundColor: 'transparent',
-          backgroundImage: 'linear-gradient(135deg, #1f1f2e, #282846)', // Dark bluish gradient
+          backgroundImage: 'linear-gradient(135deg, #1f1f2e, #282846)',
           minHeight: '100vh',
           display: 'flex',
           justifyContent: 'center',
@@ -120,10 +108,10 @@ export default function Login({ setToken }) {
             }}
           >
             <Typography variant="h5" align="center">
-              TVS Top Haven
+              NEXA
             </Typography>
             <Typography variant="body1" align="center" sx={{ mt: 1 }}>
-              Welcome back
+              Popular Vehicles & Services, Alappuzha, Punnapra
             </Typography>
 
             <Box component="form" onSubmit={handleLogin} noValidate sx={{ mt: 3 }}>
@@ -131,11 +119,9 @@ export default function Login({ setToken }) {
                 margin="normal"
                 required
                 fullWidth
-                id="username"
-                label="Email"
-                name="username"
-                autoComplete="email"
-                autoFocus
+                label="Username"
+                type='username'
+                autoComplete="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
@@ -143,34 +129,17 @@ export default function Login({ setToken }) {
                 margin="normal"
                 required
                 fullWidth
-                name="password"
                 label="Password"
                 type="password"
-                id="password"
                 autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
               {error && <Typography color="error">{error}</Typography>}
-              <FormControlLabel
-                control={<Checkbox value="remember" color="primary" />}
-                label="Remember me"
-              />
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                disabled={isLoading} // Disable button while loading
-                sx={{
-                  mt: 3,
-                  mb: 2,
-                  backgroundColor: '#1db954',
-                  '&:hover': {
-                    backgroundColor: '#1db954a3',
-                  },
-                }}
-              >
-                {isLoading ? 'Logging in...' : 'Login'} {/* Show loading text */}
+              <FormControlLabel control={<Checkbox value="remember" color="primary" />} label="Remember me" />
+              <Button type="submit" fullWidth variant="contained" disabled={isLoading}
+                sx={{ mt: 3, mb: 2, backgroundColor: '#1db954', '&:hover': { backgroundColor: '#1db954a3' } }}>
+                {isLoading ? 'Logging in...' : 'Login'}
               </Button>
             </Box>
           </Paper>
