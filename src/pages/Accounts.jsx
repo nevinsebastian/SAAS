@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Added for navigation
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Flex,
@@ -38,51 +38,76 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter,
-  ModalCloseButton, // Added import
+  ModalCloseButton,
   useColorMode,
+  Radio,
+  RadioGroup,
 } from '@chakra-ui/react';
-import { ToastContainer, toast } from 'react-toastify';
-
-import { HamburgerIcon, BellIcon, EditIcon } from '@chakra-ui/icons'; // Removed unused icons
+import { HamburgerIcon, BellIcon, EditIcon, ArrowBackIcon, DeleteIcon, WarningTwoIcon } from '@chakra-ui/icons';
 import { Pie, Bar, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, BarElement, LineElement, CategoryScale, LinearScale, PointElement, Title, Tooltip, Legend } from 'chart.js';
+import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 ChartJS.register(ArcElement, BarElement, LineElement, CategoryScale, LinearScale, PointElement, Title, Tooltip, Legend);
 
 const Accounts = () => {
-  const navigate = useNavigate(); // Initialized navigate
+  const navigate = useNavigate();
   const { isOpen: isMenuOpen, onOpen: onMenuOpen, onClose: onMenuClose } = useDisclosure();
   const { isOpen: isVerifyOpen, onOpen: onVerifyOpen, onClose: onVerifyClose } = useDisclosure();
+  const { isOpen: isReportOpen, onOpen: onReportOpen, onClose: onReportClose } = useDisclosure();
   const { colorMode, toggleColorMode } = useColorMode();
   const bgGradient = useColorModeValue('linear(to-br, gray.50, gray.100)', 'linear(to-br, gray.900, gray.800)');
   const cardBg = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.800', 'gray.100');
   const accentColor = 'blue.500';
+  const borderColor = useColorModeValue('gray.200', 'gray.600');
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState(null);
-  const [tabIndex, setTabIndex] = useState(0); // Done or Pending tabs
+  const [tabIndex, setTabIndex] = useState(0); // Done, Pending, Errors tabs
+  const [isEditing, setIsEditing] = useState(false);
   const [customerData, setCustomerData] = useState({
     name: '', vehicle: '', variant: '', color: '', exShowroom: '', tax: '', onRoad: '', insurance: '',
-    hasFinance: false, financeApproved: false, financeProvider: '', financeAmount: '', emi: '', tenure: '',
+    bookingCharge: '', deliveryCharge: '', hasFinance: false, financeProvider: '', financeAmount: '', emi: '', tenure: '',
   });
+  const [reportMessage, setReportMessage] = useState('');
+  const [customReport, setCustomReport] = useState('');
 
   // Dummy customer data
   const customers = [
-    { id: 'B001', name: 'John Doe', status: 'Pending', vehicle: 'Toyota Corolla', date: '2025-03-01', errors: 1 },
+    { id: 'B001', name: 'John Doe', status: 'Pending', vehicle: 'Toyota Corolla', date: '2025-03-01', errors: 0 },
     { id: 'B002', name: 'Jane Smith', status: 'Done', vehicle: 'Honda City', date: '2025-02-28', errors: 0 },
-    { id: 'B003', name: 'Mike Johnson', status: 'Pending', vehicle: 'Hyundai Creta', date: '2025-03-02', errors: 2 },
+    { id: 'B003', name: 'Mike Johnson', status: 'Errors', vehicle: 'Hyundai Creta', date: '2025-03-02', errors: 1, errorReason: 'Wrong Transaction ID' },
   ];
 
-  const filteredCustomers = customers.filter(c =>
-    c.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-    (tabIndex === 0 ? c.status === 'Done' : c.status === 'Pending')
-  );
+  // Search and sort across all customers
+  const filteredCustomers = customers
+    .filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    .sort((a, b) => {
+      if (sortBy === 'date') return new Date(b.date) - new Date(a.date);
+      if (sortBy === 'name') return a.name.localeCompare(b.name);
+      if (sortBy === 'status') return a.status.localeCompare(b.status);
+      return 0;
+    });
+
+  const notifications = [
+    { id: 1, message: 'New customer added: John Doe', time: '2025-03-01 10:00 AM', seen: false },
+    { id: 2, message: 'Error reported for Mike Johnson', time: '2025-03-02 09:00 AM', seen: false },
+    { id: 3, message: 'Verification completed for Jane Smith', time: '2025-02-28 12:00 PM', seen: true },
+  ];
+
+  const unseenNotifications = notifications.filter(n => !n.seen);
 
   const handleCustomerSelect = (customer) => {
     setSelectedCustomer(customer);
-    setCustomerData({ name: customer.name, vehicle: customer.vehicle, variant: '', color: '', exShowroom: '50000', tax: '5000', onRoad: '55000', insurance: '2000', hasFinance: false });
+    setCustomerData({
+      name: customer.name, vehicle: customer.vehicle, variant: 'LE', color: 'Black',
+      exShowroom: '50000', tax: '5000', onRoad: '55000', insurance: '2000', bookingCharge: '1000', deliveryCharge: '1500',
+      hasFinance: false, financeProvider: '', financeAmount: '', emi: '', tenure: '',
+    });
+    setIsEditing(false);
   };
 
   const handleInputChange = (e) => {
@@ -90,7 +115,16 @@ const Accounts = () => {
     setCustomerData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleFinanceToggle = (e) => {
+    setCustomerData(prev => ({ ...prev, hasFinance: e.target.checked }));
+  };
+
+  const handleEditToggle = () => {
+    setIsEditing(!isEditing);
+  };
+
   const handleSave = () => {
+    setIsEditing(false);
     toast.success('Customer details saved!', { position: 'top-center' });
   };
 
@@ -99,6 +133,23 @@ const Accounts = () => {
     setSelectedCustomer(null);
     onVerifyClose();
     toast.success('Customer verified successfully!', { position: 'top-center' });
+  };
+
+  const handleDelete = () => {
+    setSelectedCustomer(null);
+    toast.info('Customer deleted!', { position: 'top-center' });
+  };
+
+  const handleReportSubmit = () => {
+    const finalMessage = customReport || reportMessage;
+    if (finalMessage) {
+      toast.success(`Reported: ${finalMessage}`, { position: 'top-center' });
+      setReportMessage('');
+      setCustomReport('');
+      onReportClose();
+    } else {
+      toast.error('Please select or enter a report message!', { position: 'top-center' });
+    }
   };
 
   return (
@@ -121,9 +172,27 @@ const Accounts = () => {
         </HStack>
         <HStack spacing={4}>
           <Input placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} size="sm" w={{ base: '100px', md: '200px' }} />
-          <IconButton icon={<BellIcon />} variant="ghost" aria-label="Notifications" position="relative">
-            <Badge colorScheme="red" borderRadius="full" position="absolute" top="-1" right="-1">3</Badge>
-          </IconButton>
+          <Menu>
+            <MenuButton as={IconButton} icon={<BellIcon />} variant="ghost" aria-label="Notifications" position="relative">
+              {unseenNotifications.length > 0 && (
+                <Badge colorScheme="red" borderRadius="full" position="absolute" top="-1" right="-1">{unseenNotifications.length}</Badge>
+              )}
+            </MenuButton>
+            <MenuList maxH="300px" overflowY="auto">
+              {unseenNotifications.length > 0 ? (
+                unseenNotifications.map(n => (
+                  <MenuItem key={n.id}>
+                    <VStack align="start" spacing={1}>
+                      <Text fontSize="sm" color={textColor}>{n.message}</Text>
+                      <Text fontSize="xs" color="gray.500">{n.time}</Text>
+                    </VStack>
+                  </MenuItem>
+                ))
+              ) : (
+                <MenuItem>No new notifications</MenuItem>
+              )}
+            </MenuList>
+          </Menu>
           <Menu>
             <MenuButton>
               <Avatar name="Account User" size="sm" />
@@ -132,193 +201,196 @@ const Accounts = () => {
               <MenuItem onClick={toggleColorMode}>{colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}</MenuItem>
               <MenuItem onClick={() => navigate('/login')}>Sign Out</MenuItem>
             </MenuList>
-          </Menu>
-        </HStack>
-      </Flex>
+            </Menu>
+          </HStack>
+        </Flex>
 
       {/* Main Layout */}
-      <Flex direction={{ base: 'column', md: 'row' }} maxW="1400px" mx="auto" mt={4} px={{ base: 0, md: 4 }} pb={{ base: 16, md: 0 }}>
-        {/* Sidebar (Desktop) */}
-        <Box
-          w={{ base: 'full', md: '250px' }}
-          bg={cardBg}
-          borderRadius="lg"
-          boxShadow="md"
-          p={4}
-          mr={{ md: 4 }}
-          display={{ base: 'none', md: 'block' }}
-        >
-          <VStack align="stretch" spacing={4}>
-            <Button variant="ghost" colorScheme="blue" isActive>Accounts</Button>
-            <Button variant="ghost" onClick={() => navigate('/dashboard')}>Dashboard</Button>
-            <Button variant="ghost" onClick={() => navigate('/customers')}>Customers</Button>
-            <Button variant="ghost" onClick={() => navigate('/reports')}>Reports</Button>
-          </VStack>
-        </Box>
-
-        {/* Customer List (Left Panel) */}
-        <Box w={{ base: 'full', md: '40%' }} bg={cardBg} borderRadius="lg" boxShadow="md" p={4} mb={{ base: 4, md: 0 }}>
-          <Tabs variant="soft-rounded" colorScheme="blue" index={tabIndex} onChange={setTabIndex}>
-            <TabList mb={4}>
-              <Tab>Done</Tab>
-              <Tab>Pending</Tab>
-            </TabList>
-          </Tabs>
-          <HStack mb={4}>
-            <Select placeholder="Sort by" size="sm" w="150px">
-              <option value="date">Date</option>
-              <option value="name">Name</option>
-              <option value="status">Status</option>
-            </Select>
-            <Input placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} size="sm" />
-          </HStack>
-          <VStack spacing={2} align="stretch" maxH="70vh" overflowY="auto">
-            {filteredCustomers.map(customer => (
-              <Box
-                key={customer.id}
-                bg={cardBg}
-                borderRadius="md"
-                p={3}
-                boxShadow="sm"
-                _hover={{ boxShadow: 'md', transform: 'scale(1.02)' }}
-                transition="all 0.2s"
-                cursor="pointer"
-                onClick={() => handleCustomerSelect(customer)}
-              >
-                <Flex justify="space-between" align="center">
-                  <VStack align="start" spacing={1} flex="1">
-                    <Text fontWeight="bold" color={textColor}>{customer.name}</Text>
-                    <Text fontSize="sm" color="gray.500">{customer.id}</Text>
-                    <Text fontSize="sm" color="gray.500">{customer.vehicle}</Text>
-                  </VStack>
-                  <VStack align="end" spacing={1}>
-                    <Badge colorScheme={customer.status === 'Pending' ? 'orange' : 'green'}>{customer.status}</Badge>
-                    <Text fontSize="xs" color="gray.500">{customer.date}</Text>
-                  </VStack>
-                </Flex>
-              </Box>
-            ))}
-          </VStack>
-        </Box>
-
-        {/* Customer Details (Right Panel) */}
-        <Box w={{ base: 'full', md: '60%' }} bg={cardBg} borderRadius="lg" boxShadow="md" p={4}>
-          {selectedCustomer ? (
-            <VStack spacing={4} align="stretch">
-              <Flex justify="space-between" align="center">
+      <Box maxW="1400px" mx="auto" mt={4} px={{ base: 2, md: 4 }} pb={{ base: 20, md: 8 }}>
+        {selectedCustomer ? (
+          // Full-Screen Customer Details (Mobile)
+          <Flex direction="column" h={{ base: 'calc(100vh - 70px)', md: 'auto' }} position={{ base: 'fixed', md: 'static' }} top={{ base: '70px', md: 'auto' }} left={0} right={0} bottom={0} bg={cardBg} zIndex={9}>
+            {/* Fixed Header with Back Button */}
+            <Flex
+              justify="space-between"
+              align="center"
+              bg={cardBg}
+              p={3}
+              borderRadius={{ base: 0, md: 'lg' }}
+              boxShadow="md"
+              position="sticky"
+              top={0}
+              zIndex={10}
+              borderBottom="1px"
+              borderColor={borderColor}
+            >
+              <HStack spacing={2}>
+                <IconButton
+                  icon={<ArrowBackIcon />}
+                  variant="ghost"
+                  onClick={() => setSelectedCustomer(null)}
+                  aria-label="Back to list"
+                />
                 <Heading size="md" color={textColor}>{selectedCustomer.name} - {selectedCustomer.id}</Heading>
-                <HStack>
-                  <Button size="sm" leftIcon={<EditIcon />} variant="outline" colorScheme="blue">Edit</Button>
-                  <Button size="sm" variant="outline" colorScheme="red">Archive</Button>
-                </HStack>
-              </Flex>
-              <Tabs variant="soft-rounded" colorScheme="blue">
-                <TabList mb={4}>
-                  <Tab>Booking & Finance</Tab>
-                  <Tab>Verification</Tab>
-                  <Tab>Errors</Tab>
-                </TabList>
-                <TabPanels>
-                  {/* Booking & Finance */}
-                  <TabPanel>
-                    <VStack spacing={4} align="stretch">
-                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                        <VStack align="start">
-                          <Text fontWeight="bold">Vehicle Details</Text>
-                          <Input name="vehicle" value={customerData.vehicle} onChange={handleInputChange} placeholder="Vehicle Name" />
-                          <Input name="variant" value={customerData.variant} onChange={handleInputChange} placeholder="Variant" />
-                          <Input name="color" value={customerData.color} onChange={handleInputChange} placeholder="Color" />
-                        </VStack>
-                        <VStack align="start">
-                          <Text fontWeight="bold">Pricing</Text>
-                          <Input name="exShowroom" value={customerData.exShowroom} onChange={handleInputChange} placeholder="Ex-Showroom Price" type="number" />
-                          <Input name="tax" value={customerData.tax} onChange={handleInputChange} placeholder="Tax" type="number" />
-                          <Input name="onRoad" value={customerData.onRoad} onChange={handleInputChange} placeholder="On-Road Price" type="number" />
-                          <Input name="insurance" value={customerData.insurance} onChange={handleInputChange} placeholder="Insurance" type="number" />
-                        </VStack>
-                      </SimpleGrid>
-                      <HStack justify="space-between">
-                        <Text fontWeight="bold">Finance Options</Text>
-                        <Checkbox isChecked={customerData.hasFinance} onChange={e => setCustomerData(prev => ({ ...prev, hasFinance: e.target.checked }))}>Has Loan/Finance?</Checkbox>
-                      </HStack>
-                      {customerData.hasFinance && (
-                        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                          <Input name="financeProvider" value={customerData.financeProvider} onChange={handleInputChange} placeholder="Finance Provider" />
-                          <Input name="financeAmount" value={customerData.financeAmount} onChange={handleInputChange} placeholder="Approved Finance Amount" type="number" />
-                          <Input name="emi" value={customerData.emi} onChange={handleInputChange} placeholder="Monthly EMI" type="number" />
-                          <Input name="tenure" value={customerData.tenure} onChange={handleInputChange} placeholder="Tenure (months)" type="number" />
-                          <Checkbox isChecked={customerData.financeApproved} onChange={e => setCustomerData(prev => ({ ...prev, financeApproved: e.target.checked }))}>Approved</Checkbox>
-                        </SimpleGrid>
-                      )}
-                      <HStack justify="flex-end" mt={4}>
-                        <Button variant="outline" onClick={() => setSelectedCustomer(null)}>Cancel</Button>
-                        <Button bg={accentColor} color="white" onClick={handleSave}>Save</Button>
-                      </HStack>
-                    </VStack>
-                  </TabPanel>
+              </HStack>
+              <Button size="sm" leftIcon={<EditIcon />} variant="outline" colorScheme="blue" onClick={handleEditToggle}>
+                {isEditing ? 'Cancel' : 'Edit'}
+              </Button>
+            </Flex>
 
-                  {/* Verification */}
-                  <TabPanel>
-                    <VStack spacing={4} align="stretch">
-                      <Text>Current Status: <Badge colorScheme={selectedCustomer.status === 'Pending' ? 'orange' : 'green'}>{selectedCustomer.status}</Badge></Text>
-                      <Text fontWeight="bold">Verification History</Text>
-                      <VStack align="start" spacing={2}>
-                        <Text fontSize="sm" color="gray.500">Edited by John Doe - Feb 28, 2025</Text>
-                      </VStack>
-                      {selectedCustomer.status === 'Pending' && (
-                        <Button colorScheme="blue" onClick={onVerifyOpen}>Verify Customer</Button>
-                      )}
-                    </VStack>
-                  </TabPanel>
-
-                  {/* Errors */}
-                  <TabPanel>
-                    <VStack spacing={4} align="stretch">
-                      <Text fontWeight="bold">Reported Errors</Text>
-                      {selectedCustomer.errors > 0 ? (
-                        <VStack spacing={2} align="stretch">
-                          <HStack justify="space-between" bg={cardBg} p={3} borderRadius="md" boxShadow="sm">
-                            <Text color={textColor}>Incorrect Tax Entered - Reported by Jane Doe - Feb 25, 2025</Text>
-                            <Checkbox />
-                          </HStack>
-                        </VStack>
-                      ) : (
-                        <Text color="gray.500">No errors reported</Text>
-                      )}
-                      <Text fontWeight="bold" mt={4}>Analytics</Text>
-                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                        <Box>
-                          <Pie data={{
-                            labels: ['Correct', 'Wrong'],
-                            datasets: [{ data: [90, 10], backgroundColor: ['#28A745', '#DC3545'] }],
-                          }} options={{ responsive: true }} />
-                          <Text textAlign="center" mt={2}>Success Rate</Text>
-                        </Box>
-                        <Box>
-                          <Bar data={{
-                            labels: ['Avg. Time'],
-                            datasets: [{ label: 'Minutes', data: [5], backgroundColor: '#007BFF' }],
-                          }} options={{ responsive: true }} />
-                          <Text textAlign="center" mt={2}>Avg. Time to Verify</Text>
-                        </Box>
-                      </SimpleGrid>
+            {/* Scrollable Details */}
+            <Box flex="1" overflowY="auto" p={4} pb={{ base: isEditing ? '80px' : '120px', md: 4 }}>
+              <VStack spacing={4} align="stretch">
+                <Box>
+                  <Text fontWeight="bold" mb={2}>Vehicle Details</Text>
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={2}>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Vehicle</Text>
+                      <Input name="vehicle" value={customerData.vehicle} onChange={handleInputChange} isDisabled={!isEditing} />
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Variant</Text>
+                      <Input name="variant" value={customerData.variant} onChange={handleInputChange} isDisabled={!isEditing} />
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Color</Text>
+                      <Input name="color" value={customerData.color} onChange={handleInputChange} isDisabled={!isEditing} />
+                    </Box>
+                  </SimpleGrid>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold" mb={2}>Pricing</Text>
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={2}>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Ex-Showroom</Text>
+                      <Input name="exShowroom" value={customerData.exShowroom} onChange={handleInputChange} type="number" isDisabled={!isEditing} />
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Tax</Text>
+                      <Input name="tax" value={customerData.tax} onChange={handleInputChange} type="number" isDisabled={!isEditing} />
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">On-Road</Text>
+                      <Input name="onRoad" value={customerData.onRoad} onChange={handleInputChange} type="number" isDisabled={!isEditing} />
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Insurance</Text>
+                      <Input name="insurance" value={customerData.insurance} onChange={handleInputChange} type="number" isDisabled={!isEditing} />
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Booking Charge</Text>
+                      <Input name="bookingCharge" value={customerData.bookingCharge} onChange={handleInputChange} type="number" isDisabled={!isEditing} />
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Delivery Charge</Text>
+                      <Input name="deliveryCharge" value={customerData.deliveryCharge} onChange={handleInputChange} type="number" isDisabled={!isEditing} />
+                    </Box>
+                  </SimpleGrid>
+                </Box>
+                <Box>
+                  <HStack justify="space-between">
+                    <Text fontWeight="bold">Finance Options</Text>
+                    <Checkbox isChecked={customerData.hasFinance} onChange={handleFinanceToggle} isDisabled={!isEditing}>Has Finance?</Checkbox>
+                  </HStack>
+                  {customerData.hasFinance && (
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={2} mt={2}>
                       <Box>
-                        <Line data={{
-                          labels: ['Feb 25', 'Feb 26', 'Feb 27', 'Feb 28', 'Mar 01'],
-                          datasets: [{ label: 'Errors', data: [2, 1, 3, 0, 1], borderColor: '#DC3545' }],
-                        }} options={{ responsive: true }} />
-                        <Text textAlign="center" mt={2}>Errors Over Time</Text>
+                        <Text fontSize="sm" color="gray.500">Provider</Text>
+                        <Input name="financeProvider" value={customerData.financeProvider} onChange={handleInputChange} isDisabled={!isEditing} />
                       </Box>
+                      <Box>
+                        <Text fontSize="sm" color="gray.500">Amount</Text>
+                        <Input name="financeAmount" value={customerData.financeAmount} onChange={handleInputChange} type="number" isDisabled={!isEditing} />
+                      </Box>
+                      <Box>
+                        <Text fontSize="sm" color="gray.500">EMI</Text>
+                        <Input name="emi" value={customerData.emi} onChange={handleInputChange} type="number" isDisabled={!isEditing} />
+                      </Box>
+                      <Box>
+                        <Text fontSize="sm" color="gray.500">Tenure (months)</Text>
+                        <Input name="tenure" value={customerData.tenure} onChange={handleInputChange} type="number" isDisabled={!isEditing} />
+                      </Box>
+                    </SimpleGrid>
+                  )}
+                </Box>
+              </VStack>
+            </Box>
+
+            {/* Fixed Bottom Buttons */}
+            <Flex
+              justify="space-between"
+              align="center"
+              bg={cardBg}
+              p={2}
+              position={{ base: 'fixed', md: 'static' }}
+              bottom={0}
+              left={0}
+              right={0}
+              boxShadow="md"
+              zIndex={10}
+            >
+              {isEditing ? (
+                <Button colorScheme="blue" w="full" onClick={handleSave}>Save</Button>
+              ) : (
+                <HStack spacing={2} w="full" px={4}>
+                  <Button colorScheme="green" flex="1" size="md" onClick={onVerifyOpen}>Verify</Button>
+                  <Button colorScheme="red" flex="1" size="md" leftIcon={<DeleteIcon />} onClick={handleDelete}>Delete</Button>
+                  <Button colorScheme="orange" flex="1" size="md" leftIcon={<WarningTwoIcon />} onClick={onReportOpen}>Report</Button>
+                </HStack>
+              )}
+            </Flex>
+          </Flex>
+        ) : (
+          // Customer List (Default Mobile View)
+          <Box>
+            <Tabs variant="soft-rounded" colorScheme="blue" index={tabIndex} onChange={setTabIndex}>
+              <TabList mb={4}>
+                <Tab>Done</Tab>
+                <Tab>Pending</Tab>
+                <Tab>Errors</Tab>
+              </TabList>
+            </Tabs>
+            <HStack mb={4}>
+              <Select placeholder="Sort by" size="sm" w="150px" value={sortBy} onChange={e => setSortBy(e.target.value)}>
+                <option value="date">Date</option>
+                <option value="name">Name</option>
+                <option value="status">Status</option>
+              </Select>
+              <Input placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} size="sm" />
+            </HStack>
+            <VStack spacing={2} align="stretch" maxH={{ base: 'calc(100vh - 200px)', md: '70vh' }} overflowY="auto">
+              {filteredCustomers.map(customer => (
+                <Box
+                  key={customer.id}
+                  bg={cardBg}
+                  borderRadius="md"
+                  p={3}
+                  boxShadow="sm"
+                  _hover={{ boxShadow: 'md', transform: 'scale(1.02)' }}
+                  transition="all 0.2s"
+                  cursor="pointer"
+                  onClick={() => handleCustomerSelect(customer)}
+                >
+                  <Flex justify="space-between" align="center">
+                    <VStack align="start" spacing={1} flex="1">
+                      <Text fontWeight="bold" color={textColor}>{customer.name}</Text>
+                      <Text fontSize="sm" color="gray.500">{customer.id}</Text>
+                      <Text fontSize="sm" color="gray.500">{customer.vehicle}</Text>
+                      {customer.status === 'Errors' && (
+                        <Text fontSize="sm" color="red.500">{customer.errorReason}</Text>
+                      )}
                     </VStack>
-                  </TabPanel>
-                </TabPanels>
-              </Tabs>
+                    <VStack align="end" spacing={1}>
+                      <Badge colorScheme={customer.status === 'Pending' ? 'orange' : customer.status === 'Done' ? 'green' : 'red'}>{customer.status}</Badge>
+                      <Text fontSize="xs" color="gray.500">{customer.date}</Text>
+                    </VStack>
+                  </Flex>
+                </Box>
+              ))}
             </VStack>
-          ) : (
-            <Text color="gray.500" textAlign="center" py={10}>Select a customer to view details</Text>
-          )}
-        </Box>
-      </Flex>
+          </Box>
+        )}
+      </Box>
 
       {/* Footer */}
       <Flex
@@ -368,6 +440,39 @@ const Accounts = () => {
           </ModalBody>
           <ModalFooter>
             <Button colorScheme="blue" onClick={handleVerify}>Confirm Verification</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Report Customer Modal */}
+      <Modal isOpen={isReportOpen} onClose={onReportClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader color={textColor}>Report Customer</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <VStack spacing={4} align="stretch">
+              <RadioGroup value={reportMessage} onChange={setReportMessage}>
+                <VStack align="start" spacing={2}>
+                  <Radio value="Payment Pending">Payment Pending</Radio>
+                  <Radio value="Can’t Confirm Payment">Can’t Confirm Payment</Radio>
+                  <Radio value="Wrong Transaction ID">Wrong Transaction ID</Radio>
+                  <Radio value="Payment Not Received">Payment Not Received</Radio>
+                </VStack>
+              </RadioGroup>
+              <Input
+                placeholder="Or type a custom message..."
+                value={customReport}
+                onChange={e => setCustomReport(e.target.value)}
+                bg={useColorModeValue('gray.100', 'gray.700')}
+                borderColor={useColorModeValue('gray.200', 'gray.600')}
+                _focus={{ borderColor: accentColor }}
+              />
+            </VStack>
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="orange" onClick={handleReportSubmit}>Submit</Button>
+            <Button variant="ghost" ml={2} onClick={onReportClose}>Cancel</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
