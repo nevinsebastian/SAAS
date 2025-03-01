@@ -1,597 +1,206 @@
-/* Main Container */
-.sales-executive-container {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  padding: 5px;
-  background-color: #f5f7fa; /* Soft background */
-  box-sizing: border-box;
-  font-family: 'Inter', sans-serif; /* Modern, clean font */
-  min-height: 100vh; /* Ensure full height */
-  overflow: hidden;
-  overflow-y: auto; /* Enable scrolling for the entire page */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+:root {
+  --primary-bg: #0f172a;
+  --secondary-bg: #1e293b;
+  --accent-purple: #6366f1;
+  --text-primary: #ffffff;
+  --text-secondary: #94a3b8;
+  --border-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Navigation Bar */
-.nav-bar {
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+}
+
+.sales-executive-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--primary-bg), var(--secondary-bg));
+  color: var(--text-primary);
+  padding: 2rem;
+}
+
+.navbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #1f2937; /* Dark, modern color */
-  color: white;
-  padding: 16px;
+  background: rgba(30, 41, 59, 0.9);
+  backdrop-filter: blur(12px);
   border-radius: 12px;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
+  padding: 1rem 2rem;
+  margin-bottom: 2rem;
+  border: 1px solid var(--border-color);
 }
 
 .user-info {
-  font-size: 16px;
-  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
-.logout-button {
-  background-color: #ef4444; /* Red logout button */
-  border: none;
-  color: white;
-  padding: 10px 20px;
+.logout-btn {
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 0.5rem 1rem;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
 }
 
-.logout-button:hover {
-  background-color: #dc2626; /* Darker red */
-}
-
-/* Insights Section */
-.insights {
-  display: flex;
-  flex-wrap: wrap; /* Allow wrapping to the next line */
-  margin: 20px 0;
-}
-
-/* Insight Box Styles */
-.insight-box {
-  flex: 1 1 calc(33.333% - 20px); /* Three boxes in a row for desktop */
-  background-color:'#F2F0EF'; /* Card color */
-  border-radius: 12px;
-  padding: 20px;
-  margin: 10px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); /* Shadow for 3D effect */
-  position: relative; /* For positioning the glow */
-  overflow: hidden; /* Ensures inner glow does not spill */
-  transition: transform 0.2s, box-shadow 0.2s;
-  text-align: center; /* Center align content */
-  font-size: 12px;
-}
-
-.insight-box:hover {
-  transform: translateY(-5px); /* Lift effect on hover */
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3); /* Deeper shadow on hover */
-}
-
-.insight-box:before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: 12px;
-  background: rgba(255, 255, 0, 0.1); /* Soft yellow glow */
-  filter: blur(20px); /* Blurred effect */
-  z-index: -1; /* Send glow behind the box */
-}
-.customers-list {
-  flex: 1; /* Allow the container to expand */
-  display: flex;
-  flex-direction: column;
-  gap: 10px; /* Space between customer cards */
-  max-height: 60vh; /* Ensure list takes up most of the screen, adjustable */
-  overflow-y: auto; /* Vertical scroll for the customer list */
-  padding: 10px;
-  background-color: #f5f7fa;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Soft shadow */
-}
-.customers-list::-webkit-scrollbar {
-  width: 8px;
-}
-.customers-list::-webkit-scrollbar-thumb {
-  background-color: #1f2937; /* Dark scrollbar */
-  border-radius: 4px;
-}
-
-/* Customer Card */
-.customer-card {
-  background-color: white; /* Card color */
-  border-radius: 12px;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  margin: 10px 0;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.customer-card:hover {
-  transform: translateY(-5px); /* Lift effect */
-  box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.2); /* Deeper shadow on hover */
-}
-
-.customer-card h3 {
-  margin: 0;
-  font-size: 18px;
-  color: #374151; /* Darker text */
-}
-
-.customer-card p {
-  margin: 5px 0;
-  color: #6b7280; /* Gray text */
-}
-
-/* Button Styles */
-.verify-button {
-  background-color: #3b82f6; /* Blue verify button */
-  border: none;
-  color: white;
-  padding: 10px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.verify-button:hover {
-  background-color: #2563eb; /* Darker blue on hover */
-}
-
-/* Media Queries */
-@media (max-width: 768px) {
-  .customers-list {
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Center align cards */
-  }
-
-  .insights {
-    flex-direction: row; /* Maintain row layout */
-    justify-content: center; /* Center the boxes */
-    margin: 0px;
-  }
-
-  .insight-box {
-    flex: 1 1 calc(30% - 10px); /* Adjusted width for 3 boxes */
-    margin: 5px; /* Reduce margin for smaller boxes */
-    padding: 10px; /* Smaller padding */
-    font-size: 9px;
-    max-height: 120px; /* Limit the maximum height of the insight box */
-    overflow: hidden; /* Hide overflow content */
-  }
-
-  /* Adjust review container */
-  .review-container {
-    display: flex;
-    justify-content: space-between;
-    flex: 1 1 calc(60% - 10px); /* Two boxes in the middle row */
-    margin: 5px 00; /* Reduce margin */
-    max-height: 95px; /* Add this to control height */
-    overflow: hidden; /* Hide overflow content */
-  }
-
-  .insight-box:nth-child(4),
-  .insight-box:nth-child(5) {
-    display: flex;
-    justify-content: space-between; /* Align review boxes side by side */
-    flex: 1 1 48%; /* Each box takes up about half of the row */
-    padding: 10px; /* Add padding to reduce vertical space */
-    min-height: 0px; /* Set a minimum height to keep boxes compact */
-    max-height: 120px; /* Limit the maximum height */
-    overflow: hidden; /* Hide overflow content */
-  }
-}
-.status-buttons-container {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+.logout-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .status-buttons {
   display: flex;
-  flex-wrap: wrap; /* Allow buttons to wrap in case they overflow */
-  justify-content: space-between; /* Spread buttons evenly */
-  width: 100%; /* Ensure buttons take up full width */
-  margin-top: 10px;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2rem;
 }
 
 .status-button {
-  flex: 1 1 calc(16% - 10px); /* Make buttons fit in one line */
-  padding: 10px 15px;
-  margin: 5px;
-  background-color: #1f2939;
-  color: white;
+  background: var(--secondary-bg);
+  color: var(--text-primary);
   border: none;
+  padding: 0.75rem 1.5rem;
   border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
-  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.status-button:hover, .status-button.active {
+  background: var(--accent-purple);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+}
+
+.stats-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stats-card {
+  background: rgba(30, 41, 59, 0.9);
+  backdrop-filter: blur(12px);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  padding: 1.5rem;
   text-align: center;
-  white-space: nowrap; /* Keep text on one line */
 }
 
-.status-button:hover {
-  background-color: #2563eb;
+.stats-card h3 {
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
 }
 
-.expand-icon {
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.stats-card span {
+  font-size: 1.5rem;
+  font-weight: 600;
 }
 
-@media (max-width: 768px) {
-  .status-buttons {
-    justify-content: space-evenly; /* Space out buttons on mobile */
-    flex-wrap: wrap; /* Allow wrap on smaller screens */
-  }
-
-  .status-button {
-    flex: 1 1 calc(50% - 10px); /* Two buttons per row on mobile */
-    padding: 8px 10px;
-    font-size: 12px;
-  }
+.form-container, .customer-card, .generated-link {
+  margin-bottom: 2rem;
 }
 
-/* Customer List Container */
-.customers-list {
-  display: flex;
-  flex-direction: column; /* Ensure the cards stack vertically */
-  gap: 10px; /* Space between cards */
-  height: 60vh; /* Limit height for scrollability */
-  overflow-y: auto; /* Enable vertical scrolling */
-  padding: 10px;
-  background-color: #f5f7fa;
+.glass-card {
+  background: rgba(30, 41, 59, 0.9);
+  backdrop-filter: blur(12px);
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Soft shadow for elegance */
+  border: 1px solid var(--border-color);
+  padding: 1.5rem;
+  transition: all 0.3s ease;
 }
 
-/* Scrollbar Styling for better visibility (Optional) */
-.customers-list::-webkit-scrollbar {
-  width: 8px;
-}
-
-.customers-list::-webkit-scrollbar-thumb {
-  background-color: #1f2937; /* Dark scrollbar thumb */
-  border-radius: 4px;
-}
-
-/* Customer Card */
-.customer-card {
-  background-color: white;
-  border-radius: 12px;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  width: 100%; /* Full width for vertical stacking */
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.customer-card:hover {
+.glass-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.form-container h3, .generated-link h3 {
+  margin-bottom: 1rem;
+}
+
+.form-input {
+  display: block;
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  background: var(--primary-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.gradient-btn {
+  background: linear-gradient(45deg, var(--accent-purple), #8b5cf6);
+  color: #ffffff;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.gradient-btn:hover {
+  background: linear-gradient(45deg, #4f46e5, #7c3aed);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+}
+
+.customers-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.customer-card {
+  cursor: pointer;
 }
 
 .customer-card h3 {
-  margin: 0;
-  font-size: 18px;
-  color: #374151;
+  margin-bottom: 0.5rem;
 }
 
 .customer-card p {
-  margin: 5px 0;
-  color: #6b7280;
+  color: var(--text-secondary);
 }
 
-/* Button Styles */
-.verify-button {
-  background-color: #3b82f6;
+.no-data {
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.generated-link p {
+  word-break: break-all;
+  margin-bottom: 1rem;
+}
+
+.copy-btn {
+  background: var(--accent-purple);
+  color: #ffffff;
   border: none;
-  color: white;
-  padding: 10px 16px;
+  padding: 0.5rem 1rem;
   border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
 }
 
-.verify-button:hover {
-  background-color: #2563eb;
+.copy-btn:hover {
+  background: #4f46e5;
 }
 
-/* Responsive Adjustments */
-@media (max-width: 768px) {
-  .customers-list {
-    height: 0vh; /* Reduce height on smaller screens */
-  }
-
-  .customer-card {
-    padding: 15px; /* Smaller padding for mobile */
-  }
-}
-
-
-:root {
-  --primary-color: #2563eb; /* Adjust this to match your app's primary color */
-  --primary-color-hover: #1d4ed8; /* Primary color hover state */
-  --input-border-color: #d1d5db; /* Input border color */
-  --background-color: #f8f9fa; /* Light background color for the form */
-  --text-color: #333; /* General text color */
-  --font-family: 'Poppins', sans-serif; /* Change this to your app's font */
-}
-
-html, body {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  width: 100%;
-  height: 100%;
-  overflow-x: hidden;
-}
-
-.customer-form {
-  background-color: var(--background-color);
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);
-  max-width: 600px;
-  margin: 20px auto;
-  font-family: var(--font-family);
-  color: var(--text-color);
-  width: calc(100% - 40px); /* Ensures form is responsive */
-}
-
-.customer-form h2 {
-  font-size: 24px;
-  margin-bottom: 20px;
-  text-align: center;
-  color: var(--primary-color);
-}
-
-.form-group {
-  margin-bottom: 15px;
-  display: flex;
-  flex-direction: column;
-}
-
-.form-group label {
-  margin-bottom: 5px;
-  font-weight: 500;
-  font-size: 14px;
-}
-
-.form-group input {
-  padding: 12px;
-  border: 1px solid var(--input-border-color);
-  border-radius: 8px;
-  font-size: 14px;
-  font-family: var(--font-family);
-  transition: border-color 0.3s ease;
-  width: 100%; /* Ensure inputs take full width */
-  box-sizing: border-box;
-  max-width: 100%; /* Prevent overflow in smaller screens */
-}
-
-.form-group input:focus {
-  border-color: var(--primary-color);
-  outline: none;
-}
-
-.submit-button {
-  width: 100%;
-  padding: 15px;
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 16px;
-  font-family: var(--font-family);
-  text-align: center;
-  transition: background-color 0.3s ease;
-}
-
-.submit-button:hover {
-  background-color: var(--primary-color-hover);
-}
-
-@media (max-width: 768px) {
-  .customer-form {
-    margin: 0;
-    padding: 20px;
-    border-radius: 0;
-    box-shadow: none;
-    width: 100%;
-    max-width: 0%; /* Full width on mobile */
-    height: 100vh; /* Fullscreen on mobile */
-  }
-  .form-group {
-    overflow: hidden;
-
-    margin-bottom: 15px; /* Adjust spacing on mobile */
-  }
-
-  .customer-form h2 {
-    font-size: 22px;
-  }
-
-  .form-group input {
-    font-size: 16px;
-    padding: 12px;
-  }
-
-  .submit-button {
-    font-size: 18px;
-    padding: 16px;
-  }
-}
-
-@media (max-width: 480px) {
-  .customer-form h2 {
-    font-size: 20px;
-  }
-
-  .form-group label {
-    font-size: 13px;
-  }
-
-  .form-group input {
-    font-size: 15px;
-    padding: 12px;
-  }
-
-  .submit-button {
-    font-size: 16px;
-    padding: 14px;
-  }
-}
-:root {
-  --primary-color: #2563eb; /* Adjust this to match your app's primary color */
-  --primary-color-hover: #1d4ed8; /* Primary color hover state */
-  --input-border-color: #d1d5db; /* Input border color */
-  --background-color: #f8f9fa; /* Light background color for the form */
-  --text-color: #333; /* General text color */
-  --font-family: 'Poppins', sans-serif; /* Change this to your app's font */
-}
-
-html, body {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  width: 100%;
-  height: 100%;
-  overflow-x: hidden;
-}
-
-.customer-form {
-  background-color: var(--background-color);
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);
-  max-width: 600px;
-  margin: 20px auto;
-  font-family: var(--font-family);
-  color: var(--text-color);
-  width: calc(100% - 40px); /* Ensures form is responsive */
-}
-
-.customer-form h2 {
-  font-size: 24px;
-  margin-bottom: 20px;
-  text-align: center;
-  color: var(--primary-color);
-}
-
-.form-group {
-  margin-bottom: 15px;
-  display: flex;
-  flex-direction: column;
-}
-
-.form-group label {
-  margin-bottom: 5px;
-  font-weight: 500;
-  font-size: 14px;
-}
-
-.form-group input {
-  padding: 12px;
-  border: 1px solid var(--input-border-color);
-  border-radius: 8px;
-  font-size: 14px;
-  font-family: var(--font-family);
-  transition: border-color 0.3s ease;
-  width: 100%; /* Ensures input fields take full width */
-  box-sizing: border-box;
-}
-
-.form-group input:focus {
-  border-color: var(--primary-color);
-  outline: none;
-}
-
-.submit-button {
-  width: 100%;
-  padding: 15px;
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 16px;
-  font-family: var(--font-family);
-  text-align: center;
-  transition: background-color 0.3s ease;
-}
-
-.submit-button:hover {
-  background-color: var(--primary-color-hover);
-}
-
-@media (max-width: 768px) {
-  .customer-form {
-    margin: 0;
-    padding: 20px;
-    border-radius: 0;
-    box-shadow: none;
-    width: 100%;
-    max-width: 90%; /* Full width on mobile */
-    height: 100vh; /* Fullscreen on mobile */
-  }
-
-  .customer-form h2 {
-    font-size: 22px;
-  }
-
-  .form-group input {
-    font-size: 16px;
-    padding: 14px;
-  }
-
-  .submit-button {
-    font-size: 18px;
-    padding: 16px;
-  }
-}
-
-@media (max-width: 480px) {
-  .customer-form h2 {
-    font-size: 20px;
-  }
-
-  .form-group label {
-    font-size: 13px;
-  }
-
-  .form-group input {
-    font-size: 15px;
-    padding: 12px;
-  }
-
-  .submit-button {
-    font-size: 16px;
-    padding: 14px;
-  }
-}
-.customers-list {
-  background-color: transparent; /* Or use another background color */
-}
-.customer-form-container {
-  position: relative; /* Ensure it's positioned relative to its parent */
-  z-index: 10; /* Brings the form to the front */
-  min-height: 100vh; /* Make sure it takes full height */
-  background-color: white; /* Optionally add background to cover elements behind */
-}
-
-.customers-list {
-  z-index: 1; /* Send customer list behind */
+.toast-center-mobile {
+  top: 10px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: 90%;
+  max-width: 400px;
 }
