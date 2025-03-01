@@ -174,7 +174,7 @@ const Accounts = () => {
         zIndex={10}
       >
         <HStack spacing={3}>
-          <IconButton icon={<HamburgerIcon />} variant="ghost" onClick={onMenuOpen} aria-label="Open menu" display={{ md: 'none' }} />
+          <IconButton icon={<HamburgerIcon />} variant="ghost" onClick={onMenuOpen} aria-label="Open menu" />
           <Heading size="md" color={accentColor}>Accounts</Heading>
         </HStack>
         <HStack spacing={4}>
@@ -185,7 +185,7 @@ const Accounts = () => {
                 <Badge colorScheme="red" borderRadius="full" position="absolute" top="-1" right="-1">{unseenNotifications.length}</Badge>
               )}
             </MenuButton>
-            <MenuList maxH="300px" overflowY="auto">
+            <MenuList maxH="300px" overflowY="auto" w="20px">
               {unseenNotifications.length > 0 ? (
                 unseenNotifications.map(n => (
                   <MenuItem key={n.id}>
@@ -406,7 +406,7 @@ const Accounts = () => {
         zIndex={10}
       >
         <Text fontSize="sm" color="gray.500">Customers Verified Today: 5</Text>
-        <Button size="sm" variant="ghost" colorScheme="blue">Need Help?</Button>
+        
       </Flex>
 
       {/* Mobile Navigation Drawer */}
