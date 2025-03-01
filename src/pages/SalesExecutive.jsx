@@ -235,7 +235,7 @@ const SalesExecutive = () => {
       <Drawer isOpen={isMessagesOpen} placement="right" onClose={onMessagesClose} size="full">
         <DrawerOverlay />
         <DrawerContent>
-          <Messages onClose={onMessagesClose} />
+          <Messages onClose={onMessagesClose} user={user} onMenuOpen={onMenuOpen} />
         </DrawerContent>
       </Drawer>
 
