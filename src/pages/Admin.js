@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/AdminDashboard.css';
-import { FiPlus, FiEdit, FiUsers, FiPieChart, FiBriefcase, FiLogOut, FiFilter, FiDownload, FiBell, FiImage, FiBarChart } from 'react-icons/fi';
-import { Line, Bar, Pie } from 'react-chartjs-2';
+import { FiPlus, FiEdit, FiUsers, FiPieChart, FiBriefcase, FiLogOut, FiDownload, FiBell, FiImage, FiBarChart } from 'react-icons/fi';
+import { Line, Pie } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,

@@ -28,11 +28,10 @@ import {
   MenuList,
   MenuItem,
   Avatar,
-  Divider,
   InputGroup,
   InputLeftElement,
 } from '@chakra-ui/react';
-import { AddIcon, CopyIcon, ChevronDownIcon, HamburgerIcon, SearchIcon, SettingsIcon, BellIcon, ChatIcon } from '@chakra-ui/icons'; // Replaced BarChartIcon with SettingsIcon
+import { AddIcon, CopyIcon, HamburgerIcon, SearchIcon, SettingsIcon, BellIcon, ChatIcon, ArrowBackIcon } from '@chakra-ui/icons'; // Replaced HouseIcon with ArrowBackIcon
 import Analytics from '../components/Analytics';
 import Notifications from '../components/Notifications';
 import Messages from '../components/Messages';
@@ -116,6 +115,8 @@ const SalesExecutive = () => {
     navigate(`/customer-details/${id}`);
   };
 
+  const isHomeActive = !isAnalyticsOpen && !isNotificationsOpen && !isMessagesOpen;
+
   return (
     <Box minH="100vh" bg={bgGradient} p={{ base: 2, md: 4 }} transition="filter 0.3s" filter={isDrawerOpen || isAnalyticsOpen || isNotificationsOpen || isMessagesOpen ? 'blur(4px)' : 'none'}>
       {/* Header */}
@@ -177,20 +178,10 @@ const SalesExecutive = () => {
           <DrawerHeader>Menu</DrawerHeader>
           <DrawerBody>
             <VStack align="stretch" spacing={4}>
-              <Box>
-                <Heading size="sm" mb={3}>Dashboard</Heading>
-                <VStack align="stretch" spacing={2}>
-                  {Object.entries(stats).map(([key, value]) => (
-                    <HStack key={key} justify="space-between">
-                      <Text fontSize="sm" color="gray.500">{key.replace(/([A-Z])/g, ' $1').trim()}</Text>
-                      <Badge colorScheme="purple" px={2} borderRadius="full">{value}</Badge>
-                    </HStack>
-                  ))}
-                </VStack>
-              </Box>
-              <Button leftIcon={<SettingsIcon />} colorScheme="purple" variant="outline" onClick={() => { onMenuClose(); onAnalyticsOpen(); }}>Analytics</Button>
-              <Button leftIcon={<BellIcon />} colorScheme="purple" variant="outline" onClick={() => { onMenuClose(); onNotificationsOpen(); }}>Notifications</Button>
-              <Button leftIcon={<ChatIcon />} colorScheme="purple" variant="outline" onClick={() => { onMenuClose(); onMessagesOpen(); }}>Messages</Button>
+              <Button leftIcon={<ArrowBackIcon />} colorScheme="purple" variant={isHomeActive ? 'solid' : 'outline'} onClick={() => { onMenuClose(); onAnalyticsClose(); onNotificationsClose(); onMessagesClose(); }}>Home</Button>
+              <Button leftIcon={<SettingsIcon />} colorScheme="purple" variant={isAnalyticsOpen ? 'solid' : 'outline'} onClick={() => { onMenuClose(); onAnalyticsOpen(); }}>Analytics</Button>
+              <Button leftIcon={<BellIcon />} colorScheme="purple" variant={isNotificationsOpen ? 'solid' : 'outline'} onClick={() => { onMenuClose(); onNotificationsOpen(); }}>Notifications</Button>
+              <Button leftIcon={<ChatIcon />} colorScheme="purple" variant={isMessagesOpen ? 'solid' : 'outline'} onClick={() => { onMenuClose(); onMessagesOpen(); }}>Messages</Button>
             </VStack>
           </DrawerBody>
         </DrawerContent>
@@ -208,7 +199,6 @@ const SalesExecutive = () => {
                 <Input name="name" placeholder="Customer Name" value={formData.name} onChange={handleInputChange} variant="filled" isRequired />
                 <Input name="phone" placeholder="Phone Number" value={formData.phone} onChange={handleInputChange} variant="filled" isRequired />
                 <Input name="vehicle" placeholder="Vehicle" value={formData.vehicle} onChange={handleInputChange} variant="filled" isRequired />
-                <Divider />
                 <Input name="variant" placeholder="Variant (optional)" value={formData.variant} onChange={handleInputChange} variant="filled" />
                 <Input name="color" placeholder="Color (optional)" value={formData.color} onChange={handleInputChange} variant="filled" />
                 <Input name="price" placeholder="Price (optional)" value={formData.price} onChange={handleInputChange} variant="filled" type="number" />
@@ -233,7 +223,7 @@ const SalesExecutive = () => {
       <Drawer isOpen={isAnalyticsOpen} placement="right" onClose={onAnalyticsClose} size="full">
         <DrawerOverlay />
         <DrawerContent>
-          <Analytics onClose={onAnalyticsClose} stats={stats} />
+          <Analytics onClose={onAnalyticsClose} stats={stats} user={user} onMenuOpen={onMenuOpen} />
         </DrawerContent>
       </Drawer>
       <Drawer isOpen={isNotificationsOpen} placement="right" onClose={onNotificationsClose} size="full">
