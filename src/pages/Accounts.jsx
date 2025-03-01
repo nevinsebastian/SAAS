@@ -29,8 +29,6 @@ import {
   Tabs,
   TabList,
   Tab,
-  TabPanels,
-  TabPanel,
   Checkbox,
   Modal,
   ModalOverlay,
@@ -44,7 +42,6 @@ import {
   RadioGroup,
 } from '@chakra-ui/react';
 import { HamburgerIcon, BellIcon, EditIcon, ArrowBackIcon, DeleteIcon, WarningTwoIcon } from '@chakra-ui/icons';
-import { Pie, Bar, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, BarElement, LineElement, CategoryScale, LinearScale, PointElement, Title, Tooltip, Legend } from 'chart.js';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -56,6 +53,8 @@ const Accounts = () => {
   const { isOpen: isMenuOpen, onOpen: onMenuOpen, onClose: onMenuClose } = useDisclosure();
   const { isOpen: isVerifyOpen, onOpen: onVerifyOpen, onClose: onVerifyClose } = useDisclosure();
   const { isOpen: isReportOpen, onOpen: onReportOpen, onClose: onReportClose } = useDisclosure();
+  const { isOpen: isDeletOpen, onOpen: onDeletOpen, onClose: onDeletClose } = useDisclosure();
+
   const { colorMode, toggleColorMode } = useColorMode();
   const bgGradient = useColorModeValue('linear(to-br, gray.50, gray.100)', 'linear(to-br, gray.900, gray.800)');
   const cardBg = useColorModeValue('white', 'gray.800');
@@ -64,7 +63,6 @@ const Accounts = () => {
   const borderColor = useColorModeValue('gray.200', 'gray.600');
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [tabIndex, setTabIndex] = useState(0); // Done, Pending, Errors tabs
   const [isEditing, setIsEditing] = useState(false);
@@ -75,6 +73,8 @@ const Accounts = () => {
   const [reportMessage, setReportMessage] = useState('');
   const [customReport, setCustomReport] = useState('');
 
+  const [deleteMessage, setDeleteMessage] = useState('');
+  const [customDelete, setCustomDelete] = useState('');
   // Dummy customer data
   const customers = [
     { id: 'B001', name: 'John Doe', status: 'Pending', vehicle: 'Toyota Corolla', date: '2025-03-01', errors: 0 },
@@ -82,15 +82,10 @@ const Accounts = () => {
     { id: 'B003', name: 'Mike Johnson', status: 'Errors', vehicle: 'Hyundai Creta', date: '2025-03-02', errors: 1, errorReason: 'Wrong Transaction ID' },
   ];
 
-  // Search and sort across all customers
-  const filteredCustomers = customers
-    .filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    .sort((a, b) => {
-      if (sortBy === 'date') return new Date(b.date) - new Date(a.date);
-      if (sortBy === 'name') return a.name.localeCompare(b.name);
-      if (sortBy === 'status') return a.status.localeCompare(b.status);
-      return 0;
-    });
+  const filteredCustomers = customers.filter(c =>
+    c.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+    (tabIndex === 0 ? c.status === 'Done' : tabIndex === 1 ? c.status === 'Pending' : c.status === 'Errors')
+  );
 
   const notifications = [
     { id: 1, message: 'New customer added: John Doe', time: '2025-03-01 10:00 AM', seen: false },
@@ -115,8 +110,8 @@ const Accounts = () => {
     setCustomerData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleFinanceToggle = (e) => {
-    setCustomerData(prev => ({ ...prev, hasFinance: e.target.checked }));
+  const handleFinanceToggle = () => {
+    setCustomerData(prev => ({ ...prev, hasFinance: !prev.hasFinance }));
   };
 
   const handleEditToggle = () => {
@@ -135,9 +130,21 @@ const Accounts = () => {
     toast.success('Customer verified successfully!', { position: 'top-center' });
   };
 
-  const handleDelete = () => {
+  const handleCancelVerify = () => {
     setSelectedCustomer(null);
-    toast.info('Customer deleted!', { position: 'top-center' });
+    onVerifyClose();
+  };
+
+  const handleDelete = () => {
+    const finalMessage = customDelete || deleteMessage;
+    if (finalMessage) {
+      toast.success(`Deleted: ${finalMessage}`, { position: 'top-center' });
+      setDeleteMessage('');
+      setCustomDelete('');
+      onDeletClose();
+    } else {
+      toast.error('Please select or enter a Reason!', { position: 'top-center' });
+    }
   };
 
   const handleReportSubmit = () => {
@@ -206,7 +213,7 @@ const Accounts = () => {
         </Flex>
 
       {/* Main Layout */}
-      <Box maxW="1400px" mx="auto" mt={4} px={{ base: 2, md: 4 }} pb={{ base: 20, md: 8 }}>
+      <Box maxW="1400px" mx="auto" mt={4} px={{ base: 2, md: 4 }} pb={{ base: 16, md: 8 }}>
         {selectedCustomer ? (
           // Full-Screen Customer Details (Mobile)
           <Flex direction="column" h={{ base: 'calc(100vh - 70px)', md: 'auto' }} position={{ base: 'fixed', md: 'static' }} top={{ base: '70px', md: 'auto' }} left={0} right={0} bottom={0} bg={cardBg} zIndex={9}>
@@ -239,7 +246,7 @@ const Accounts = () => {
             </Flex>
 
             {/* Scrollable Details */}
-            <Box flex="1" overflowY="auto" p={4} pb={{ base: isEditing ? '80px' : '120px', md: 4 }}>
+            <Flex direction="column" flex="1" overflowY="auto" p={4} pb={200}> {/* Added padding-bottom */}
               <VStack spacing={4} align="stretch">
                 <Box>
                   <Text fontWeight="bold" mb={2}>Vehicle Details</Text>
@@ -290,16 +297,22 @@ const Accounts = () => {
                 <Box>
                   <HStack justify="space-between">
                     <Text fontWeight="bold">Finance Options</Text>
-                    <Checkbox isChecked={customerData.hasFinance} onChange={handleFinanceToggle} isDisabled={!isEditing}>Has Finance?</Checkbox>
+                    <Checkbox
+                      isChecked={customerData.hasFinance}
+                      onChange={handleFinanceToggle}
+                      isDisabled={!isEditing}
+                    >
+                      Has Finance?
+                    </Checkbox>
                   </HStack>
                   {customerData.hasFinance && (
                     <SimpleGrid columns={{ base: 1, md: 2 }} spacing={2} mt={2}>
                       <Box>
-                        <Text fontSize="sm" color="gray.500">Provider</Text>
+                        <Text fontSize="sm" color="gray.500">Finance Provider</Text>
                         <Input name="financeProvider" value={customerData.financeProvider} onChange={handleInputChange} isDisabled={!isEditing} />
                       </Box>
                       <Box>
-                        <Text fontSize="sm" color="gray.500">Amount</Text>
+                        <Text fontSize="sm" color="gray.500">Finance Amount</Text>
                         <Input name="financeAmount" value={customerData.financeAmount} onChange={handleInputChange} type="number" isDisabled={!isEditing} />
                       </Box>
                       <Box>
@@ -314,30 +327,17 @@ const Accounts = () => {
                   )}
                 </Box>
               </VStack>
-            </Box>
-
-            {/* Fixed Bottom Buttons */}
-            <Flex
-              justify="space-between"
-              align="center"
-              bg={cardBg}
-              p={2}
-              position={{ base: 'fixed', md: 'static' }}
-              bottom={0}
-              left={0}
-              right={0}
-              boxShadow="md"
-              zIndex={10}
-            >
-              {isEditing ? (
-                <Button colorScheme="blue" w="full" onClick={handleSave}>Save</Button>
-              ) : (
-                <HStack spacing={2} w="full" px={4}>
-                  <Button colorScheme="green" flex="1" size="md" onClick={onVerifyOpen}>Verify</Button>
-                  <Button colorScheme="red" flex="1" size="md" leftIcon={<DeleteIcon />} onClick={handleDelete}>Delete</Button>
-                  <Button colorScheme="orange" flex="1" size="md" leftIcon={<WarningTwoIcon />} onClick={onReportOpen}>Report</Button>
-                </HStack>
-              )}
+              <Box mt={4}>
+                {isEditing ? (
+                  <Button colorScheme="blue" w="full" onClick={handleSave}>Save</Button>
+                ) : (
+                  <HStack spacing={4} justify="center">
+                    <Button colorScheme="green" w="full" size="lg" onClick={onVerifyOpen}>Verify</Button>
+                    <Button colorScheme="red" w="full" size="lg" leftIcon={<DeleteIcon />} onClick={onDeletOpen}>Delete</Button>
+                    <Button colorScheme="orange" w="full" size="lg" leftIcon={<WarningTwoIcon />} onClick={onReportOpen}>Report</Button>
+                  </HStack>
+                )}
+              </Box>
             </Flex>
           </Flex>
         ) : (
@@ -351,7 +351,7 @@ const Accounts = () => {
               </TabList>
             </Tabs>
             <HStack mb={4}>
-              <Select placeholder="Sort by" size="sm" w="150px" value={sortBy} onChange={e => setSortBy(e.target.value)}>
+              <Select placeholder="Sort by" size="sm" w="150px">
                 <option value="date">Date</option>
                 <option value="name">Name</option>
                 <option value="status">Status</option>
@@ -430,16 +430,18 @@ const Accounts = () => {
       <Modal isOpen={isVerifyOpen} onClose={onVerifyClose}>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Verify Customer</ModalHeader>
+          <ModalHeader>Verify </ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <VStack spacing={4}>
-              <Checkbox>Docs Uploaded</Checkbox>
-              <Checkbox>Finance Approved</Checkbox>
+             <Text>
+              Are you sure u wanna verify the customer
+             </Text>
             </VStack>
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme="blue" onClick={handleVerify}>Confirm Verification</Button>
+          <Button colorScheme="red"  mr={4} onClick={handleCancelVerify}>No</Button>
+            <Button colorScheme="blue"  onClick={handleVerify}>Yes</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -474,6 +476,49 @@ const Accounts = () => {
             <Button colorScheme="orange" onClick={handleReportSubmit}>Submit</Button>
             <Button variant="ghost" ml={2} onClick={onReportClose}>Cancel</Button>
           </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+            {/* delet Customer Modal */}
+            <Modal isOpen={isDeletOpen} onClose={onDeletClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader color={textColor}>Delete Customer</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>            <VStack spacing={4} align="stretch">
+
+            <Text>Why deleting customer?</Text>
+              <RadioGroup value={deleteMessage} onChange={setDeleteMessage}>
+                <VStack align="start" spacing={2}>
+                  <Radio value="Payment Not Received">Payment Not Received</Radio>
+                  <Radio value="Canceled Booking">Canceled Booking</Radio>
+                  <Radio value="Customer dosnt ecist">Customer dosnt exist</Radio>
+                </VStack>
+              </RadioGroup>
+              <Input
+                placeholder="Or type a custom message..."
+                value={customDelete}
+                onChange={e => setCustomReport(e.target.value)}
+                bg={useColorModeValue('gray.100', 'gray.700')}
+                borderColor={useColorModeValue('gray.200', 'gray.600')}
+                _focus={{ borderColor: accentColor }}
+              />
+            </VStack>
+            
+
+          </ModalBody>
+          <ModalFooter>
+  <Text fontSize="sm" color="gray.500">
+    Once deleted, only admin can restore the customer
+  </Text>
+  <Button colorScheme="red" onClick={handleDelete} ml={4}>
+    Delete
+  </Button>
+  <Button variant="ghost" ml={2} onClick={onDeletClose}>
+    Cancel
+  </Button>
+</ModalFooter>
+
         </ModalContent>
       </Modal>
 
