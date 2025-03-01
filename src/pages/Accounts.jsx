@@ -178,7 +178,7 @@ const Accounts = () => {
           <Heading size="md" color={accentColor}>Accounts</Heading>
         </HStack>
         <HStack spacing={4}>
-          <Input placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} size="sm" w={{ base: '100px', md: '200px' }} />
+      
           <Menu>
             <MenuButton as={IconButton} icon={<BellIcon />} variant="ghost" aria-label="Notifications" position="relative">
               {unseenNotifications.length > 0 && (
