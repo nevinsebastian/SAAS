@@ -31,7 +31,7 @@ import {
   InputGroup,
   InputLeftElement,
 } from '@chakra-ui/react';
-import { AddIcon, CopyIcon, HamburgerIcon, SearchIcon, SettingsIcon, BellIcon, ChatIcon, ArrowBackIcon } from '@chakra-ui/icons'; // Replaced HouseIcon with ArrowBackIcon
+import { AddIcon, CopyIcon, HamburgerIcon, SearchIcon, SettingsIcon, BellIcon, ChatIcon, ArrowBackIcon } from '@chakra-ui/icons';
 import Analytics from '../components/Analytics';
 import Notifications from '../components/Notifications';
 import Messages from '../components/Messages';
@@ -229,7 +229,7 @@ const SalesExecutive = () => {
       <Drawer isOpen={isNotificationsOpen} placement="right" onClose={onNotificationsClose} size="full">
         <DrawerOverlay />
         <DrawerContent>
-          <Notifications onClose={onNotificationsClose} />
+          <Notifications onClose={onNotificationsClose} user={user} onMenuOpen={onMenuOpen} />
         </DrawerContent>
       </Drawer>
       <Drawer isOpen={isMessagesOpen} placement="right" onClose={onMessagesClose} size="full">
