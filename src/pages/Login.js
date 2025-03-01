@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Box, Button, TextField, Typography, Checkbox, FormControlLabel, Container, createTheme, ThemeProvider, CssBaseline
+  Box, Button, TextField, Typography, Checkbox, FormControlLabel, createTheme, ThemeProvider, CssBaseline
 } from '@mui/material';
 import { styled } from '@mui/system';
 
@@ -58,15 +58,41 @@ const modernTheme = createTheme({
   },
 });
 
-const GlassPaper = styled(Box)(({ theme }) => ({
-  background: 'rgba(30, 41, 59, 0.9)',
-  backdropFilter: 'blur(12px)',
+const DesktopGlassPaper = styled(Box)(({ theme }) => ({
+  position: 'relative',
+  background: 'rgba(30, 41, 59, 0.9)', // Semi-transparent background
   borderRadius: '16px',
   border: '1px solid rgba(255, 255, 255, 0.1)',
   boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
   padding: theme.spacing(4),
   width: '100%',
-  maxWidth: '400px',
+  maxWidth: '600px',
+  overflow: 'hidden', // Ensure pseudo-element doesn't bleed out
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'inherit', // Match the rgba background
+    backdropFilter: 'blur(12px)', // Apply blur only to the background
+    zIndex: -1, // Place behind content
+  },
+  '& > *': {
+    position: 'relative', // Ensure content stays above the blurred layer
+    zIndex: 1, // Keep content sharp
+  },
+}));
+
+const MobileFullScreen = styled(Box)(({ theme }) => ({
+  background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+  padding: theme.spacing(4),
+  width: '100%',
+  height: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'center',
 }));
 
 const GradientButton = styled(Button)(({ theme }) => ({
@@ -131,16 +157,19 @@ export default function Login({ setUserRole }) {
       <Box
         sx={{
           minHeight: '100vh',
+          height: '100%',
+          width: '100vw',
           background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          padding: { xs: 2, sm: 4 },
+          padding: { xs: 0, sm: 4 }, // No padding on mobile, padding on desktop
           position: 'relative',
           overflow: 'hidden',
+          margin: 0,
         }}
       >
-        {/* Background Decorative Elements */}
+        {/* Background Decorative Elements - Only on Desktop */}
         <Box
           sx={{
             position: 'absolute',
@@ -150,6 +179,7 @@ export default function Login({ setUserRole }) {
             height: '300px',
             background: 'radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%)',
             zIndex: 0,
+            display: { xs: 'none', sm: 'block' },
           }}
         />
         <Box
@@ -161,112 +191,224 @@ export default function Login({ setUserRole }) {
             height: '400px',
             background: 'radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%)',
             zIndex: 0,
+            display: { xs: 'none', sm: 'block' },
           }}
         />
 
-        <Container maxWidth="sm" sx={{ zIndex: 1 }}>
-          <GlassPaper>
-            <Typography
-              variant="h4"
-              align="center"
-              sx={{
-                fontWeight: 700,
-                background: 'linear-gradient(45deg, #6366f1, #8b5cf6)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                mb: 1,
-              }}
-            >
-              NEXA
-            </Typography>
-            <Typography
-              variant="body2"
-              align="center"
-              sx={{ color: 'text.secondary', mb: 4 }}
-            >
-              Popular Vehicles & Services, Alappuzha, Punnapra
-            </Typography>
-
-            <Box component="form" onSubmit={handleLogin} noValidate>
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                label="Username"
-                type='username'
-                autoComplete="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                variant="outlined"
-                InputProps={{
-                  sx: { borderRadius: '8px' },
+        {/* Conditional Rendering for Mobile vs Desktop */}
+        <Box
+          sx={{
+            width: { xs: '100%', sm: 'auto' },
+            height: { xs: '100vh', sm: 'auto' },
+            zIndex: 1,
+          }}
+        >
+          {window.innerWidth < 600 ? (
+            <MobileFullScreen>
+              <Typography
+                variant="h4"
+                align="center"
+                sx={{
+                  fontWeight: 700,
+                  background: 'linear-gradient(45deg, #6366f1, #8b5cf6)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  mb: 1,
                 }}
-              />
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                label="Password"
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                variant="outlined"
-                InputProps={{
-                  sx: { borderRadius: '8px' },
-                }}
-              />
-              {error && (
-                <Typography
-                  color="error"
-                  align="center"
-                  sx={{ mt: 2, fontSize: '0.875rem' }}
-                >
-                  {error}
-                </Typography>
-              )}
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    value={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    sx={{
-                      color: '#94a3b8',
-                      '&.Mui-checked': { color: '#6366f1' },
-                    }}
-                  />
-                }
-                label="Remember me"
-                sx={{ mt: 1, color: 'text.secondary' }}
-              />
-              <GradientButton
-                type="submit"
-                fullWidth
-                disabled={isLoading}
-                sx={{ mt: 3, mb: 2 }}
               >
-                {isLoading ? 'Logging in...' : 'Sign In'}
-              </GradientButton>
+                NEXA
+              </Typography>
               <Typography
                 variant="body2"
                 align="center"
-                sx={{ color: 'text.secondary', mt: 2 }}
+                sx={{ color: 'text.secondary', mb: 4 }}
               >
-                Need help?{' '}
-                <Box
-                  component="span"
-                  sx={{
-                    color: '#6366f1',
-                    cursor: 'pointer',
-                    '&:hover': { textDecoration: 'underline' },
-                  }}
-                >
-                  Contact Support
-                </Box>
+                Popular Vehicles & Services, Alappuzha, Punnapra
               </Typography>
-            </Box>
-          </GlassPaper>
-        </Container>
+
+              <Box component="form" onSubmit={handleLogin} noValidate sx={{ width: '100%' }}>
+                <TextField
+                  margin="normal"
+                  required
+                  fullWidth
+                  type='username'
+                  label="Username"
+                  autoComplete="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  variant="outlined"
+                  InputProps={{
+                    sx: { borderRadius: '8px' },
+                  }}
+                />
+                <TextField
+                  margin="normal"
+                  required
+                  fullWidth
+                  label="Password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  variant="outlined"
+                  InputProps={{
+                    sx: { borderRadius: '8px' },
+                  }}
+                />
+                {error && (
+                  <Typography
+                    color="error"
+                    align="center"
+                    sx={{ mt: 2, fontSize: '0.875rem' }}
+                  >
+                    {error}
+                  </Typography>
+                )}
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      value={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      sx={{
+                        color: '#94a3b8',
+                        '&.Mui-checked': { color: '#6366f1' },
+                      }}
+                    />
+                  }
+                  label="Remember me"
+                  sx={{ mt: 1, color: 'text.secondary' }}
+                />
+                <GradientButton
+                  type="submit"
+                  fullWidth
+                  disabled={isLoading}
+                  sx={{ mt: 3, mb: 2 }}
+                >
+                  {isLoading ? 'Logging in...' : 'Sign In'}
+                </GradientButton>
+                <Typography
+                  variant="body2"
+                  align="center"
+                  sx={{ color: 'text.secondary', mt: 2 }}
+                >
+                  Need help?{' '}
+                  <Box
+                    component="span"
+                    sx={{
+                      color: '#6366f1',
+                      cursor: 'pointer',
+                      '&:hover': { textDecoration: 'underline' },
+                    }}
+                  >
+                    Contact Support
+                  </Box>
+                </Typography>
+              </Box>
+            </MobileFullScreen>
+          ) : (
+            <DesktopGlassPaper>
+              <Typography
+                variant="h4"
+                align="center"
+                sx={{
+                  fontWeight: 700,
+                  background: 'linear-gradient(45deg, #6366f1, #8b5cf6)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  mb: 1,
+                }}
+              >
+                NEXA
+              </Typography>
+              <Typography
+                variant="body2"
+                align="center"
+                sx={{ color: 'text.secondary', mb: 4 }}
+              >
+                Popular Vehicles & Services, Alappuzha, Punnapra
+              </Typography>
+
+              <Box component="form" onSubmit={handleLogin} noValidate>
+                <TextField
+                  margin="normal"
+                  required
+                  fullWidth
+                  label="Username"
+                  type='username'
+                  autoComplete="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  variant="outlined"
+                  InputProps={{
+                    sx: { borderRadius: '8px' },
+                  }}
+                />
+                <TextField
+                  margin="normal"
+                  required
+                  fullWidth
+                  label="Password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  variant="outlined"
+                  InputProps={{
+                    sx: { borderRadius: '8px' },
+                  }}
+                />
+                {error && (
+                  <Typography
+                    color="error"
+                    align="center"
+                    sx={{ mt: 2, fontSize: '0.875rem' }}
+                  >
+                    {error}
+                  </Typography>
+                )}
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      value={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      sx={{
+                        color: '#94a3b8',
+                        '&.Mui-checked': { color: '#6366f1' },
+                      }}
+                    />
+                  }
+                  label="Remember me"
+                  sx={{ mt: 1, color: 'text.secondary' }}
+                />
+                <GradientButton
+                  type="submit"
+                  fullWidth
+                  disabled={isLoading}
+                  sx={{ mt: 3, mb: 2 }}
+                >
+                  {isLoading ? 'Logging in...' : 'Sign In'}
+                </GradientButton>
+                <Typography
+                  variant="body2"
+                  align="center"
+                  sx={{ color: 'text.secondary', mt: 2 }}
+                >
+                  Need help?{' '}
+                  <Box
+                    component="span"
+                    sx={{
+                      color: '#6366f1',
+                      cursor: 'pointer',
+                      '&:hover': { textDecoration: 'underline' },
+                    }}
+                  >
+                    Contact Support
+                  </Box>
+                </Typography>
+              </Box>
+            </DesktopGlassPaper>
+          )}
+        </Box>
       </Box>
     </ThemeProvider>
   );
