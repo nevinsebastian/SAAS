@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ChakraProvider, extendTheme } from '@chakra-ui/react';
-import { ThemeProvider } from '@mui/material/styles';
 import SalesExecutive from './pages/SalesExecutive';
 import Login from './pages/Login';
 import Admin from './pages/Admin';
-import Accounts from './pages/Accounts';
 import RTO from './pages/RTO';
 import Manager from './pages/Manager';
 import CustomerForm from './pages/CustomerForm';
@@ -63,7 +61,6 @@ const App = () => {
           }
         />
         <Route path="/admin" element={userRole === 'admin' ? <Admin /> : <Navigate to="/login" />} />
-        <Route path="/accounts" element={userRole === 'accounts' ? <Accounts /> : <Navigate to="/login" />} />
         <Route path="/rto" element={userRole === 'rto' ? <RTO /> : <Navigate to="/login" />} />
         <Route path="/manager" element={userRole === 'manager' ? <Manager /> : <Navigate to="/login" />} />
         <Route path="/stock" element={userRole === 'stock_person' ? <Stock /> : <Navigate to="/login" />} />
