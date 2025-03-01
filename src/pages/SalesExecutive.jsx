@@ -14,7 +14,6 @@ import {
   SimpleGrid,
   Badge,
   IconButton,
-  Tooltip,
   useColorModeValue,
   Drawer,
   DrawerBody,
@@ -30,8 +29,16 @@ import {
   Avatar,
   InputGroup,
   InputLeftElement,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  ModalCloseButton
 } from '@chakra-ui/react';
 import { AddIcon, CopyIcon, HamburgerIcon, SearchIcon, SettingsIcon, BellIcon, ChatIcon, ArrowBackIcon } from '@chakra-ui/icons';
+import { FaWhatsapp } from 'react-icons/fa'; // WhatsApp icon
 import Analytics from '../components/Analytics';
 import Notifications from '../components/Notifications';
 import Messages from '../components/Messages';
@@ -44,6 +51,7 @@ const SalesExecutive = () => {
   const { isOpen: isAnalyticsOpen, onOpen: onAnalyticsOpen, onClose: onAnalyticsClose } = useDisclosure();
   const { isOpen: isNotificationsOpen, onOpen: onNotificationsOpen, onClose: onNotificationsClose } = useDisclosure();
   const { isOpen: isMessagesOpen, onOpen: onMessagesOpen, onClose: onMessagesClose } = useDisclosure();
+  const { isOpen: isSuccessModalOpen, onOpen: onSuccessModalOpen, onClose: onSuccessModalClose } = useDisclosure();
 
   const dummyData = {
     stats: { totalCustomers: 25, pending: 8, submitted: 17, reviewsPending: 5, reviewsDone: 20 },
@@ -66,7 +74,6 @@ const SalesExecutive = () => {
   const bgGradient = useColorModeValue('gray.50', 'gray.900');
   const cardBg = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.700', 'gray.200');
-  const linkBg = useColorModeValue('gray.100', 'gray.700');
 
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -88,7 +95,7 @@ const SalesExecutive = () => {
     const filtered = customers.filter(c =>
       c.name.toLowerCase().includes(query.toLowerCase()) ||
       c.phone.includes(query) ||
-      c.vehicle.toLowerCase().includes(query.toLowerCase())
+      c.vehicle.toLowerCase().includes(searchQuery.toLowerCase())
     );
     setFilteredCustomers(filtered);
   };
@@ -108,17 +115,29 @@ const SalesExecutive = () => {
     setFilteredCustomers(prev => [...prev, newCustomer]);
     setGeneratedLink(`https://example.com/customer/${newCustomer.id}`);
     setFormData({ name: '', phone: '', vehicle: '', variant: '', color: '', price: '' });
-    toast.success('Customer added successfully!', { position: 'top-center', style: { zIndex: 1000 } });
+    toast.success('Customer added successfully!', { position: 'top-center' });
+    onDrawerClose(); // Close the create customer drawer
+    onSuccessModalOpen(); // Open the success modal
   };
 
   const handleCustomerClick = (id) => {
     navigate(`/customer-details/${id}`);
   };
 
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(generatedLink);
+    toast.info('Link copied to clipboard!', { position: 'top-center' });
+  };
+
+  const handleShareWhatsApp = () => {
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(generatedLink)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
   const isHomeActive = !isAnalyticsOpen && !isNotificationsOpen && !isMessagesOpen;
 
   return (
-    <Box minH="100vh" bg={bgGradient} p={{ base: 2, md: 4 }} transition="filter 0.3s" filter={isDrawerOpen || isAnalyticsOpen || isNotificationsOpen || isMessagesOpen ? 'blur(4px)' : 'none'}>
+    <Box minH="100vh" bg={bgGradient} p={{ base: 2, md: 4 }} transition="filter 0.3s" filter={isDrawerOpen || isAnalyticsOpen || isNotificationsOpen || isMessagesOpen ? 'blur(4px)' : 'none'} position="relative">
       {/* Header */}
       <Flex justify="space-between" align="center" bg={cardBg} borderRadius="lg" p={3} mb={4} boxShadow="sm" position="sticky" top={0} zIndex={10}>
         <HStack spacing={3}>
@@ -203,21 +222,48 @@ const SalesExecutive = () => {
                 <Input name="color" placeholder="Color (optional)" value={formData.color} onChange={handleInputChange} variant="filled" />
                 <Input name="price" placeholder="Price (optional)" value={formData.price} onChange={handleInputChange} variant="filled" type="number" />
               </VStack>
-              <VStack w="full" spacing={3}>
-                <Button type="submit" colorScheme="purple" w="full" size="md">Add Customer</Button>
-                {generatedLink && (
-                  <Flex w="full" bg={linkBg} borderRadius="md" p={3} align="center" justify="space-between">
-                    <Text fontSize="sm" color={textColor} isTruncated maxW="70%">{generatedLink}</Text>
-                    <Tooltip label="Copy Link">
-                      <IconButton icon={<CopyIcon />} colorScheme="purple" size="sm" onClick={() => navigator.clipboard.writeText(generatedLink)} aria-label="Copy link" />
-                    </Tooltip>
-                  </Flex>
-                )}
-              </VStack>
+              <Button type="submit" colorScheme="purple" w="full" size="md">Add Customer</Button>
             </VStack>
           </DrawerBody>
         </DrawerContent>
       </Drawer>
+
+      {/* Success Modal */}
+      <Modal isOpen={isSuccessModalOpen} onClose={onSuccessModalClose} size={{ base: 'full', md: 'md' }}>
+        <ModalOverlay />
+        <ModalContent bg={cardBg}>
+          <ModalHeader color={textColor}>Customer Created Successfully</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <VStack spacing={4} align="stretch">
+              <Text fontSize="sm" color={textColor} wordBreak="break-all">{generatedLink}</Text>
+              <HStack spacing={2}>
+                <Button
+                  leftIcon={<CopyIcon />}
+                  colorScheme="purple"
+                  variant="solid"
+                  size="md"
+                  onClick={handleCopyLink}
+                >
+                  Copy
+                </Button>
+                <Button
+                  leftIcon={<FaWhatsapp />}
+                  colorScheme="green"
+                  variant="solid"
+                  size="md"
+                  onClick={handleShareWhatsApp}
+                >
+                  Share via WhatsApp
+                </Button>
+              </HStack>
+            </VStack>
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="purple" onClick={onSuccessModalClose}>Close</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       {/* Analytics, Notifications, Messages Drawers */}
       <Drawer isOpen={isAnalyticsOpen} placement="right" onClose={onAnalyticsClose} size="full">
@@ -239,7 +285,7 @@ const SalesExecutive = () => {
         </DrawerContent>
       </Drawer>
 
-      <ToastContainer position="top-center" autoClose={2000} style={{ zIndex: 1000 }} />
+      <ToastContainer position="top-center" autoClose={2000} style={{ zIndex: 1500 }} />
     </Box>
   );
 };

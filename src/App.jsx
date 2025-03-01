@@ -4,16 +4,9 @@ import { ChakraProvider, extendTheme } from '@chakra-ui/react';
 import SalesExecutive from './pages/SalesExecutive';
 import Login from './pages/Login';
 import Admin from './pages/Admin';
-import RTO from './pages/RTO';
-import Manager from './pages/Manager';
-import CustomerForm from './pages/CustomerForm';
-import RTODetails from './pages/RTODetails';
-import Pdf from './pages/PdfEditor';
 import CustomerDetails from './pages/CustomerDetails';
-import AccountCustomerDetails from './pages/AccountCustomerDetails';
-import Stock from './pages/Stock';
-import Chassis from './pages/Chassis';
-import NotFound from './pages/NotFound';
+import Accounts from './pages/Accounts';
+
 
 // Chakra UI Theme
 const chakraTheme = extendTheme({
@@ -61,16 +54,12 @@ const App = () => {
           }
         />
         <Route path="/admin" element={userRole === 'admin' ? <Admin /> : <Navigate to="/login" />} />
-        <Route path="/rto" element={userRole === 'rto' ? <RTO /> : <Navigate to="/login" />} />
-        <Route path="/manager" element={userRole === 'manager' ? <Manager /> : <Navigate to="/login" />} />
-        <Route path="/stock" element={userRole === 'stock_person' ? <Stock /> : <Navigate to="/login" />} />
-        <Route path="/customer-form/:link_token" element={<CustomerForm />} />
-        <Route path="/rto/:customerId" element={<RTODetails />} />
-        <Route path="/pdf" element={<Pdf />} />
         <Route path="/customer-details/:customerId" element={<CustomerDetails />} />
-        <Route path="/account-customer-details/:customerId" element={<AccountCustomerDetails />} />
-        <Route path="/chassis" element={<Chassis />} />
-        <Route path="*" element={<NotFound />} />
+        <Route path='accounts' element={
+          <ChakraProvider theme={chakraTheme}>
+            {userRole === 'accounts'? <Accounts/>:<Navigate to="/login"/>}
+          </ChakraProvider>
+        }/>
       </Routes>
     </Router>
   );
