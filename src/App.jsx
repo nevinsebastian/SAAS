@@ -6,7 +6,7 @@ import Login from './pages/Login';
 import Admin from './pages/Admin';
 import CustomerDetails from './pages/CustomerDetails';
 import Accounts from './pages/Accounts';
-
+import RtoDashboard from './pages/RtoDashboard';
 
 // Chakra UI Theme
 const chakraTheme = extendTheme({
@@ -58,6 +58,11 @@ const App = () => {
         <Route path='accounts' element={
           <ChakraProvider theme={chakraTheme}>
             {userRole === 'accounts'? <Accounts/>:<Navigate to="/login"/>}
+          </ChakraProvider>
+        }/>
+         <Route path='rto' element={
+          <ChakraProvider theme={chakraTheme}>
+            {userRole === 'rto'? <RtoDashboard/>:<Navigate to="/login"/>}
           </ChakraProvider>
         }/>
       </Routes>
