@@ -105,6 +105,7 @@ const MobileFullScreen = styled(Box)(({ theme }) => ({
 
 const GradientButton = styled(Button)(({ theme }) => ({
   background: 'linear-gradient(45deg, #6366f1, #8b5cf6)',
+  color: '#ffffcc', // Change text color
   '&:hover': {
     background: 'linear-gradient(45deg, #4f46e5, #7c3aed)',
     transform: 'translateY(-2px)',
@@ -112,6 +113,7 @@ const GradientButton = styled(Button)(({ theme }) => ({
   transition: 'all 0.3s ease',
   boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)',
 }));
+
 
 export default function Login({ setUserRole }) {
   const [username, setUsername] = useState('');
