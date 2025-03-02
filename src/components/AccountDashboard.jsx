@@ -1,21 +1,35 @@
 import React from 'react';
 import {
   Box,
+  Flex,
   Text,
   VStack,
-  HStack,
   SimpleGrid,
+  IconButton,
   useColorModeValue,
-  
+  Button,
+  Stat,
+  StatLabel,
+  StatNumber,
+  StatHelpText,
+  Divider,
+  Collapse,
+  useDisclosure,
 } from '@chakra-ui/react';
+import {  ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
 import { Pie, Bar, Line } from 'react-chartjs-2';
+import { toast } from 'react-toastify';
 
 const Dashboard = ({ onClose, user, onMenuOpen }) => {
   const bgGradient = useColorModeValue('linear(to-br, gray.50, gray.100)', 'linear(to-br, gray.900, gray.800)');
   const cardBg = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.800', 'gray.100');
   const accentColor = 'blue.500';
-  const highlightBg = useColorModeValue('blue.50', 'blue.900');
+  const successColor = 'green.500';
+  const errorColor = 'red.500';
+  const warningColor = 'orange.500';
+
+  const { isOpen: isInsightsOpen, onToggle: toggleInsights } = useDisclosure({ defaultIsOpen: true });
 
   // Dummy data for the logged-in user
   const metrics = {
@@ -24,7 +38,9 @@ const Dashboard = ({ onClose, user, onMenuOpen }) => {
     declinedOnce: 5,
     onTime: 18,
     hasError: 2,
-    timeSpent: { totalMinutes: 300, avgPerCustomer: 12 }, // Total 5 hours, avg 12 min/customer
+    pendingTasks: 3,
+    timeSpent: { totalMinutes: 300, avgPerCustomer: 12, todayMinutes: 45 },
+    overdueTasks: 1,
   };
 
   // Processed data for insights
@@ -37,7 +53,9 @@ const Dashboard = ({ onClose, user, onMenuOpen }) => {
     labels: ['Verified', 'Declined', 'Errors'],
     datasets: [{
       data: [metrics.verifiedOnce, metrics.declinedOnce, metrics.hasError],
-      backgroundColor: ['#28A745', '#DC3545', '#FF9800'],
+      backgroundColor: [successColor, errorColor, warningColor],
+      borderWidth: 1,
+      borderColor: cardBg,
     }],
   };
 
@@ -45,98 +63,127 @@ const Dashboard = ({ onClose, user, onMenuOpen }) => {
     labels: ['Last Week', 'This Week'],
     datasets: [{
       label: 'Reviews Done',
-      data: [15, metrics.totalReviewsDone], // Example progression
+      data: [15, metrics.totalReviewsDone],
       backgroundColor: accentColor,
+      borderRadius: 4,
     }],
   };
 
   const lineData = {
-    labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5'],
+    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
     datasets: [{
       label: 'Time Spent (min)',
       data: [10, 15, 12, 14, metrics.timeSpent.avgPerCustomer],
       borderColor: accentColor,
-      fill: false,
+      backgroundColor: `${accentColor}33`, // 20% opacity fill
+      fill: true,
+      tension: 0.4,
     }],
   };
 
   return (
     <Box minH="100vh" bg={bgGradient} position="relative">
-      {/* Header */}
    
 
       {/* Main Content */}
-      <Box maxW="1400px" mx="auto" mt={4} px={{ base: 2, md: 4 }} pb={{ base: 16, md: 8 }}>
-        <VStack spacing={6} align="stretch">
-          {/* Key Metrics */}
-          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-            <Box bg={cardBg} borderRadius="lg" p={4} boxShadow="md">
-              <Text fontWeight="bold" color={textColor}>Total Reviews Done</Text>
-              <Text fontSize="2xl" color={accentColor}>{metrics.totalReviewsDone}</Text>
-            </Box>
-            <Box bg={cardBg} borderRadius="lg" p={4} boxShadow="md">
-              <Text fontWeight="bold" color={textColor}>Verified Once</Text>
-              <Text fontSize="2xl" color="green.500">{metrics.verifiedOnce}</Text>
-            </Box>
-            <Box bg={cardBg} borderRadius="lg" p={4} boxShadow="md">
-              <Text fontWeight="bold" color={textColor}>Declined Once</Text>
-              <Text fontSize="2xl" color="red.500">{metrics.declinedOnce}</Text>
-            </Box>
-            <Box bg={cardBg} borderRadius="lg" p={4} boxShadow="md">
-              <Text fontWeight="bold" color={textColor}>On Time</Text>
-              <Text fontSize="2xl" color="blue.500">{metrics.onTime}</Text>
-            </Box>
-            <Box bg={cardBg} borderRadius="lg" p={4} boxShadow="md">
-              <Text fontWeight="bold" color={textColor}>Has Error</Text>
-              <Text fontSize="2xl" color="orange.500">{metrics.hasError}</Text>
-            </Box>
-          </SimpleGrid>
-
-          {/* Time Spent */}
-          <Box bg={cardBg} borderRadius="lg" p={4} boxShadow="md">
-            <Text fontWeight="bold" mb={2} color={textColor}>Your Time Stats</Text>
-            <HStack spacing={4}>
-              <Text>Total: <strong>{Math.floor(metrics.timeSpent.totalMinutes / 60)}h {metrics.timeSpent.totalMinutes % 60}m</strong></Text>
-              <Text>Avg per Customer: <strong>{metrics.timeSpent.avgPerCustomer} min</strong></Text>
-            </HStack>
+      <Box maxW="1400px" mx="auto" mt={6} px={{ base: 4, md: 6 }} pb={{ base: 16, md: 8 }}>
+        <VStack spacing={8} align="stretch">
+          {/* Welcome & Overview */}
+          <Box>
+            <Text fontSize="lg" fontWeight="semibold" color={textColor}>Welcome, {user.username}!</Text>
+            <Text fontSize="sm" color="gray.500">Here’s your performance overview for today, {new Date().toLocaleDateString()}.</Text>
           </Box>
 
-          {/* Insights & Predictions */}
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-            <Box bg={highlightBg} borderRadius="lg" p={4}>
-              <Text fontWeight="bold" mb={2} color={textColor}>Insights</Text>
-              <VStack align="start" spacing={2}>
-                <Text fontSize="sm">Verification Rate: <strong>{verificationRate.toFixed(1)}%</strong> - {verificationRate > 80 ? 'Excellent consistency!' : 'Room to improve verification speed.'}</Text>
-                <Text fontSize="sm">Error Rate: <strong>{errorRate.toFixed(1)}%</strong> - {errorRate < 10 ? 'Great accuracy!' : 'Focus on reducing errors.'}</Text>
-                <Text fontSize="sm">On-Time Rate: <strong>{onTimeRate.toFixed(1)}%</strong> - {onTimeRate > 75 ? 'Strong punctuality!' : 'Prioritize timely reviews.'}</Text>
-              </VStack>
-            </Box>
-            <Box bg={highlightBg} borderRadius="lg" p={4}>
-              <Text fontWeight="bold" mb={2} color={textColor}>Predictions</Text>
-              <VStack align="start" spacing={2}>
-       
-                <Text fontSize="sm">Expected Time: <strong>{Math.round(metrics.timeSpent.avgPerCustomer * (metrics.totalReviewsDone + 5) / 60)}h</strong> - Plan for upcoming workload.</Text>
-              </VStack>
-            </Box>
+          {/* Key Metrics */}
+          <SimpleGrid columns={{ base: 1, md: 3, lg: 5 }} spacing={6}>
+            <Stat bg={cardBg} borderRadius="xl" p={4} boxShadow="md" _hover={{ transform: 'translateY(-2px)', transition: 'all 0.2s' }}>
+              <StatLabel color={textColor}>Total Reviews Done</StatLabel>
+              <StatNumber color={accentColor}>{metrics.totalReviewsDone}</StatNumber>
+              <StatHelpText color="gray.500">All-time</StatHelpText>
+            </Stat>
+            <Stat bg={cardBg} borderRadius="xl" p={4} boxShadow="md" _hover={{ transform: 'translateY(-2px)', transition: 'all 0.2s' }}>
+              <StatLabel color={textColor}>Verified</StatLabel>
+              <StatNumber color={successColor}>{metrics.verifiedOnce}</StatNumber>
+              <StatHelpText color="gray.500">{verificationRate.toFixed(1)}% Rate</StatHelpText>
+            </Stat>
+            <Stat bg={cardBg} borderRadius="xl" p={4} boxShadow="md" _hover={{ transform: 'translateY(-2px)', transition: 'all 0.2s' }}>
+              <StatLabel color={textColor}>Declined</StatLabel>
+              <StatNumber color={errorColor}>{metrics.declinedOnce}</StatNumber>
+              <StatHelpText color="gray.500">{(100 - verificationRate).toFixed(1)}% Rate</StatHelpText>
+            </Stat>
+            <Stat bg={cardBg} borderRadius="xl" p={4} boxShadow="md" _hover={{ transform: 'translateY(-2px)', transition: 'all 0.2s' }}>
+              <StatLabel color={textColor}>Pending Tasks</StatLabel>
+              <StatNumber color={warningColor}>{metrics.pendingTasks}</StatNumber>
+              <StatHelpText color="gray.500">Awaiting Action</StatHelpText>
+            </Stat>
+            <Stat bg={cardBg} borderRadius="xl" p={4} boxShadow="md" _hover={{ transform: 'translateY(-2px)', transition: 'all 0.2s' }}>
+              <StatLabel color={textColor}>Errors</StatLabel>
+              <StatNumber color={errorColor}>{metrics.hasError}</StatNumber>
+              <StatHelpText color="gray.500">{errorRate.toFixed(1)}% Rate</StatHelpText>
+            </Stat>
           </SimpleGrid>
 
-          {/* Charts */}
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-            <Box bg={cardBg} borderRadius="lg" p={4} boxShadow="md">
-              <Text fontWeight="bold" mb={2} color={textColor}>Review Breakdown</Text>
-              <Pie data={pieData} options={{ responsive: true }} />
-            </Box>
-            <Box bg={cardBg} borderRadius="lg" p={4} boxShadow="md">
-              <Text fontWeight="bold" mb={2} color={textColor}>Weekly Progress</Text>
-              <Bar data={barData} options={{ responsive: true }} />
-            </Box>
-            <Box bg={cardBg} borderRadius="lg" p={4} boxShadow="md" gridColumn={{ base: 'span 1', md: 'span 2' }}>
-              <Text fontWeight="bold" mb={2} color={textColor}>Time Spent Trend</Text>
-              <Line data={lineData} options={{ responsive: true }} />
-            </Box>
-          </SimpleGrid>
-
+          {/* Productivity & Time Stats */}
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={0}>
          
+              <Divider my={4} />
+         
+            <Box bg={cardBg} borderRadius="xl" p={6} boxShadow="md">
+              <Text fontWeight="bold" mb={4} color={textColor}>Quick Actions</Text>
+              <VStack spacing={3} align="stretch">
+                <Button colorScheme="blue" variant="outline" size="sm" onClick={onClose}>Review Pending Tasks</Button>
+                <Button colorScheme="orange" variant="outline" size="sm" onClick={() => toast.info('Feature coming soon!')}>View Error Reports</Button>
+              </VStack>
+            </Box>
+          </SimpleGrid>
+
+          {/* Insights & Trends */}
+          <Box bg={cardBg} borderRadius="xl" p={6} boxShadow="md">
+            <Flex justify="space-between" align="center" mb={4}>
+              <Text fontWeight="bold" color={textColor}>Insights & Trends</Text>
+              <IconButton
+                icon={isInsightsOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
+                variant="ghost"
+                onClick={toggleInsights}
+                aria-label="Toggle Insights"
+              />
+            </Flex>
+            <Collapse in={isInsightsOpen}>
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+                <Box>
+                  <Text fontSize="sm" fontWeight="semibold" mb={2} color={textColor}>Performance Insights</Text>
+                  <VStack align="start" spacing={2}>
+                    <Text fontSize="sm" color={verificationRate > 80 ? successColor : warningColor}>
+                      Verification Rate: <strong>{verificationRate.toFixed(1)}%</strong> - {verificationRate > 80 ? 'Top-tier efficiency!' : 'Boost verification speed.'}
+                    </Text>
+                    <Text fontSize="sm" color={errorRate < 10 ? successColor : warningColor}>
+                      Error Rate: <strong>{errorRate.toFixed(1)}%</strong> - {errorRate < 10 ? 'High accuracy!' : 'Review error-prone cases.'}
+                    </Text>
+                    <Text fontSize="sm" color={onTimeRate > 75 ? successColor : warningColor}>
+                      On-Time Rate: <strong>{(metrics.onTime / metrics.totalReviewsDone * 100).toFixed(1)}%</strong> - {onTimeRate > 75 ? 'Great punctuality!' : 'Prioritize deadlines.'}
+                    </Text>
+                  </VStack>
+                </Box>
+              
+              </SimpleGrid>
+            </Collapse>
+          </Box>
+
+          {/* Visualizations */}
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+            <Box bg={cardBg} borderRadius="xl" p={6} boxShadow="md">
+              <Text fontWeight="bold" mb={4} color={textColor}>Review Status</Text>
+              <Pie data={pieData} options={{ responsive: true, plugins: { legend: { position: 'bottom' } } }} />
+            </Box>
+            <Box bg={cardBg} borderRadius="xl" p={6} boxShadow="md">
+              <Text fontWeight="bold" mb={4} color={textColor}>Weekly Progress</Text>
+              <Bar data={barData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
+            </Box>
+            <Box bg={cardBg} borderRadius="xl" p={6} boxShadow="md" gridColumn={{ base: 'span 1', md: 'span 2' }}>
+              <Text fontWeight="bold" mb={4} color={textColor}>Time Efficiency Trend</Text>
+              <Line data={lineData} options={{ responsive: true, plugins: { legend: { position: 'top' } } }} />
+            </Box>
+          </SimpleGrid>
         </VStack>
       </Box>
     </Box>
