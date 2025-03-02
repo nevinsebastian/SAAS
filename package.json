@@ -35,6 +35,7 @@
     "file-saver": "^2.0.5",
     "flow-bin": "^0.245.1",
     "framer-motion": "^12.4.7",
+    "jspdf": "^3.0.0",
     "jszip": "^3.10.1",
     "jwt-decode": "^4.0.0",
     "process": "^0.11.10",

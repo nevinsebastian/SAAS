@@ -42,6 +42,7 @@ import {
 import { HamburgerIcon, BellIcon, ArrowBackIcon, DownloadIcon } from '@chakra-ui/icons';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import jsPDF from 'jspdf'; // Add jsPDF for PDF generation
 
 const RtoDashboard = () => {
   const { isOpen: isMenuOpen, onOpen: onMenuOpen, onClose: onMenuClose } = useDisclosure();
@@ -55,9 +56,9 @@ const RtoDashboard = () => {
   const textColor = useColorModeValue('gray.800', 'white');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const inputBg = useColorModeValue('gray.100', 'gray.700');
-  const headerGradient = useColorModeValue('linear(to-r, teal.500, teal.700)', 'linear(to-r, teal.700, teal.900)');
-  const accentColor = 'teal.500';
-  const hoverBg = useColorModeValue('teal.50', 'teal.900');
+  const headerGradient = useColorModeValue('linear(to-r, blue.500, blue.700)', 'linear(to-r, blue.700, blue.900)'); // Reverted to blue
+  const accentColor = 'blue.500';
+  const hoverBg = useColorModeValue('blue.50', 'blue.900');
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -213,12 +214,79 @@ const RtoDashboard = () => {
       { url: customerData.invoicePdf, name: 'invoice.pdf' },
     ];
 
+    // Download individual files
     files.forEach(file => {
       const link = document.createElement('a');
       link.href = file.url;
       link.download = `${folderName}_${file.name}`;
       link.click();
     });
+
+    // Generate and download full data PDF
+    const doc = new jsPDF();
+    let yOffset = 10;
+
+    // Title
+    doc.setFontSize(16);
+    doc.text('Customer Data Report', 10, yOffset);
+    yOffset += 10;
+
+    // Personal Information
+    doc.setFontSize(12);
+    doc.text('Personal Information', 10, yOffset);
+    yOffset += 7;
+    doc.setFontSize(10);
+    doc.text(`Full Name: ${customerData.fullName}`, 10, yOffset); yOffset += 5;
+    doc.text(`Address: ${customerData.address}`, 10, yOffset); yOffset += 5;
+    doc.text(`Father's Name: ${customerData.fathersName}`, 10, yOffset); yOffset += 5;
+    doc.text(`PAN Number: ${customerData.panNumber}`, 10, yOffset); yOffset += 5;
+    doc.text(`Aadhar Number: ${customerData.aadharNumber}`, 10, yOffset); yOffset += 5;
+    doc.text(`Ward: ${customerData.ward}`, 10, yOffset); yOffset += 5;
+    doc.text(`RTO Office: ${customerData.rtoOffice}`, 10, yOffset); yOffset += 10;
+
+    // Nominee Details
+    doc.setFontSize(12);
+    doc.text('Nominee Details', 10, yOffset);
+    yOffset += 7;
+    doc.setFontSize(10);
+    doc.text(`Nominee Name: ${customerData.nomineeName}`, 10, yOffset); yOffset += 5;
+    doc.text(`Nominee Age: ${customerData.nomineeAge}`, 10, yOffset); yOffset += 5;
+    doc.text(`Relation: ${customerData.nomineeRelation}`, 10, yOffset); yOffset += 10;
+
+    // Vehicle Details
+    doc.setFontSize(12);
+    doc.text('Vehicle Details', 10, yOffset);
+    yOffset += 7;
+    doc.setFontSize(10);
+    doc.text(`Vehicle: ${customerData.vehicle}`, 10, yOffset); yOffset += 5;
+    doc.text(`Variant: ${customerData.variant}`, 10, yOffset); yOffset += 5;
+    doc.text(`Color: ${customerData.color}`, 10, yOffset); yOffset += 10;
+
+    // Pricing
+    doc.setFontSize(12);
+    doc.text('Pricing', 10, yOffset);
+    yOffset += 7;
+    doc.setFontSize(10);
+    doc.text(`Ex-Showroom: ${customerData.exShowroom}`, 10, yOffset); yOffset += 5;
+    doc.text(`Tax: ${customerData.tax}`, 10, yOffset); yOffset += 5;
+    doc.text(`On-Road: ${customerData.onRoad}`, 10, yOffset); yOffset += 5;
+    doc.text(`Insurance: ${customerData.insurance}`, 10, yOffset); yOffset += 5;
+    doc.text(`Booking Charge: ${customerData.bookingCharge}`, 10, yOffset); yOffset += 5;
+    doc.text(`Delivery Charge: ${customerData.deliveryCharge}`, 10, yOffset); yOffset += 10;
+
+    // Placeholder for images (actual image embedding requires fetching and converting to base64)
+    doc.setFontSize(12);
+    doc.text('Images (See Downloaded Files)', 10, yOffset);
+    yOffset += 7;
+    doc.setFontSize(10);
+    doc.text('Passport Photo: Included as separate file', 10, yOffset); yOffset += 5;
+    doc.text('Aadhar Front: Included as separate file', 10, yOffset); yOffset += 5;
+    doc.text('Aadhar Back: Included as separate file', 10, yOffset); yOffset += 5;
+    doc.text('Signature: Included as separate file', 10, yOffset); yOffset += 5;
+    doc.text('Invoice: Included as separate file', 10, yOffset);
+
+    // Save PDF
+    doc.save(`${folderName}_full_data.pdf`);
     toast.success(`Downloaded user data as "${folderName}" folder!`, { position: 'top-center' });
   };
 
@@ -327,11 +395,11 @@ const RtoDashboard = () => {
               </HStack>
               <Button
                 leftIcon={<DownloadIcon />}
-                colorScheme="teal"
+                colorScheme="blue"
                 variant="solid"
                 size="sm"
                 onClick={handleDownloadUserData}
-                _hover={{ bg: 'teal.600' }}
+                _hover={{ bg: 'blue.600' }}
               >
                 Download User Data
               </Button>
@@ -532,9 +600,9 @@ const RtoDashboard = () => {
                       _focus={{ borderColor: accentColor, boxShadow: `0 0 0 1px ${accentColor}` }}
                     />
                     <Button
-                      colorScheme="teal"
+                      colorScheme="blue"
                       onClick={handleChassisSearch}
-                      _hover={{ bg: 'teal.600' }}
+                      _hover={{ bg: 'blue.600' }}
                     >
                       Search
                     </Button>
@@ -552,7 +620,7 @@ const RtoDashboard = () => {
                       />
                       <Button
                         leftIcon={<DownloadIcon />}
-                        colorScheme="teal"
+                        colorScheme="blue"
                         variant="outline"
                         size="sm"
                         onClick={handleDownloadChassis}
@@ -581,18 +649,18 @@ const RtoDashboard = () => {
                 )}
                 {(selectedCustomer.status === 'Uploaded' || selectedCustomer.status === 'Pending') && (
                   <Button
-                    colorScheme="teal"
+                    colorScheme="blue"
                     size="lg"
                     w="full"
                     maxW="200px"
                     onClick={onRtoVerifiedOpen}
-                    _hover={{ bg: 'teal.600' }}
+                    _hover={{ bg: 'blue.600' }}
                   >
                     RTO Verified
                   </Button>
                 )}
                 {selectedCustomer.status === 'Done' && (
-                  <Badge colorScheme="teal" p={3} borderRadius="md" fontSize="md">Completed</Badge>
+                  <Badge colorScheme="blue" p={3} borderRadius="md" fontSize="md">Uploaded to RTO</Badge>
                 )}
               </HStack>
             </Flex>
@@ -600,7 +668,7 @@ const RtoDashboard = () => {
         ) : (
           // Customer List (Default View)
           <Box>
-            <Tabs variant="solid-rounded" colorScheme="teal" index={tabIndex} onChange={setTabIndex}>
+            <Tabs variant="solid-rounded" colorScheme="blue" index={tabIndex} onChange={setTabIndex}>
               <TabList mb={6} bg={cardBg} p={2} borderRadius="xl" boxShadow="md">
                 <Tab _selected={{ bg: accentColor, color: 'white' }}>Done</Tab>
                 <Tab _selected={{ bg: accentColor, color: 'white' }}>Pending</Tab>
@@ -655,7 +723,7 @@ const RtoDashboard = () => {
                     </VStack>
                     <VStack align="end" spacing={1}>
                       <Badge
-                        colorScheme={customer.status === 'Pending' ? 'orange' : customer.status === 'Uploaded' ? 'teal' : 'green'}
+                        colorScheme={customer.status === 'Pending' ? 'orange' : customer.status === 'Uploaded' ? 'blue' : 'green'}
                         fontSize="sm"
                         px={2}
                         py={1}
@@ -683,7 +751,7 @@ const RtoDashboard = () => {
             <VStack align="stretch" spacing={4}>
               <Button
                 variant="ghost"
-                colorScheme="teal"
+                colorScheme="blue"
                 isActive
                 justifyContent="start"
                 _hover={{ bg: hoverBg }}
@@ -717,9 +785,9 @@ const RtoDashboard = () => {
           </ModalBody>
           <ModalFooter>
             <Button
-              colorScheme="teal"
+              colorScheme="blue"
               onClick={handleRtoVerified}
-              _hover={{ bg: 'teal.600' }}
+              _hover={{ bg: 'blue.600' }}
             >
               Mark Verified
             </Button>
