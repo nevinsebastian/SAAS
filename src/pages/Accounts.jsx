@@ -45,7 +45,7 @@ import { HamburgerIcon, BellIcon, EditIcon, ArrowBackIcon, DeleteIcon, WarningTw
 import { Chart as ChartJS, ArcElement, BarElement, LineElement, CategoryScale, LinearScale, PointElement, Title, Tooltip, Legend } from 'chart.js';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
+import Dashboard from '../components/AccountDashboard';
 ChartJS.register(ArcElement, BarElement, LineElement, CategoryScale, LinearScale, PointElement, Title, Tooltip, Legend);
 
 const Accounts = () => {
@@ -66,15 +66,18 @@ const Accounts = () => {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [tabIndex, setTabIndex] = useState(0); // Done, Pending, Errors tabs
   const [isEditing, setIsEditing] = useState(false);
+  const [selectedScreen, setSelectedScreen] = useState('Accounts'); // Track selected screen
   const [customerData, setCustomerData] = useState({
     name: '', vehicle: '', variant: '', color: '', exShowroom: '', tax: '', onRoad: '', insurance: '',
     bookingCharge: '', deliveryCharge: '', hasFinance: false, financeProvider: '', financeAmount: '', emi: '', tenure: '',
   });
   const [reportMessage, setReportMessage] = useState('');
   const [customReport, setCustomReport] = useState('');
-
   const [deleteMessage, setDeleteMessage] = useState('');
   const [customDelete, setCustomDelete] = useState('');
+
+  const user = JSON.parse(localStorage.getItem('user')) || { username: 'account_user' };
+
   // Dummy customer data
   const customers = [
     { id: 'B001', name: 'John Doe', status: 'Pending', vehicle: 'Toyota Corolla', date: '2025-03-01', errors: 0 },
@@ -94,6 +97,12 @@ const Accounts = () => {
   ];
 
   const unseenNotifications = notifications.filter(n => !n.seen);
+
+  const handleScreenSelect = (screen) => {
+    setSelectedScreen(screen);
+    if (screen !== 'Accounts') setSelectedCustomer(null); // Reset customer selection when switching screens
+    onMenuClose();
+  };
 
   const handleCustomerSelect = (customer) => {
     setSelectedCustomer(customer);
@@ -142,8 +151,9 @@ const Accounts = () => {
       setDeleteMessage('');
       setCustomDelete('');
       onDeletClose();
+      setSelectedCustomer(null);
     } else {
-      toast.error('Please select or enter a Reason!', { position: 'top-center' });
+      toast.error('Please select or enter a reason!', { position: 'top-center' });
     }
   };
 
@@ -175,17 +185,17 @@ const Accounts = () => {
       >
         <HStack spacing={3}>
           <IconButton icon={<HamburgerIcon />} variant="ghost" onClick={onMenuOpen} aria-label="Open menu" />
-          <Heading size="md" color={accentColor}>Accounts</Heading>
+          <Heading size="md" color={accentColor}>{selectedScreen}</Heading>
         </HStack>
         <HStack spacing={4}>
-      
+     
           <Menu>
             <MenuButton as={IconButton} icon={<BellIcon />} variant="ghost" aria-label="Notifications" position="relative">
               {unseenNotifications.length > 0 && (
                 <Badge colorScheme="red" borderRadius="full" position="absolute" top="-1" right="-1">{unseenNotifications.length}</Badge>
               )}
             </MenuButton>
-            <MenuList maxH="300px" overflowY="auto" w="20px">
+            <MenuList maxH="300px" overflowY="auto">
               {unseenNotifications.length > 0 ? (
                 unseenNotifications.map(n => (
                   <MenuItem key={n.id}>
@@ -208,13 +218,15 @@ const Accounts = () => {
               <MenuItem onClick={toggleColorMode}>{colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}</MenuItem>
               <MenuItem onClick={() => navigate('/login')}>Sign Out</MenuItem>
             </MenuList>
-            </Menu>
-          </HStack>
-        </Flex>
+          </Menu>
+        </HStack>
+      </Flex>
 
       {/* Main Layout */}
       <Box maxW="1400px" mx="auto" mt={4} px={{ base: 2, md: 4 }} pb={{ base: 16, md: 8 }}>
-        {selectedCustomer ? (
+        {selectedScreen === 'Dashboard' ? (
+          <Dashboard onClose={() => setSelectedScreen('Accounts')} user={user} onMenuOpen={onMenuOpen} />
+        ) : selectedCustomer ? (
           // Full-Screen Customer Details (Mobile)
           <Flex direction="column" h={{ base: 'calc(100vh - 70px)', md: 'auto' }} position={{ base: 'fixed', md: 'static' }} top={{ base: '70px', md: 'auto' }} left={0} right={0} bottom={0} bg={cardBg} zIndex={9}>
             {/* Fixed Header with Back Button */}
@@ -246,7 +258,7 @@ const Accounts = () => {
             </Flex>
 
             {/* Scrollable Details */}
-            <Flex direction="column" flex="1" overflowY="auto" p={4} pb={200}> {/* Added padding-bottom */}
+            <Flex direction="column" flex="1" overflowY="auto" p={4} pb={200}>
               <VStack spacing={4} align="stretch">
                 <Box>
                   <Text fontWeight="bold" mb={2}>Vehicle Details</Text>
@@ -406,21 +418,20 @@ const Accounts = () => {
         zIndex={10}
       >
         <Text fontSize="sm" color="gray.500">Customers Verified Today: 5</Text>
-        
       </Flex>
 
-      {/* Mobile Navigation Drawer */}
+      {/* Sidebar Drawer */}
       <Drawer isOpen={isMenuOpen} placement="left" onClose={onMenuClose}>
         <DrawerOverlay />
-        <DrawerContent>
+        <DrawerContent w={{ base: 'full', md: '200px' }}>
           <DrawerCloseButton />
           <DrawerHeader>Menu</DrawerHeader>
           <DrawerBody>
             <VStack align="stretch" spacing={4}>
-              <Button variant="ghost" colorScheme="blue" isActive>Accounts</Button>
-              <Button variant="ghost" onClick={() => navigate('/dashboard')}>Dashboard</Button>
-              <Button variant="ghost" onClick={() => navigate('/customers')}>Customers</Button>
-              <Button variant="ghost" onClick={() => navigate('/reports')}>Reports</Button>
+              <Button variant="ghost" colorScheme="blue" isActive={selectedScreen === 'Accounts'} onClick={() => handleScreenSelect('Accounts')}>Accounts</Button>
+              <Button variant="ghost" colorScheme="blue" isActive={selectedScreen === 'Dashboard'} onClick={() => handleScreenSelect('Dashboard')}>Dashboard</Button>
+              <Button variant="ghost" colorScheme="blue" isActive={selectedScreen === 'Customers'} onClick={() => handleScreenSelect('Customers')}>Customers</Button>
+              <Button variant="ghost" colorScheme="blue" isActive={selectedScreen === 'Reports'} onClick={() => handleScreenSelect('Reports')}>Reports</Button>
             </VStack>
           </DrawerBody>
         </DrawerContent>
@@ -430,18 +441,16 @@ const Accounts = () => {
       <Modal isOpen={isVerifyOpen} onClose={onVerifyClose}>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Verify </ModalHeader>
+          <ModalHeader>Verify</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <VStack spacing={4}>
-             <Text>
-              Are you sure u wanna verify the customer
-             </Text>
+              <Text>Are you sure you want to verify the customer?</Text>
             </VStack>
           </ModalBody>
           <ModalFooter>
-          <Button colorScheme="red"  mr={4} onClick={handleCancelVerify}>No</Button>
-            <Button colorScheme="blue"  onClick={handleVerify}>Yes</Button>
+            <Button colorScheme="red" mr={4} onClick={handleCancelVerify}>No</Button>
+            <Button colorScheme="blue" onClick={handleVerify}>Yes</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -479,46 +488,37 @@ const Accounts = () => {
         </ModalContent>
       </Modal>
 
-            {/* delet Customer Modal */}
-            <Modal isOpen={isDeletOpen} onClose={onDeletClose}>
+      {/* Delete Customer Modal */}
+      <Modal isOpen={isDeletOpen} onClose={onDeletClose}>
         <ModalOverlay />
         <ModalContent>
           <ModalHeader color={textColor}>Delete Customer</ModalHeader>
           <ModalCloseButton />
-          <ModalBody>            <VStack spacing={4} align="stretch">
-
-            <Text>Why deleting customer?</Text>
+          <ModalBody>
+            <VStack spacing={4} align="stretch">
+              <Text>Why deleting customer?</Text>
               <RadioGroup value={deleteMessage} onChange={setDeleteMessage}>
                 <VStack align="start" spacing={2}>
                   <Radio value="Payment Not Received">Payment Not Received</Radio>
                   <Radio value="Canceled Booking">Canceled Booking</Radio>
-                  <Radio value="Customer dosnt ecist">Customer dosnt exist</Radio>
+                  <Radio value="Customer doesn’t exist">Customer doesn’t exist</Radio>
                 </VStack>
               </RadioGroup>
               <Input
                 placeholder="Or type a custom message..."
                 value={customDelete}
-                onChange={e => setCustomReport(e.target.value)}
+                onChange={e => setCustomDelete(e.target.value)}
                 bg={useColorModeValue('gray.100', 'gray.700')}
                 borderColor={useColorModeValue('gray.200', 'gray.600')}
                 _focus={{ borderColor: accentColor }}
               />
             </VStack>
-            
-
           </ModalBody>
           <ModalFooter>
-  <Text fontSize="sm" color="gray.500">
-    Once deleted, only admin can restore the customer
-  </Text>
-  <Button colorScheme="red" onClick={handleDelete} ml={4}>
-    Delete
-  </Button>
-  <Button variant="ghost" ml={2} onClick={onDeletClose}>
-    Cancel
-  </Button>
-</ModalFooter>
-
+            <Text fontSize="sm" color="gray.500">Once deleted, only admin can restore the customer</Text>
+            <Button colorScheme="red" onClick={handleDelete} ml={4}>Delete</Button>
+            <Button variant="ghost" ml={2} onClick={onDeletClose}>Cancel</Button>
+          </ModalFooter>
         </ModalContent>
       </Modal>
 
