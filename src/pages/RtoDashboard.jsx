@@ -83,7 +83,7 @@ const RtoDashboard = () => {
       fullName: 'John Michael Doe', address: '123 Main St, Springfield', fathersName: 'Robert Doe',
       panNumber: 'ABCDE1234F', aadharNumber: '1234-5678-9012', photo: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgLXG6-abcFOb8OfkXL12NRC0r_poydMnr9-Vte6KrDY1FzDPfx0I_Nf5zhVOBNZ9MqsGz-v_4SiiMpKLCBsWxaI5yZL0KbrXfNMvqarDHGZQQoVlz40RQ52DpjHPOQwHo2RVRQdTZuPfI/s1600/Sachin.jpg',
       aadharFront: 'https://akm-img-a-in.tosshub.com/businesstoday/images/story/202205/screenshot_2022-05-29_at_10-sixteen_nine.png?size=1200:675',
-      aadharBack: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRL8JFf8Xm0tpcQih9Ys0GHfinVjnbc8g2n7w&s',
+      aadharBack: 'https://akm-img-a-in.tosshub.com/businesstoday/images/story/202205/screenshot_2022-05-29_at_10-sixteen_nine.png?size=1200:675',
       signature: 'https://www.morebusiness.com/wp-content/uploads/2020/09/handwritten-email-signature.jpg',
       nomineeName: 'Mary Doe', nomineeAge: '35', nomineeRelation: 'Wife',
       ward: 'Ward 5', rtoOffice: 'Springfield RTO', invoicePdf: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
@@ -95,7 +95,7 @@ const RtoDashboard = () => {
       fullName: 'Jane Elizabeth Smith', address: '456 Oak Ave, Rivertown', fathersName: 'James Smith',
       panNumber: 'FGHIJ5678K', aadharNumber: '9876-5432-1098', photo: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgLXG6-abcFOb8OfkXL12NRC0r_poydMnr9-Vte6KrDY1FzDPfx0I_Nf5zhVOBNZ9MqsGz-v_4SiiMpKLCBsWxaI5yZL0KbrXfNMvqarDHGZQQoVlz40RQ52DpjHPOQwHo2RVRQdTZuPfI/s1600/Sachin.jpg',
       aadharFront: 'https://akm-img-a-in.tosshub.com/businesstoday/images/story/202205/screenshot_2022-05-29_at_10-sixteen_nine.png?size=1200:675',
-      aadharBack: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRL8JFf8Xm0tpcQih9Ys0GHfinVjnbc8g2n7w&s',
+      aadharBack: 'https://akm-img-a-in.tosshub.com/businesstoday/images/story/202205/screenshot_2022-05-29_at_10-sixteen_nine.png?size=1200:675',
       signature: 'https://www.morebusiness.com/wp-content/uploads/2020/09/handwritten-email-signature.jpg',
       nomineeName: 'Tom Smith', nomineeAge: '40', nomineeRelation: 'Brother',
       ward: 'Ward 3', rtoOffice: 'Rivertown RTO', invoicePdf: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
@@ -107,7 +107,7 @@ const RtoDashboard = () => {
       fullName: 'Michael David Johnson', address: '789 Pine Rd, Hillcity', fathersName: 'David Johnson',
       panNumber: 'KLMNO9012P', aadharNumber: '4567-8901-2345', photo: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgLXG6-abcFOb8OfkXL12NRC0r_poydMnr9-Vte6KrDY1FzDPfx0I_Nf5zhVOBNZ9MqsGz-v_4SiiMpKLCBsWxaI5yZL0KbrXfNMvqarDHGZQQoVlz40RQ52DpjHPOQwHo2RVRQdTZuPfI/s1600/Sachin.jpg',
       aadharFront: 'https://akm-img-a-in.tosshub.com/businesstoday/images/story/202205/screenshot_2022-05-29_at_10-sixteen_nine.png?size=1200:675',
-      aadharBack: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRL8JFf8Xm0tpcQih9Ys0GHfinVjnbc8g2n7w&s',
+      aadharBack: 'https://akm-img-a-in.tosshub.com/businesstoday/images/story/202205/screenshot_2022-05-29_at_10-sixteen_nine.png?size=1200:675',
       signature: 'https://www.morebusiness.com/wp-content/uploads/2020/09/handwritten-email-signature.jpg',
       nomineeName: 'Lisa Johnson', nomineeAge: '28', nomineeRelation: 'Daughter',
       ward: 'Ward 7', rtoOffice: 'Hillcity RTO', invoicePdf: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
@@ -406,7 +406,7 @@ const RtoDashboard = () => {
             </Flex>
 
             {/* Scrollable Details */}
-            <Flex direction="column" flex="1" overflowY="auto" p={6} pb={20}>
+            <Flex direction="column" flex="1" overflowY="auto" p={6} pb={200}>
               <VStack spacing={8} align="stretch">
                 {/* Personal Information */}
                 <Box bg={cardBg} borderRadius="2xl" p={6} boxShadow="lg" _hover={{ boxShadow: 'xl' }} transition="all 0.2s">
@@ -522,17 +522,13 @@ const RtoDashboard = () => {
                 </Box>
 
                 {/* Invoice */}
-                <Box bg={cardBg} borderRadius="2xl" p={6} boxShadow="lg" _hover={{ boxShadow: 'xl' }} transition="all 0.2s">
+             {/* Invoice */}
+             <Box bg={cardBg} borderRadius="2xl" p={6} boxShadow="lg" _hover={{ boxShadow: 'xl' }} transition="all 0.2s">
                   <Text fontWeight="bold" fontSize="lg" mb={4} color={textColor}>Invoice</Text>
-                  <Image
+                  <iframe
                     src={customerData.invoicePdf}
-                    alt="Invoice PDF"
-                    objectFit="contain"
-                    borderRadius="md"
-                    cursor="pointer"
-                    onClick={() => handleImageClick(customerData.invoicePdf)}
-                    fallbackSrc="https://via.placeholder.com/300x400?text=No+Invoice"
-                    _hover={{ opacity: 0.8 }}
+                    title="Invoice PDF"
+                    style={{ width: '100%', height: '400px', border: 'none', borderRadius: '8px' }}
                   />
                 </Box>
 
