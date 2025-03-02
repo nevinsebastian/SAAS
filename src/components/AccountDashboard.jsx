@@ -1,17 +1,13 @@
 import React from 'react';
 import {
   Box,
-  Flex,
-  Heading,
   Text,
   VStack,
   HStack,
   SimpleGrid,
-  IconButton,
   useColorModeValue,
   
 } from '@chakra-ui/react';
-import { HamburgerIcon, ArrowBackIcon } from '@chakra-ui/icons';
 import { Pie, Bar, Line } from 'react-chartjs-2';
 
 const Dashboard = ({ onClose, user, onMenuOpen }) => {
@@ -35,7 +31,6 @@ const Dashboard = ({ onClose, user, onMenuOpen }) => {
   const verificationRate = (metrics.verifiedOnce / metrics.totalReviewsDone) * 100;
   const errorRate = (metrics.hasError / metrics.totalReviewsDone) * 100;
   const onTimeRate = (metrics.onTime / metrics.totalReviewsDone) * 100;
-  const predictedErrors = metrics.hasError > 0 ? Math.round(metrics.hasError * 1.2) : 0; // Simple prediction: 20% increase
 
   // Chart data
   const pieData = {
@@ -68,23 +63,7 @@ const Dashboard = ({ onClose, user, onMenuOpen }) => {
   return (
     <Box minH="100vh" bg={bgGradient} position="relative">
       {/* Header */}
-      <Flex
-        justify="space-between"
-        align="center"
-        bg={cardBg}
-        borderRadius={{ base: 0, md: 'lg' }}
-        p={3}
-        boxShadow="md"
-        position="sticky"
-        top={0}
-        zIndex={10}
-      >
-        <HStack spacing={3}>
-          <IconButton icon={<HamburgerIcon />} variant="ghost" onClick={onMenuOpen} aria-label="Open menu" />
-          <Heading size="md" color={accentColor}>Dashboard</Heading>
-        </HStack>
-        <IconButton icon={<ArrowBackIcon />} variant="ghost" onClick={onClose} aria-label="Back to Accounts" />
-      </Flex>
+   
 
       {/* Main Content */}
       <Box maxW="1400px" mx="auto" mt={4} px={{ base: 2, md: 4 }} pb={{ base: 16, md: 8 }}>
@@ -135,7 +114,7 @@ const Dashboard = ({ onClose, user, onMenuOpen }) => {
             <Box bg={highlightBg} borderRadius="lg" p={4}>
               <Text fontWeight="bold" mb={2} color={textColor}>Predictions</Text>
               <VStack align="start" spacing={2}>
-                <Text fontSize="sm">Potential Errors Next Week: <strong>{predictedErrors}</strong> - Review high-risk cases early.</Text>
+       
                 <Text fontSize="sm">Expected Time: <strong>{Math.round(metrics.timeSpent.avgPerCustomer * (metrics.totalReviewsDone + 5) / 60)}h</strong> - Plan for upcoming workload.</Text>
               </VStack>
             </Box>
@@ -157,15 +136,7 @@ const Dashboard = ({ onClose, user, onMenuOpen }) => {
             </Box>
           </SimpleGrid>
 
-          {/* Actionable Suggestions */}
-          <Box bg={highlightBg} borderRadius="lg" p={4}>
-            <Text fontWeight="bold" mb={2} color={textColor}>Actionable Suggestions</Text>
-            <VStack align="start" spacing={2}>
-              {errorRate > 10 && <Text fontSize="sm">Double-check payment details to reduce errors.</Text>}
-              {onTimeRate < 75 && <Text fontSize="sm">Schedule reviews earlier to improve on-time rate.</Text>}
-              <Text fontSize="sm">Focus on {metrics.hasError > 0 ? 'error-prone customers' : 'maintaining accuracy'} this week.</Text>
-            </VStack>
-          </Box>
+         
         </VStack>
       </Box>
     </Box>
