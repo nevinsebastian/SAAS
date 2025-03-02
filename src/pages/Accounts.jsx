@@ -430,8 +430,6 @@ const Accounts = () => {
             <VStack align="stretch" spacing={4}>
               <Button variant="ghost" colorScheme="blue" isActive={selectedScreen === 'Accounts'} onClick={() => handleScreenSelect('Accounts')}>Accounts</Button>
               <Button variant="ghost" colorScheme="blue" isActive={selectedScreen === 'Dashboard'} onClick={() => handleScreenSelect('Dashboard')}>Dashboard</Button>
-              <Button variant="ghost" colorScheme="blue" isActive={selectedScreen === 'Customers'} onClick={() => handleScreenSelect('Customers')}>Customers</Button>
-              <Button variant="ghost" colorScheme="blue" isActive={selectedScreen === 'Reports'} onClick={() => handleScreenSelect('Reports')}>Reports</Button>
             </VStack>
           </DrawerBody>
         </DrawerContent>
