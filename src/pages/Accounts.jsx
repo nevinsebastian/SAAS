@@ -40,12 +40,14 @@ import {
   useColorMode,
   Radio,
   RadioGroup,
+  Image,
 } from '@chakra-ui/react';
 import { HamburgerIcon, BellIcon, EditIcon, ArrowBackIcon, DeleteIcon, WarningTwoIcon } from '@chakra-ui/icons';
 import { Chart as ChartJS, ArcElement, BarElement, LineElement, CategoryScale, LinearScale, PointElement, Title, Tooltip, Legend } from 'chart.js';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Dashboard from '../components/AccountDashboard';
+
 ChartJS.register(ArcElement, BarElement, LineElement, CategoryScale, LinearScale, PointElement, Title, Tooltip, Legend);
 
 const Accounts = () => {
@@ -68,6 +70,7 @@ const Accounts = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedScreen, setSelectedScreen] = useState('Accounts'); // Track selected screen
   const [customerData, setCustomerData] = useState({
+    fullName: '', address: '', fathersName: '', panNumber: '', aadharNumber: '', photo: '',
     name: '', vehicle: '', variant: '', color: '', exShowroom: '', tax: '', onRoad: '', insurance: '',
     bookingCharge: '', deliveryCharge: '', hasFinance: false, financeProvider: '', financeAmount: '', emi: '', tenure: '',
   });
@@ -78,11 +81,23 @@ const Accounts = () => {
 
   const user = JSON.parse(localStorage.getItem('user')) || { username: 'account_user' };
 
-  // Dummy customer data
+  // Dummy customer data with personal info
   const customers = [
-    { id: 'B001', name: 'John Doe', status: 'Pending', vehicle: 'Toyota Corolla', date: '2025-03-01', errors: 0 },
-    { id: 'B002', name: 'Jane Smith', status: 'Done', vehicle: 'Honda City', date: '2025-02-28', errors: 0 },
-    { id: 'B003', name: 'Mike Johnson', status: 'Errors', vehicle: 'Hyundai Creta', date: '2025-03-02', errors: 1, errorReason: 'Wrong Transaction ID' },
+    {
+      id: 'B001', name: 'John Doe', status: 'Pending', vehicle: 'Toyota Corolla', date: '2025-03-01', errors: 0,
+      fullName: 'John Michael Doe', address: '123 Main St, Springfield', fathersName: 'Robert Doe',
+      panNumber: 'ABCDE1234F', aadharNumber: '1234-5678-9012', photo: 'https://via.placeholder.com/100',
+    },
+    {
+      id: 'B002', name: 'Jane Smith', status: 'Done', vehicle: 'Honda City', date: '2025-02-28', errors: 0,
+      fullName: 'Jane Elizabeth Smith', address: '456 Oak Ave, Rivertown', fathersName: 'James Smith',
+      panNumber: 'FGHIJ5678K', aadharNumber: '9876-5432-1098', photo: 'https://via.placeholder.com/100',
+    },
+    {
+      id: 'B003', name: 'Mike Johnson', status: 'Errors', vehicle: 'Hyundai Creta', date: '2025-03-02', errors: 1, errorReason: 'Wrong Transaction ID',
+      fullName: 'Michael David Johnson', address: '789 Pine Rd, Hillcity', fathersName: 'David Johnson',
+      panNumber: 'KLMNO9012P', aadharNumber: '4567-8901-2345', photo: 'https://via.placeholder.com/100',
+    },
   ];
 
   const filteredCustomers = customers.filter(c =>
@@ -107,9 +122,27 @@ const Accounts = () => {
   const handleCustomerSelect = (customer) => {
     setSelectedCustomer(customer);
     setCustomerData({
-      name: customer.name, vehicle: customer.vehicle, variant: 'LE', color: 'Black',
-      exShowroom: '50000', tax: '5000', onRoad: '55000', insurance: '2000', bookingCharge: '1000', deliveryCharge: '1500',
-      hasFinance: false, financeProvider: '', financeAmount: '', emi: '', tenure: '',
+      fullName: customer.fullName,
+      address: customer.address,
+      fathersName: customer.fathersName,
+      panNumber: customer.panNumber,
+      aadharNumber: customer.aadharNumber,
+      photo: customer.photo,
+      name: customer.name,
+      vehicle: customer.vehicle,
+      variant: 'LE',
+      color: 'Black',
+      exShowroom: '50000',
+      tax: '5000',
+      onRoad: '55000',
+      insurance: '2000',
+      bookingCharge: '1000',
+      deliveryCharge: '1500',
+      hasFinance: false,
+      financeProvider: '',
+      financeAmount: '',
+      emi: '',
+      tenure: '',
     });
     setIsEditing(false);
   };
@@ -188,7 +221,6 @@ const Accounts = () => {
           <Heading size="md" color={accentColor}>{selectedScreen}</Heading>
         </HStack>
         <HStack spacing={4}>
-     
           <Menu>
             <MenuButton as={IconButton} icon={<BellIcon />} variant="ghost" aria-label="Notifications" position="relative">
               {unseenNotifications.length > 0 && (
@@ -259,7 +291,50 @@ const Accounts = () => {
 
             {/* Scrollable Details */}
             <Flex direction="column" flex="1" overflowY="auto" p={4} pb={200}>
-              <VStack spacing={4} align="stretch">
+              <VStack spacing={6} align="stretch">
+                {/* Personal Information */}
+                <Box>
+                  <Text fontWeight="bold" mb={2}>Personal Information</Text>
+                  <HStack spacing={4} align="start">
+                    <Box flex="1">
+                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={2}>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500">Full Name</Text>
+                          <Input name="fullName" value={customerData.fullName} onChange={handleInputChange} isDisabled={!isEditing} />
+                        </Box>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500">Address</Text>
+                          <Input name="address" value={customerData.address} onChange={handleInputChange} isDisabled={!isEditing} />
+                        </Box>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500">Father's Name</Text>
+                          <Input name="fathersName" value={customerData.fathersName} onChange={handleInputChange} isDisabled={!isEditing} />
+                        </Box>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500">PAN Number</Text>
+                          <Input name="panNumber" value={customerData.panNumber} onChange={handleInputChange} isDisabled={!isEditing} />
+                        </Box>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500">Aadhar Number</Text>
+                          <Input name="aadharNumber" value={customerData.aadharNumber} onChange={handleInputChange} isDisabled={!isEditing} />
+                        </Box>
+                      </SimpleGrid>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500" mb={2}>Passport Photo</Text>
+                      <Image
+                        src={customerData.photo}
+                        alt="Customer Photo"
+                        boxSize={{ base: '100px', md: '120px' }}
+                        objectFit="cover"
+                        borderRadius="md"
+                        fallbackSrc="https://via.placeholder.com/100?text=No+Photo"
+                      />
+                    </Box>
+                  </HStack>
+                </Box>
+
+                {/* Vehicle Details */}
                 <Box>
                   <Text fontWeight="bold" mb={2}>Vehicle Details</Text>
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={2}>
@@ -277,6 +352,8 @@ const Accounts = () => {
                     </Box>
                   </SimpleGrid>
                 </Box>
+
+                {/* Pricing */}
                 <Box>
                   <Text fontWeight="bold" mb={2}>Pricing</Text>
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={2}>
@@ -306,6 +383,8 @@ const Accounts = () => {
                     </Box>
                   </SimpleGrid>
                 </Box>
+
+                {/* Finance Options */}
                 <Box>
                   <HStack justify="space-between">
                     <Text fontWeight="bold">Finance Options</Text>
