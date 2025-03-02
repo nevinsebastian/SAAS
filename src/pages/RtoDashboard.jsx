@@ -37,6 +37,7 @@ import {
   ModalCloseButton,
   useColorMode,
   Image,
+  Divider,
 } from '@chakra-ui/react';
 import { HamburgerIcon, BellIcon, ArrowBackIcon, DownloadIcon } from '@chakra-ui/icons';
 import { toast, ToastContainer } from 'react-toastify';
@@ -45,15 +46,18 @@ import 'react-toastify/dist/ReactToastify.css';
 const RtoDashboard = () => {
   const { isOpen: isMenuOpen, onOpen: onMenuOpen, onClose: onMenuClose } = useDisclosure();
   const { isOpen: isRtoVerifiedOpen, onOpen: onRtoVerifiedOpen, onClose: onRtoVerifiedClose } = useDisclosure();
+  const { isOpen: isImageModalOpen, onOpen: onImageModalOpen, onClose: onImageModalClose } = useDisclosure();
   const { colorMode, toggleColorMode } = useColorMode();
 
-  // Move all useColorModeValue calls to the top level
+  // Top-level useColorModeValue calls
   const bgGradient = useColorModeValue('linear(to-br, gray.50, gray.100)', 'linear(to-br, gray.900, gray.800)');
   const cardBg = useColorModeValue('white', 'gray.800');
-  const textColor = useColorModeValue('gray.800', 'gray.100');
+  const textColor = useColorModeValue('gray.800', 'white');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const inputBg = useColorModeValue('gray.100', 'gray.700');
-  const headerGradient = useColorModeValue('linear(to-r, blue.500, blue.700)', 'linear(to-r, blue.700, blue.900)');
+  const headerGradient = useColorModeValue('linear(to-r, teal.500, teal.700)', 'linear(to-r, teal.700, teal.900)');
+  const accentColor = 'teal.500';
+  const hoverBg = useColorModeValue('teal.50', 'teal.900');
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -61,6 +65,7 @@ const RtoDashboard = () => {
   const [chassisNumber, setChassisNumber] = useState('');
   const [chassisImage, setChassisImage] = useState(null);
   const [registrationNumber, setRegistrationNumber] = useState('');
+  const [selectedImage, setSelectedImage] = useState(null);
   const [customerData, setCustomerData] = useState({
     fullName: '', address: '', fathersName: '', panNumber: '', aadharNumber: '', photo: '',
     aadharFront: '', aadharBack: '', signature: '', nomineeName: '', nomineeAge: '', nomineeRelation: '',
@@ -193,6 +198,30 @@ const RtoDashboard = () => {
     }
   };
 
+  const handleImageClick = (imageUrl) => {
+    setSelectedImage(imageUrl);
+    onImageModalOpen();
+  };
+
+  const handleDownloadUserData = () => {
+    const folderName = `${customerData.name.split(' ')[0]}_${customerData.vehicle.replace(' ', '_')}`;
+    const files = [
+      { url: customerData.photo, name: 'passport_photo.jpg' },
+      { url: customerData.aadharFront, name: 'aadhar_front.jpg' },
+      { url: customerData.aadharBack, name: 'aadhar_back.jpg' },
+      { url: customerData.signature, name: 'signature.jpg' },
+      { url: customerData.invoicePdf, name: 'invoice.pdf' },
+    ];
+
+    files.forEach(file => {
+      const link = document.createElement('a');
+      link.href = file.url;
+      link.download = `${folderName}_${file.name}`;
+      link.click();
+    });
+    toast.success(`Downloaded user data as "${folderName}" folder!`, { position: 'top-center' });
+  };
+
   return (
     <Box minH="100vh" bg={bgGradient} position="relative">
       {/* Header */}
@@ -201,28 +230,44 @@ const RtoDashboard = () => {
         align="center"
         bgGradient={headerGradient}
         color="white"
-        borderRadius={{ base: 0, md: 'lg' }}
-        p={3}
+        p={4}
         boxShadow="lg"
         position="sticky"
         top={0}
         zIndex={10}
+        borderBottom="1px solid"
+        borderColor={borderColor}
       >
-        <HStack spacing={3}>
-          <IconButton icon={<HamburgerIcon />} variant="ghost" color="white" onClick={onMenuOpen} aria-label="Open menu" />
-          <Heading size="md">RTO Dashboard</Heading>
+        <HStack spacing={4}>
+          <IconButton
+            icon={<HamburgerIcon />}
+            variant="ghost"
+            color="white"
+            onClick={onMenuOpen}
+            aria-label="Open menu"
+            _hover={{ bg: hoverBg }}
+          />
+          <Heading size="md" fontWeight="bold">RTO Dashboard</Heading>
         </HStack>
         <HStack spacing={4}>
           <Menu>
-            <MenuButton as={IconButton} icon={<BellIcon />} variant="ghost" color="white" aria-label="Notifications" position="relative">
+            <MenuButton
+              as={IconButton}
+              icon={<BellIcon />}
+              variant="ghost"
+              color="white"
+              aria-label="Notifications"
+              position="relative"
+              _hover={{ bg: hoverBg }}
+            >
               {unseenNotifications.length > 0 && (
                 <Badge colorScheme="red" borderRadius="full" position="absolute" top="-1" right="-1">{unseenNotifications.length}</Badge>
               )}
             </MenuButton>
-            <MenuList maxH="300px" overflowY="auto">
+            <MenuList maxH="300px" overflowY="auto" bg={cardBg} borderColor={borderColor}>
               {unseenNotifications.length > 0 ? (
                 unseenNotifications.map(n => (
-                  <MenuItem key={n.id}>
+                  <MenuItem key={n.id} bg={cardBg} _hover={{ bg: hoverBg }}>
                     <VStack align="start" spacing={1}>
                       <Text fontSize="sm" color={textColor}>{n.message}</Text>
                       <Text fontSize="xs" color="gray.500">{n.time}</Text>
@@ -230,7 +275,7 @@ const RtoDashboard = () => {
                   </MenuItem>
                 ))
               ) : (
-                <MenuItem>No new notifications</MenuItem>
+                <MenuItem bg={cardBg}>No new notifications</MenuItem>
               )}
             </MenuList>
           </Menu>
@@ -238,9 +283,13 @@ const RtoDashboard = () => {
             <MenuButton>
               <Avatar name={user.username} size="sm" />
             </MenuButton>
-            <MenuList>
-              <MenuItem onClick={toggleColorMode}>{colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}</MenuItem>
-              <MenuItem onClick={() => toast.info('Sign out not implemented')}>Sign Out</MenuItem>
+            <MenuList bg={cardBg} borderColor={borderColor}>
+              <MenuItem onClick={toggleColorMode} bg={cardBg} _hover={{ bg: hoverBg }}>
+                {colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
+              </MenuItem>
+              <MenuItem onClick={() => toast.info('Sign out not implemented')} bg={cardBg} _hover={{ bg: hoverBg }}>
+                Sign Out
+              </MenuItem>
             </MenuList>
           </Menu>
         </HStack>
@@ -256,7 +305,7 @@ const RtoDashboard = () => {
               justify="space-between"
               align="center"
               bg={cardBg}
-              p={3}
+              p={4}
               borderRadius={{ base: 0, md: 'lg' }}
               boxShadow="md"
               position="sticky"
@@ -265,54 +314,66 @@ const RtoDashboard = () => {
               borderBottom="1px"
               borderColor={borderColor}
             >
-              <HStack spacing={2}>
+              <HStack spacing={4}>
                 <IconButton
                   icon={<ArrowBackIcon />}
                   variant="ghost"
+                  color={textColor}
                   onClick={() => setSelectedCustomer(null)}
                   aria-label="Back to list"
+                  _hover={{ bg: hoverBg }}
                 />
                 <Heading size="md" color={textColor}>{customerData.name} - {customerData.id}</Heading>
               </HStack>
+              <Button
+                leftIcon={<DownloadIcon />}
+                colorScheme="teal"
+                variant="solid"
+                size="sm"
+                onClick={handleDownloadUserData}
+                _hover={{ bg: 'teal.600' }}
+              >
+                Download User Data
+              </Button>
             </Flex>
 
             {/* Scrollable Details */}
             <Flex direction="column" flex="1" overflowY="auto" p={6} pb={20}>
-              <VStack spacing={6} align="stretch">
+              <VStack spacing={8} align="stretch">
                 {/* Personal Information */}
-                <Box bg={cardBg} borderRadius="xl" p={4} boxShadow="md">
-                  <Text fontWeight="bold" mb={4} color={textColor}>Personal Information</Text>
-                  <HStack spacing={6} align="start">
-                    <Box flex="1">
+                <Box bg={cardBg} borderRadius="2xl" p={6} boxShadow="lg" _hover={{ boxShadow: 'xl' }} transition="all 0.2s">
+                  <Text fontWeight="bold" fontSize="lg" mb={4} color={textColor}>Personal Information</Text>
+                  <HStack spacing={6} align="start" wrap="wrap">
+                    <Box flex="1" minW={{ base: '100%', md: '300px' }}>
                       <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                         <Box>
                           <Text fontSize="sm" color="gray.500">Full Name</Text>
-                          <Text color={textColor}>{customerData.fullName}</Text>
+                          <Text fontSize="md" color={textColor}>{customerData.fullName}</Text>
                         </Box>
                         <Box>
                           <Text fontSize="sm" color="gray.500">Address</Text>
-                          <Text color={textColor}>{customerData.address}</Text>
+                          <Text fontSize="md" color={textColor}>{customerData.address}</Text>
                         </Box>
                         <Box>
                           <Text fontSize="sm" color="gray.500">Father's Name</Text>
-                          <Text color={textColor}>{customerData.fathersName}</Text>
+                          <Text fontSize="md" color={textColor}>{customerData.fathersName}</Text>
                         </Box>
                         <Box>
                           <Text fontSize="sm" color="gray.500">PAN Number</Text>
-                          <Text color={textColor}>{customerData.panNumber}</Text>
+                          <Text fontSize="md" color={textColor}>{customerData.panNumber}</Text>
                         </Box>
                         <Box>
                           <Text fontSize="sm" color="gray.500">Aadhar Number</Text>
-                          <Text color={textColor}>{customerData.aadharNumber}</Text>
+                          <Text fontSize="md" color={textColor}>{customerData.aadharNumber}</Text>
                         </Box>
                         <Box>
-                      <Text fontSize="sm" color="gray.500">Ward</Text>
-                      <Text color={textColor}>{customerData.ward}</Text>
-                    </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500">RTO Office</Text>
-                      <Text color={textColor}>{customerData.rtoOffice}</Text>
-                    </Box>
+                          <Text fontSize="sm" color="gray.500">Ward</Text>
+                          <Text fontSize="md" color={textColor}>{customerData.ward}</Text>
+                        </Box>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500">RTO Office</Text>
+                          <Text fontSize="md" color={textColor}>{customerData.rtoOffice}</Text>
+                        </Box>
                       </SimpleGrid>
                     </Box>
                     <Box>
@@ -320,23 +381,28 @@ const RtoDashboard = () => {
                       <Image
                         src={customerData.photo}
                         alt="Customer Photo"
-                        boxSize={{ base: '100px', md: '120px' }}
                         objectFit="cover"
                         borderRadius="md"
-                        fallbackSrc="https://via.placeholder.com/100?text=No+Photo"
+                        cursor="pointer"
+                        onClick={() => handleImageClick(customerData.photo)}
+                        fallbackSrc="https://via.placeholder.com/150?text=No+Photo"
+                        _hover={{ opacity: 0.8 }}
                       />
                     </Box>
                   </HStack>
-                  <HStack mt={4} spacing={4}>
+                  <Divider my={4} borderColor={borderColor} />
+                  <HStack spacing={6} wrap="wrap" justify="space-between">
                     <Box>
                       <Text fontSize="sm" color="gray.500" mb={2}>Aadhar Front</Text>
                       <Image
                         src={customerData.aadharFront}
                         alt="Aadhar Front"
-                        boxSize={{ base: '150px', md: '200px' }}
                         objectFit="cover"
                         borderRadius="md"
+                        cursor="pointer"
+                        onClick={() => handleImageClick(customerData.aadharFront)}
                         fallbackSrc="https://via.placeholder.com/200x150?text=No+Aadhar+Front"
+                        _hover={{ opacity: 0.8 }}
                       />
                     </Box>
                     <Box>
@@ -344,10 +410,12 @@ const RtoDashboard = () => {
                       <Image
                         src={customerData.aadharBack}
                         alt="Aadhar Back"
-                        boxSize={{ base: '150px', md: '200px' }}
                         objectFit="cover"
                         borderRadius="md"
+                        cursor="pointer"
+                        onClick={() => handleImageClick(customerData.aadharBack)}
                         fallbackSrc="https://via.placeholder.com/200x150?text=No+Aadhar+Back"
+                        _hover={{ opacity: 0.8 }}
                       />
                     </Box>
                     <Box>
@@ -355,120 +423,141 @@ const RtoDashboard = () => {
                       <Image
                         src={customerData.signature}
                         alt="Signature"
-                        boxSize={{ base: '100px', md: '150x50' }}
                         objectFit="cover"
                         borderRadius="md"
+                        cursor="pointer"
+                        onClick={() => handleImageClick(customerData.signature)}
                         fallbackSrc="https://via.placeholder.com/150x50?text=No+Signature"
+                        _hover={{ opacity: 0.8 }}
                       />
                     </Box>
                   </HStack>
                 </Box>
 
-                {/* Nominee & RTO Info */}
-                <Box bg={cardBg} borderRadius="xl" p={4} boxShadow="md">
-                  <Text fontWeight="bold" mb={4} color={textColor}>Nominee  Details</Text>
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                {/* Nominee Details */}
+                <Box bg={cardBg} borderRadius="2xl" p={6} boxShadow="lg" _hover={{ boxShadow: 'xl' }} transition="all 0.2s">
+                  <Text fontWeight="bold" fontSize="lg" mb={4} color={textColor}>Nominee Details</Text>
+                  <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
                     <Box>
                       <Text fontSize="sm" color="gray.500">Nominee Name</Text>
-                      <Text color={textColor}>{customerData.nomineeName}</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.nomineeName}</Text>
                     </Box>
                     <Box>
                       <Text fontSize="sm" color="gray.500">Nominee Age</Text>
-                      <Text color={textColor}>{customerData.nomineeAge}</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.nomineeAge}</Text>
                     </Box>
                     <Box>
                       <Text fontSize="sm" color="gray.500">Relation with Nominee</Text>
-                      <Text color={textColor}>{customerData.nomineeRelation}</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.nomineeRelation}</Text>
                     </Box>
-                  
                   </SimpleGrid>
                 </Box>
 
                 {/* Invoice */}
-                <Box bg={cardBg} borderRadius="xl" p={4} boxShadow="md">
-                  <Text fontWeight="bold" mb={4} color={textColor}>Invoice</Text>
+                <Box bg={cardBg} borderRadius="2xl" p={6} boxShadow="lg" _hover={{ boxShadow: 'xl' }} transition="all 0.2s">
+                  <Text fontWeight="bold" fontSize="lg" mb={4} color={textColor}>Invoice</Text>
                   <Image
                     src={customerData.invoicePdf}
                     alt="Invoice PDF"
-                    maxW={{ base: '100%', md: '300px' }}
                     objectFit="contain"
                     borderRadius="md"
+                    cursor="pointer"
+                    onClick={() => handleImageClick(customerData.invoicePdf)}
                     fallbackSrc="https://via.placeholder.com/300x400?text=No+Invoice"
+                    _hover={{ opacity: 0.8 }}
                   />
                 </Box>
 
                 {/* Vehicle Details */}
-                <Box bg={cardBg} borderRadius="xl" p={4} boxShadow="md">
-                  <Text fontWeight="bold" mb={4} color={textColor}>Vehicle Details</Text>
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                <Box bg={cardBg} borderRadius="2xl" p={6} boxShadow="lg" _hover={{ boxShadow: 'xl' }} transition="all 0.2s">
+                  <Text fontWeight="bold" fontSize="lg" mb={4} color={textColor}>Vehicle Details</Text>
+                  <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
                     <Box>
                       <Text fontSize="sm" color="gray.500">Vehicle</Text>
-                      <Text color={textColor}>{customerData.vehicle}</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.vehicle}</Text>
                     </Box>
                     <Box>
                       <Text fontSize="sm" color="gray.500">Variant</Text>
-                      <Text color={textColor}>{customerData.variant}</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.variant}</Text>
                     </Box>
                     <Box>
                       <Text fontSize="sm" color="gray.500">Color</Text>
-                      <Text color={textColor}>{customerData.color}</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.color}</Text>
                     </Box>
                   </SimpleGrid>
                 </Box>
 
                 {/* Pricing */}
-                <Box bg={cardBg} borderRadius="xl" p={4} boxShadow="md">
-                  <Text fontWeight="bold" mb={4} color={textColor}>Pricing</Text>
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                <Box bg={cardBg} borderRadius="2xl" p={6} boxShadow="lg" _hover={{ boxShadow: 'xl' }} transition="all 0.2s">
+                  <Text fontWeight="bold" fontSize="lg" mb={4} color={textColor}>Pricing</Text>
+                  <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
                     <Box>
                       <Text fontSize="sm" color="gray.500">Ex-Showroom</Text>
-                      <Text color={textColor}>{customerData.exShowroom}</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.exShowroom}</Text>
                     </Box>
                     <Box>
                       <Text fontSize="sm" color="gray.500">Tax</Text>
-                      <Text color={textColor}>{customerData.tax}</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.tax}</Text>
                     </Box>
                     <Box>
                       <Text fontSize="sm" color="gray.500">On-Road</Text>
-                      <Text color={textColor}>{customerData.onRoad}</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.onRoad}</Text>
                     </Box>
                     <Box>
                       <Text fontSize="sm" color="gray.500">Insurance</Text>
-                      <Text color={textColor}>{customerData.insurance}</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.insurance}</Text>
                     </Box>
                     <Box>
                       <Text fontSize="sm" color="gray.500">Booking Charge</Text>
-                      <Text color={textColor}>{customerData.bookingCharge}</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.bookingCharge}</Text>
                     </Box>
                     <Box>
                       <Text fontSize="sm" color="gray.500">Delivery Charge</Text>
-                      <Text color={textColor}>{customerData.deliveryCharge}</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.deliveryCharge}</Text>
                     </Box>
                   </SimpleGrid>
                 </Box>
 
                 {/* Chassis Search */}
-                <Box bg={cardBg} borderRadius="xl" p={4} boxShadow="md">
-                  <Text fontWeight="bold" mb={4} color={textColor}>Chassis Search</Text>
+                <Box bg={cardBg} borderRadius="2xl" p={6} boxShadow="lg" _hover={{ boxShadow: 'xl' }} transition="all 0.2s">
+                  <Text fontWeight="bold" fontSize="lg" mb={4} color={textColor}>Chassis Search</Text>
                   <HStack spacing={4}>
                     <Input
                       placeholder="Enter chassis number"
                       value={chassisNumber}
                       onChange={e => setChassisNumber(e.target.value)}
                       bg={inputBg}
+                      borderColor={borderColor}
+                      _hover={{ borderColor: accentColor }}
+                      _focus={{ borderColor: accentColor, boxShadow: `0 0 0 1px ${accentColor}` }}
                     />
-                    <Button colorScheme="blue" onClick={handleChassisSearch}>Search</Button>
+                    <Button
+                      colorScheme="teal"
+                      onClick={handleChassisSearch}
+                      _hover={{ bg: 'teal.600' }}
+                    >
+                      Search
+                    </Button>
                   </HStack>
                   {chassisImage && (
                     <VStack mt={4} spacing={2} align="start">
                       <Image
                         src={chassisImage}
                         alt="Chassis Image"
-                        maxW={{ base: '100%', md: '300px' }}
                         objectFit="contain"
                         borderRadius="md"
+                        cursor="pointer"
+                        onClick={() => handleImageClick(chassisImage)}
+                        _hover={{ opacity: 0.8 }}
                       />
-                      <Button leftIcon={<DownloadIcon />} colorScheme="blue" variant="outline" size="sm" onClick={handleDownloadChassis}>
+                      <Button
+                        leftIcon={<DownloadIcon />}
+                        colorScheme="teal"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleDownloadChassis}
+                        _hover={{ bg: hoverBg }}
+                      >
                         Download
                       </Button>
                     </VStack>
@@ -477,15 +566,33 @@ const RtoDashboard = () => {
               </VStack>
 
               {/* Action Buttons */}
-              <HStack mt={6} spacing={4} justify="center">
+              <HStack mt={8} spacing={6} justify="center">
                 {selectedCustomer.status === 'Pending' && (
-                  <Button colorScheme="purple" size="lg" w="full" onClick={handleMarkUploaded}>Mark Uploaded to RTO</Button>
+                  <Button
+                    colorScheme="purple"
+                    size="lg"
+                    w="full"
+                    maxW="200px"
+                    onClick={handleMarkUploaded}
+                    _hover={{ bg: 'purple.600' }}
+                  >
+                    Mark Uploaded to RTO
+                  </Button>
                 )}
                 {(selectedCustomer.status === 'Uploaded' || selectedCustomer.status === 'Pending') && (
-                  <Button colorScheme="green" size="lg" w="full" onClick={onRtoVerifiedOpen}>RTO Verified</Button>
+                  <Button
+                    colorScheme="teal"
+                    size="lg"
+                    w="full"
+                    maxW="200px"
+                    onClick={onRtoVerifiedOpen}
+                    _hover={{ bg: 'teal.600' }}
+                  >
+                    RTO Verified
+                  </Button>
                 )}
                 {selectedCustomer.status === 'Done' && (
-                  <Badge colorScheme="green" p={2} borderRadius="md">Completed</Badge>
+                  <Badge colorScheme="teal" p={3} borderRadius="md" fontSize="md">Completed</Badge>
                 )}
               </HStack>
             </Flex>
@@ -493,15 +600,23 @@ const RtoDashboard = () => {
         ) : (
           // Customer List (Default View)
           <Box>
-            <Tabs variant="soft-rounded" colorScheme="blue" index={tabIndex} onChange={setTabIndex}>
-              <TabList mb={4}>
-                <Tab>Done</Tab>
-                <Tab>Pending</Tab>
-                <Tab>Uploaded</Tab>
+            <Tabs variant="solid-rounded" colorScheme="teal" index={tabIndex} onChange={setTabIndex}>
+              <TabList mb={6} bg={cardBg} p={2} borderRadius="xl" boxShadow="md">
+                <Tab _selected={{ bg: accentColor, color: 'white' }}>Done</Tab>
+                <Tab _selected={{ bg: accentColor, color: 'white' }}>Pending</Tab>
+                <Tab _selected={{ bg: accentColor, color: 'white' }}>Uploaded</Tab>
               </TabList>
             </Tabs>
-            <HStack mb={4}>
-              <Select placeholder="Sort by" size="sm" w="150px">
+            <HStack mb={6} spacing={4}>
+              <Select
+                placeholder="Sort by"
+                size="sm"
+                w="150px"
+                bg={inputBg}
+                borderColor={borderColor}
+                _hover={{ borderColor: accentColor }}
+                _focus={{ borderColor: accentColor }}
+              >
                 <option value="date">Date</option>
                 <option value="name">Name</option>
               </Select>
@@ -510,25 +625,28 @@ const RtoDashboard = () => {
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 size="sm"
-                bg={inputBg} // Use predefined variable
+                bg={inputBg}
+                borderColor={borderColor}
+                _hover={{ borderColor: accentColor }}
+                _focus={{ borderColor: accentColor, boxShadow: `0 0 0 1px ${accentColor}` }}
               />
             </HStack>
-            <VStack spacing={2} align="stretch" maxH={{ base: 'calc(100vh - 200px)', md: '70vh' }} overflowY="auto">
+            <VStack spacing={4} align="stretch" maxH={{ base: 'calc(100vh - 200px)', md: '70vh' }} overflowY="auto">
               {filteredCustomers.map(customer => (
                 <Box
                   key={customer.id}
                   bg={cardBg}
-                  borderRadius="md"
-                  p={3}
-                  boxShadow="sm"
-                  _hover={{ boxShadow: 'md', transform: 'scale(1.02)' }}
+                  borderRadius="xl"
+                  p={4}
+                  boxShadow="md"
+                  _hover={{ boxShadow: 'lg', transform: 'translateY(-2px)' }}
                   transition="all 0.2s"
                   cursor="pointer"
                   onClick={() => handleCustomerSelect(customer)}
                 >
                   <Flex justify="space-between" align="center">
                     <VStack align="start" spacing={1} flex="1">
-                      <Text fontWeight="bold" color={textColor}>{customer.name}</Text>
+                      <Text fontWeight="bold" fontSize="lg" color={textColor}>{customer.name}</Text>
                       <Text fontSize="sm" color="gray.500">{customer.id}</Text>
                       <Text fontSize="sm" color="gray.500">{customer.vehicle}</Text>
                       {customer.registrationNumber && (
@@ -536,7 +654,15 @@ const RtoDashboard = () => {
                       )}
                     </VStack>
                     <VStack align="end" spacing={1}>
-                      <Badge colorScheme={customer.status === 'Pending' ? 'orange' : customer.status === 'Uploaded' ? 'blue' : 'green'}>{customer.status}</Badge>
+                      <Badge
+                        colorScheme={customer.status === 'Pending' ? 'orange' : customer.status === 'Uploaded' ? 'teal' : 'green'}
+                        fontSize="sm"
+                        px={2}
+                        py={1}
+                        borderRadius="md"
+                      >
+                        {customer.status}
+                      </Badge>
                       <Text fontSize="xs" color="gray.500">{customer.date}</Text>
                     </VStack>
                   </Flex>
@@ -550,12 +676,20 @@ const RtoDashboard = () => {
       {/* Sidebar Drawer */}
       <Drawer isOpen={isMenuOpen} placement="left" onClose={onMenuClose}>
         <DrawerOverlay />
-        <DrawerContent w={{ base: 'full', md: '200px' }}>
-          <DrawerCloseButton />
-          <DrawerHeader>Menu</DrawerHeader>
+        <DrawerContent w={{ base: 'full', md: '250px' }} bg={cardBg} borderColor={borderColor}>
+          <DrawerCloseButton color={textColor} />
+          <DrawerHeader color={textColor} borderBottom="1px" borderColor={borderColor}>Menu</DrawerHeader>
           <DrawerBody>
             <VStack align="stretch" spacing={4}>
-              <Button variant="ghost" colorScheme="blue" isActive>RTO Dashboard</Button>
+              <Button
+                variant="ghost"
+                colorScheme="teal"
+                isActive
+                justifyContent="start"
+                _hover={{ bg: hoverBg }}
+              >
+                RTO Dashboard
+              </Button>
             </VStack>
           </DrawerBody>
         </DrawerContent>
@@ -564,24 +698,68 @@ const RtoDashboard = () => {
       {/* RTO Verified Modal */}
       <Modal isOpen={isRtoVerifiedOpen} onClose={onRtoVerifiedClose}>
         <ModalOverlay />
-        <ModalContent>
+        <ModalContent bg={cardBg} borderRadius="xl" boxShadow="lg">
           <ModalHeader color={textColor}>RTO Verified</ModalHeader>
-          <ModalCloseButton />
+          <ModalCloseButton color={textColor} />
           <ModalBody>
             <VStack spacing={4}>
-              <Text>Enter Vehicle Registration Number</Text>
+              <Text color={textColor}>Enter Vehicle Registration Number</Text>
               <Input
                 placeholder="e.g., MH12AB1234"
                 value={registrationNumber}
                 onChange={e => setRegistrationNumber(e.target.value)}
-                bg={inputBg} // Use predefined variable
+                bg={inputBg}
+                borderColor={borderColor}
+                _hover={{ borderColor: accentColor }}
+                _focus={{ borderColor: accentColor, boxShadow: `0 0 0 1px ${accentColor}` }}
               />
             </VStack>
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme="green" onClick={handleRtoVerified}>Mark Verified</Button>
-            <Button variant="ghost" ml={2} onClick={onRtoVerifiedClose}>Cancel</Button>
+            <Button
+              colorScheme="teal"
+              onClick={handleRtoVerified}
+              _hover={{ bg: 'teal.600' }}
+            >
+              Mark Verified
+            </Button>
+            <Button
+              variant="ghost"
+              ml={2}
+              onClick={onRtoVerifiedClose}
+              color={textColor}
+              _hover={{ bg: hoverBg }}
+            >
+              Cancel
+            </Button>
           </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Image Preview Modal */}
+      <Modal isOpen={isImageModalOpen} onClose={onImageModalClose} size="xl">
+        <ModalOverlay bg="rgba(0, 0, 0, 0.6)" />
+        <ModalContent
+          w="60%"
+          maxW="60%"
+          h="auto"
+          bg={cardBg}
+          borderRadius="2xl"
+          boxShadow="2xl"
+          overflow="hidden"
+        >
+          <ModalCloseButton color={textColor} zIndex={10} />
+          <ModalBody p={0}>
+            <Image
+              src={selectedImage}
+              alt="Selected Image"
+              objectFit="contain"
+              w="100%"
+              h="auto"
+              borderRadius="2xl"
+              fallbackSrc="https://via.placeholder.com/300?text=Image+Not+Available"
+            />
+          </ModalBody>
         </ModalContent>
       </Modal>
 
