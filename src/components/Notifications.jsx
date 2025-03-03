@@ -30,7 +30,7 @@ import {
   Textarea,
   useDisclosure,
 } from '@chakra-ui/react';
-import { BellIcon, HamburgerIcon, WarningTwoIcon } from '@chakra-ui/icons';
+import {  HamburgerIcon, WarningTwoIcon } from '@chakra-ui/icons';
 import { toast } from 'react-toastify';
 
 const Notifications = ({ onClose, user, onMenuOpen }) => {

@@ -213,11 +213,10 @@ export default function Login({ setUserRole }) {
           {window.innerWidth < 600 ? (
             <MobileFullScreen>
               <Typography variant="h4" align="center" sx={{ fontWeight: 700, background: 'linear-gradient(45deg, #6366f1, #8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', mb: 1 }}>
-                NEXA
+                DealerSync
               </Typography>
               <Typography variant="body2" align="center" sx={{ color: 'text.secondary', mb: 4 }}>
-                Popular Vehicles & Services, Alappuzha, Punnapra
-              </Typography>
+              Seamlessly syncs all dealership operations</Typography>
               <Box component="form" onSubmit={handleLogin} noValidate sx={{ width: '100%' }}>
                 <TextField margin="normal" required fullWidth type="username" label="Username" autoComplete="username" value={username} onChange={(e) => setUsername(e.target.value)} variant="outlined" InputProps={{ sx: { borderRadius: '8px' } }} />
                 <TextField margin="normal" required fullWidth label="Password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} variant="outlined" InputProps={{ sx: { borderRadius: '8px' } }} />
