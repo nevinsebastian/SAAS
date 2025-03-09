@@ -233,10 +233,11 @@ export default function Login({ setUserRole }) {
           ) : (
             <DesktopGlassPaper>
               <Typography variant="h4" align="center" sx={{ fontWeight: 700, background: 'linear-gradient(45deg, #6366f1, #8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', mb: 1 }}>
-                NEXA
+               DealerSync
+
               </Typography>
               <Typography variant="body2" align="center" sx={{ color: 'text.secondary', mb: 4 }}>
-                Popular Vehicles & Services, Alappuzha, Punnapra
+              Seamlessly syncs all dealership operations
               </Typography>
               <Box component="form" onSubmit={handleLogin} noValidate>
                 <TextField margin="normal" required fullWidth label="Username" type="username" autoComplete="username" value={username} onChange={(e) => setUsername(e.target.value)} variant="outlined" InputProps={{ sx: { borderRadius: '8px' } }} />
