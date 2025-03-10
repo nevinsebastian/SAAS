@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import {
   Box,
   Button,
@@ -13,23 +14,15 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/system';
 
+// Modern theme (unchanged)
 const modernTheme = createTheme({
   palette: {
     mode: 'dark',
-    background: {
-      default: '#0f172a',
-    },
-    primary: {
-      main: '#6366f1',
-    },
-    text: {
-      primary: '#ffffff',
-      secondary: '#94a3b8',
-    },
+    background: { default: '#0f172a' },
+    primary: { main: '#6366f1' },
+    text: { primary: '#ffffff', secondary: '#94a3b8' },
   },
-  typography: {
-    fontFamily: "'Inter', sans-serif",
-  },
+  typography: { fontFamily: "'Inter', sans-serif" },
   components: {
     MuiTextField: {
       styleOverrides: {
@@ -37,35 +30,23 @@ const modernTheme = createTheme({
           '& .MuiOutlinedInput-root': {
             borderRadius: '8px',
             backgroundColor: '#1e293b',
-            '&:hover fieldset': {
-              borderColor: '#6366f1',
-            },
-            '&.Mui-focused fieldset': {
-              borderColor: '#6366f1',
-            },
+            '&:hover fieldset': { borderColor: '#6366f1' },
+            '&.Mui-focused fieldset': { borderColor: '#6366f1' },
           },
-          '& .MuiInputLabel-root': {
-            color: '#94a3b8',
-          },
-          '& .MuiInputBase-input': {
-            color: '#ffffff',
-          },
+          '& .MuiInputLabel-root': { color: '#94a3b8' },
+          '& .MuiInputBase-input': { color: '#ffffff' },
         },
       },
     },
     MuiButton: {
       styleOverrides: {
-        root: {
-          borderRadius: '8px',
-          textTransform: 'none',
-          fontWeight: 600,
-          padding: '10px 24px',
-        },
+        root: { borderRadius: '8px', textTransform: 'none', fontWeight: 600, padding: '10px 24px' },
       },
     },
   },
 });
 
+// Styled components (unchanged)
 const DesktopGlassPaper = styled(Box)(({ theme }) => ({
   position: 'relative',
   background: 'rgba(30, 41, 59, 0.9)',
@@ -87,10 +68,7 @@ const DesktopGlassPaper = styled(Box)(({ theme }) => ({
     backdropFilter: 'blur(12px)',
     zIndex: -1,
   },
-  '& > *': {
-    position: 'relative',
-    zIndex: 1,
-  },
+  '& > *': { position: 'relative', zIndex: 1 },
 }));
 
 const MobileFullScreen = styled(Box)(({ theme }) => ({
@@ -105,7 +83,7 @@ const MobileFullScreen = styled(Box)(({ theme }) => ({
 
 const GradientButton = styled(Button)(({ theme }) => ({
   background: 'linear-gradient(45deg, #6366f1, #8b5cf6)',
-  color: '#ffffcc', // Change text color
+  color: '#ffffcc',
   '&:hover': {
     background: 'linear-gradient(45deg, #4f46e5, #7c3aed)',
     transform: 'translateY(-2px)',
@@ -114,39 +92,44 @@ const GradientButton = styled(Button)(({ theme }) => ({
   boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)',
 }));
 
-
 export default function Login({ setUserRole }) {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState(''); // Changed from username to email
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
 
-    const users = [
-      { username: 'admin', password: 'test', role: 'admin' },
-      { username: 'sales', password: 'test', role: 'sales' },
-      { username: 'accounts', password: 'test', role: 'accounts' },
-      { username: 'rto', password: 'test', role: 'rto' },
-      { username: 'manager', password: 'test', role: 'manager' },
-      { username: 'stock', password: 'test', role: 'stock_person' },
-    ];
+    try {
+      const response = await axios.post('http://localhost:3000/auth/login', {
+        email,
+        password,
+      });
 
-    const user = users.find(u => u.username === username && u.password === password);
+      const { token } = response.data;
 
-    if (user) {
-      localStorage.setItem('user', JSON.stringify(user));
-      setUserRole(user.role);
-      navigateToRole(user.role);
-    } else {
-      setError('Invalid credentials. Please try again.');
+      // Save token to localStorage
+      localStorage.setItem('token', token);
+
+      // Decode role from token (optional, or fetch from response if backend sends it)
+      const decodedToken = JSON.parse(atob(token.split('.')[1]));
+      const role = decodedToken.role;
+
+      // Set role in parent component
+      setUserRole(role);
+
+      // Navigate based on role
+      navigateToRole(role);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   const navigateToRole = (role) => {
@@ -155,8 +138,7 @@ export default function Login({ setUserRole }) {
       case 'sales': navigate('/sales-executive'); break;
       case 'accounts': navigate('/accounts'); break;
       case 'rto': navigate('/rto'); break;
-      case 'manager': navigate('/manager'); break;
-      case 'stock_person': navigate('/stock'); break;
+      // Add more roles if needed (e.g., manager, stock_person)
       default: setError('Unknown role.');
     }
   };
@@ -216,12 +198,39 @@ export default function Login({ setUserRole }) {
                 DealerSync
               </Typography>
               <Typography variant="body2" align="center" sx={{ color: 'text.secondary', mb: 4 }}>
-              Seamlessly syncs all dealership operations</Typography>
+                Seamlessly syncs all dealership operations
+              </Typography>
               <Box component="form" onSubmit={handleLogin} noValidate sx={{ width: '100%' }}>
-                <TextField margin="normal" required fullWidth type="username" label="Username" autoComplete="username" value={username} onChange={(e) => setUsername(e.target.value)} variant="outlined" InputProps={{ sx: { borderRadius: '8px' } }} />
-                <TextField margin="normal" required fullWidth label="Password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} variant="outlined" InputProps={{ sx: { borderRadius: '8px' } }} />
+                <TextField
+                  margin="normal"
+                  required
+                  fullWidth
+                  label="Email" // Changed from Username to Email
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  variant="outlined"
+                  InputProps={{ sx: { borderRadius: '8px' } }}
+                />
+                <TextField
+                  margin="normal"
+                  required
+                  fullWidth
+                  label="Password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  variant="outlined"
+                  InputProps={{ sx: { borderRadius: '8px' } }}
+                />
                 {error && <Typography color="error" align="center" sx={{ mt: 2, fontSize: '0.875rem' }}>{error}</Typography>}
-                <FormControlLabel control={<Checkbox value={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} sx={{ color: '#94a3b8', '&.Mui-checked': { color: '#6366f1' } }} />} label="Remember me" sx={{ mt: 1, color: 'text.secondary' }} />
+                <FormControlLabel
+                  control={<Checkbox value={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} sx={{ color: '#94a3b8', '&.Mui-checked': { color: '#6366f1' } }} />}
+                  label="Remember me"
+                  sx={{ mt: 1, color: 'text.secondary' }}
+                />
                 <GradientButton type="submit" fullWidth disabled={isLoading} sx={{ mt: 3, mb: 2 }}>
                   {isLoading ? 'Logging in...' : 'Sign In'}
                 </GradientButton>
@@ -233,17 +242,42 @@ export default function Login({ setUserRole }) {
           ) : (
             <DesktopGlassPaper>
               <Typography variant="h4" align="center" sx={{ fontWeight: 700, background: 'linear-gradient(45deg, #6366f1, #8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', mb: 1 }}>
-               DealerSync
-
+                DealerSync
               </Typography>
               <Typography variant="body2" align="center" sx={{ color: 'text.secondary', mb: 4 }}>
-              Seamlessly syncs all dealership operations
+                Seamlessly syncs all dealership operations
               </Typography>
               <Box component="form" onSubmit={handleLogin} noValidate>
-                <TextField margin="normal" required fullWidth label="Username" type="username" autoComplete="username" value={username} onChange={(e) => setUsername(e.target.value)} variant="outlined" InputProps={{ sx: { borderRadius: '8px' } }} />
-                <TextField margin="normal" required fullWidth label="Password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} variant="outlined" InputProps={{ sx: { borderRadius: '8px' } }} />
+                <TextField
+                  margin="normal"
+                  required
+                  fullWidth
+                  label="Email" // Changed from Username to Email
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  variant="outlined"
+                  InputProps={{ sx: { borderRadius: '8px' } }}
+                />
+                <TextField
+                  margin="normal"
+                  required
+                  fullWidth
+                  label="Password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  variant="outlined"
+                  InputProps={{ sx: { borderRadius: '8px' } }}
+                />
                 {error && <Typography color="error" align="center" sx={{ mt: 2, fontSize: '0.875rem' }}>{error}</Typography>}
-                <FormControlLabel control={<Checkbox value={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} sx={{ color: '#94a3b8', '&.Mui-checked': { color: '#6366f1' } }} />} label="Remember me" sx={{ mt: 1, color: 'text.secondary' }} />
+                <FormControlLabel
+                  control={<Checkbox value={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} sx={{ color: '#94a3b8', '&.Mui-checked': { color: '#6366f1' } }} />}
+                  label="Remember me"
+                  sx={{ mt: 1, color: 'text.secondary' }}
+                />
                 <GradientButton type="submit" fullWidth disabled={isLoading} sx={{ mt: 3, mb: 2 }}>
                   {isLoading ? 'Logging in...' : 'Sign In'}
                 </GradientButton>
