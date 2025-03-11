@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import api from '../api'; // Assuming you have an api.js file for axios instance
 import {
   Box,
   Button,
@@ -35,16 +36,15 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter,
-  ModalCloseButton
+  ModalCloseButton,
 } from '@chakra-ui/react';
 import { AddIcon, CopyIcon, HamburgerIcon, SearchIcon, SettingsIcon, BellIcon, ChatIcon, ArrowBackIcon } from '@chakra-ui/icons';
-import { FaWhatsapp } from 'react-icons/fa'; // WhatsApp icon
+import { FaWhatsapp } from 'react-icons/fa';
 import Analytics from '../components/Analytics';
 import Notifications from '../components/Notifications';
 import Messages from '../components/Messages';
 
 const SalesExecutive = () => {
-  const user = JSON.parse(localStorage.getItem('user')) || { username: 'sales_user' };
   const navigate = useNavigate();
   const { isOpen: isMenuOpen, onOpen: onMenuOpen, onClose: onMenuClose } = useDisclosure();
   const { isOpen: isDrawerOpen, onOpen: onDrawerOpen, onClose: onDrawerClose } = useDisclosure();
@@ -53,21 +53,17 @@ const SalesExecutive = () => {
   const { isOpen: isMessagesOpen, onOpen: onMessagesOpen, onClose: onMessagesClose } = useDisclosure();
   const { isOpen: isSuccessModalOpen, onOpen: onSuccessModalOpen, onClose: onSuccessModalClose } = useDisclosure();
 
-  const dummyData = {
-    stats: { totalCustomers: 25, pending: 8, submitted: 17, reviewsPending: 5, reviewsDone: 20 },
-    customers: [
-      { id: 1, name: 'John Doe', phone: '123-456-7890', status: 'Pending', vehicle: 'Honda City', date: '2025-03-01' },
-      { id: 2, name: 'Jane Smith', phone: '098-765-4321', status: 'Submitted', vehicle: 'Toyota Corolla', date: '2025-03-02' },
-      { id: 3, name: 'Mike Johnson', phone: '555-555-5555', status: 'Verified', vehicle: 'Hyundai Creta', date: '2025-03-03' },
-    ],
-  };
-
-  const [stats] = useState(dummyData.stats);
-  const [customers] = useState(dummyData.customers);
-  const [filteredCustomers, setFilteredCustomers] = useState(dummyData.customers);
+  const [stats] = useState({ totalCustomers: 0, pending: 0, submitted: 0, reviewsPending: 0, reviewsDone: 0 }); // Update later with real data
+  const [customers, setCustomers] = useState([]);
+  const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [formData, setFormData] = useState({
-    name: '', phone: '', vehicle: '', variant: '', color: '', price: '',
+    customer_name: '',
+    phone_number: '',
+    vehicle: '',
+    variant: '',
+    color: '',
+    price: '',
   });
   const [generatedLink, setGeneratedLink] = useState('');
 
@@ -75,18 +71,47 @@ const SalesExecutive = () => {
   const cardBg = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.700', 'gray.200');
 
+  // Fetch customers on mount
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const response = await api.get('/customers');
+        const fetchedCustomers = response.data.customers.map(c => ({
+          id: c.id,
+          name: c.customer_name,
+          phone: c.phone_number,
+          vehicle: c.vehicle,
+          status: 'Pending', // Adjust based on backend status if added later
+          date: new Date(c.created_at).toISOString().split('T')[0],
+        }));
+        setCustomers(fetchedCustomers);
+        setFilteredCustomers(fetchedCustomers);
+      } catch (err) {
+        console.error('Failed to fetch customers:', err);
+        toast.error('Failed to load customers', { position: 'top-center' });
+        if (err.response?.status === 401) {
+          handleLogout(); // Token expired or 
+        }
+      }
+    };
+
+    fetchCustomers();
+  }, );
+
   const handleLogout = () => {
-    localStorage.removeItem('user');
+    localStorage.removeItem('token');
     navigate('/login');
   };
 
   const handleFilter = (status) => {
     const filtered = status === 'All' ? customers : customers.filter(c => c.status === status);
-    setFilteredCustomers(filtered.filter(c =>
-      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.phone.includes(searchQuery) ||
-      c.vehicle.toLowerCase().includes(searchQuery.toLowerCase())
-    ));
+    setFilteredCustomers(
+      filtered.filter(c =>
+        c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.phone.includes(searchQuery) ||
+        c.vehicle.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    );
   };
 
   const handleSearch = (e) => {
@@ -95,7 +120,7 @@ const SalesExecutive = () => {
     const filtered = customers.filter(c =>
       c.name.toLowerCase().includes(query.toLowerCase()) ||
       c.phone.includes(query) ||
-      c.vehicle.toLowerCase().includes(searchQuery.toLowerCase())
+      c.vehicle.toLowerCase().includes(query.toLowerCase())
     );
     setFilteredCustomers(filtered);
   };
@@ -104,20 +129,39 @@ const SalesExecutive = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const newCustomer = {
-      id: customers.length + 1,
-      ...formData,
-      status: 'Pending',
-      date: new Date().toISOString().split('T')[0],
-    };
-    setFilteredCustomers(prev => [...prev, newCustomer]);
-    setGeneratedLink(`https://example.com/customer/${newCustomer.id}`);
-    setFormData({ name: '', phone: '', vehicle: '', variant: '', color: '', price: '' });
-    toast.success('Customer added successfully!', { position: 'top-center' });
-    onDrawerClose(); // Close the create customer drawer
-    onSuccessModalOpen(); // Open the success modal
+    try {
+      const response = await api.post('/customers', {
+        customer_name: formData.customer_name,
+        phone_number: formData.phone_number,
+        vehicle: formData.vehicle,
+        variant: formData.variant || undefined,
+        color: formData.color || undefined,
+        price: formData.price ? parseFloat(formData.price) : undefined,
+      });
+
+      const newCustomer = {
+        id: response.data.customer.id,
+        name: response.data.customer.customer_name,
+        phone: response.data.customer.phone_number,
+        vehicle: response.data.customer.vehicle,
+        status: 'Pending', // Default status
+        date: new Date(response.data.customer.created_at).toISOString().split('T')[0],
+      };
+
+      setCustomers(prev => [...prev, newCustomer]);
+      setFilteredCustomers(prev => [...prev, newCustomer]);
+      setGeneratedLink(response.data.uniqueLink);
+      setFormData({ customer_name: '', phone_number: '', vehicle: '', variant: '', color: '', price: '' });
+
+      toast.success('Customer added successfully!', { position: 'top-center' });
+      onDrawerClose();
+      onSuccessModalOpen();
+    } catch (err) {
+      console.error('Failed to add customer:', err);
+      toast.error(err.response?.data?.error || 'Failed to add customer', { position: 'top-center' });
+    }
   };
 
   const handleCustomerClick = (id) => {
@@ -146,7 +190,7 @@ const SalesExecutive = () => {
         </HStack>
         <Menu>
           <MenuButton>
-            <Avatar name={user.username} size="sm" />
+            <Avatar name="Sales User" size="sm" /> {/* Update with real user data if available */}
           </MenuButton>
           <MenuList>
             <MenuItem onClick={handleLogout}>Sign Out</MenuItem>
@@ -215,8 +259,8 @@ const SalesExecutive = () => {
           <DrawerBody pb={6} maxH={{ base: "70vh", md: "auto" }} overflowY="auto">
             <VStack as="form" onSubmit={handleSubmit} spacing={3} h="full">
               <VStack spacing={3} w="full" flex="1">
-                <Input name="name" placeholder="Customer Name" value={formData.name} onChange={handleInputChange} variant="filled" isRequired />
-                <Input name="phone" placeholder="Phone Number" value={formData.phone} onChange={handleInputChange} variant="filled" isRequired />
+                <Input name="customer_name" placeholder="Customer Name" value={formData.customer_name} onChange={handleInputChange} variant="filled" isRequired />
+                <Input name="phone_number" placeholder="Phone Number" value={formData.phone_number} onChange={handleInputChange} variant="filled" isRequired />
                 <Input name="vehicle" placeholder="Vehicle" value={formData.vehicle} onChange={handleInputChange} variant="filled" isRequired />
                 <Input name="variant" placeholder="Variant (optional)" value={formData.variant} onChange={handleInputChange} variant="filled" />
                 <Input name="color" placeholder="Color (optional)" value={formData.color} onChange={handleInputChange} variant="filled" />
@@ -238,22 +282,10 @@ const SalesExecutive = () => {
             <VStack spacing={4} align="stretch">
               <Text fontSize="sm" color={textColor} wordBreak="break-all">{generatedLink}</Text>
               <HStack spacing={2}>
-                <Button
-                  leftIcon={<CopyIcon />}
-                  colorScheme="purple"
-                  variant="solid"
-                  size="md"
-                  onClick={handleCopyLink}
-                >
+                <Button leftIcon={<CopyIcon />} colorScheme="purple" variant="solid" size="md" onClick={handleCopyLink}>
                   Copy
                 </Button>
-                <Button
-                  leftIcon={<FaWhatsapp />}
-                  colorScheme="green"
-                  variant="solid"
-                  size="md"
-                  onClick={handleShareWhatsApp}
-                >
+                <Button leftIcon={<FaWhatsapp />} colorScheme="green" variant="solid" size="md" onClick={handleShareWhatsApp}>
                   Share via WhatsApp
                 </Button>
               </HStack>
@@ -269,19 +301,19 @@ const SalesExecutive = () => {
       <Drawer isOpen={isAnalyticsOpen} placement="right" onClose={onAnalyticsClose} size="full">
         <DrawerOverlay />
         <DrawerContent>
-          <Analytics onClose={onAnalyticsClose} stats={stats} user={user} onMenuOpen={onMenuOpen} />
+          <Analytics onClose={onAnalyticsClose} stats={stats} user={{ username: 'Sales User' }} onMenuOpen={onMenuOpen} />
         </DrawerContent>
       </Drawer>
       <Drawer isOpen={isNotificationsOpen} placement="right" onClose={onNotificationsClose} size="full">
         <DrawerOverlay />
         <DrawerContent>
-          <Notifications onClose={onNotificationsClose} user={user} onMenuOpen={onMenuOpen} />
+          <Notifications onClose={onNotificationsClose} user={{ username: 'Sales User' }} onMenuOpen={onMenuOpen} />
         </DrawerContent>
       </Drawer>
       <Drawer isOpen={isMessagesOpen} placement="right" onClose={onMessagesClose} size="full">
         <DrawerOverlay />
         <DrawerContent>
-          <Messages onClose={onMessagesClose} user={user} onMenuOpen={onMenuOpen} />
+          <Messages onClose={onMessagesClose} user={{ username: 'Sales User' }} onMenuOpen={onMenuOpen} />
         </DrawerContent>
       </Drawer>
 
