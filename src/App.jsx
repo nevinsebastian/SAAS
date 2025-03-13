@@ -4,7 +4,7 @@ import { ChakraProvider, extendTheme } from '@chakra-ui/react';
 import SalesExecutive from './pages/SalesExecutive';
 import Login from './pages/Login';
 import Admin from './pages/Admin';
-import CustomerDetails from './pages/CustomerDetails';
+import CustomerDetails from './pages/CustomerDetails'; // Import updated component
 import Accounts from './pages/Accounts';
 import RtoDashboard from './pages/RtoDashboard';
 
@@ -19,17 +19,11 @@ const chakraTheme = extendTheme({
     body: "'Inter', sans-serif",
   },
   colors: {
-    primary: {
-      500: '#6366f1',
-    },
-    gray: {
-      700: '#1e293b',
-      800: '#0f172a',
-    },
+    primary: { 500: '#6366f1' },
+    gray: { 700: '#1e293b', 800: '#0f172a' },
   },
 });
 
-// ProtectedRoute Component
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const token = localStorage.getItem('token');
   let userRole;
@@ -40,7 +34,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
       userRole = decoded.role;
     } catch (err) {
       console.error('Invalid token', err);
-      localStorage.removeItem('token'); // Clear invalid token
+      localStorage.removeItem('token');
     }
   }
 
@@ -66,7 +60,7 @@ const App = () => {
         setUserRole(decoded.role);
       } catch (err) {
         console.error('Token parsing failed', err);
-        localStorage.removeItem('token'); // Clear invalid token
+        localStorage.removeItem('token');
         setUserRole(null);
       }
     }
@@ -74,66 +68,17 @@ const App = () => {
 
   return (
     <Router>
-      <Routes>
-        {/* Root path: Redirect based on role or to login */}
-        <Route
-          path="/"
-          element={
-            userRole ? <Navigate to={`/${userRole === 'sales' ? 'sales-executive' : userRole}`} replace /> : <Navigate to="/login" replace />
-          }
-        />
-
-        {/* Login page */}
-        <Route path="/login" element={<Login setUserRole={setUserRole} />} />
-
-        {/* Protected Routes */}
-        <Route
-          path="/sales-executive"
-          element={
-            <ProtectedRoute allowedRoles={['sales']}>
-              <ChakraProvider theme={chakraTheme}>
-                <SalesExecutive />
-              </ChakraProvider>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <Admin />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/accounts"
-          element={
-            <ProtectedRoute allowedRoles={['accounts']}>
-              <ChakraProvider theme={chakraTheme}>
-                <Accounts />
-              </ChakraProvider>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/rto"
-          element={
-            <ProtectedRoute allowedRoles={['rto']}>
-              <ChakraProvider theme={chakraTheme}>
-                <RtoDashboard />
-              </ChakraProvider>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/customer-details/:customerId"
-          element={
-            <ProtectedRoute allowedRoles={['sales', 'accounts', 'rto', 'admin']}>
-              <CustomerDetails />
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
+      <ChakraProvider theme={chakraTheme}>
+        <Routes>
+          <Route path="/" element={userRole ? <Navigate to={`/${userRole === 'sales' ? 'sales-executive' : userRole}`} replace /> : <Navigate to="/login" replace />} />
+          <Route path="/login" element={<Login setUserRole={setUserRole} />} />
+          <Route path="/sales-executive" element={<ProtectedRoute allowedRoles={['sales']}><SalesExecutive /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><Admin /></ProtectedRoute>} />
+          <Route path="/accounts" element={<ProtectedRoute allowedRoles={['accounts']}><Accounts /></ProtectedRoute>} />
+          <Route path="/rto" element={<ProtectedRoute allowedRoles={['rto']}><RtoDashboard /></ProtectedRoute>} />
+          <Route path="/customer-details/:customerId" element={<CustomerDetails />} /> {/* Public route */}
+        </Routes>
+      </ChakraProvider>
     </Router>
   );
 };
