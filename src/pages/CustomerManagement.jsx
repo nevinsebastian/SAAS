@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -13,9 +13,23 @@ import {
   useColorModeValue,
   Divider,
   Grid,
-  GridItem,
   Image,
+  HStack,
+  IconButton,
+  Flex,
+  Badge,
+  Card,
+  CardBody,
 } from '@chakra-ui/react';
+import {
+  ArrowBackIcon,
+  CheckCircleIcon,
+  WarningIcon,
+  TimeIcon,
+  DeleteIcon,
+  CheckIcon,
+  ArrowForwardIcon,
+} from '@chakra-ui/icons';
 import axios from 'axios';
 
 const CustomerManagement = () => {
@@ -37,10 +51,13 @@ const CustomerManagement = () => {
     passport_photo: null,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const blobUrlsRef = useRef({});
 
-  const bgGradient = useColorModeValue('gray.50', 'gray.900');
-  const cardBg = useColorModeValue('white', 'gray.800');
-  const textColor = useColorModeValue('gray.700', 'gray.200');
+  const bgGradient = useColorModeValue('linear(to-b, gray.50, gray.100)', 'linear(to-b, gray.800, gray.900)');
+  const cardBg = useColorModeValue('gray', 'gray.800');
+  const textColor = useColorModeValue('gray.600', 'gray.200');
+  const accentColor = useColorModeValue('blue.600', 'blue.300');
+  const borderColor = useColorModeValue('gray.200', 'gray.700');
 
   useEffect(() => {
     const fetchCustomer = async () => {
@@ -49,6 +66,7 @@ const CustomerManagement = () => {
         const response = await axios.get(`http://localhost:3000/customers/${customerId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        console.log('Customer data:', response.data.customer); // Debug customer response
         setCustomer(response.data.customer);
         setPriceData({
           ex_showroom: response.data.customer.ex_showroom || '',
@@ -59,21 +77,27 @@ const CustomerManagement = () => {
           amount_paid: '',
         });
 
-        // Fetch images
         const imageTypes = ['aadhar_front', 'aadhar_back', 'passport_photo'];
         const imagePromises = imageTypes.map(async (type) => {
-          if (response.data.customer[type]) {
+          try {
+            console.log(`Fetching ${type} for customer ${customerId}`);
             const imgResponse = await axios.get(`http://localhost:3000/customers/${customerId}/${type}`, {
               headers: { Authorization: `Bearer ${token}` },
               responseType: 'blob',
             });
-            return { [type]: URL.createObjectURL(imgResponse.data) };
+            const imageUrl = URL.createObjectURL(imgResponse.data);
+            console.log(`${type} URL:`, imageUrl);
+            return { [type]: imageUrl };
+          } catch (err) {
+            console.error(`Failed to fetch ${type}:`, err.response?.status);
+            return { [type]: null };
           }
-          return { [type]: null };
         });
 
         const imageResults = await Promise.all(imagePromises);
-        setImages(Object.assign({}, ...imageResults));
+        const newImages = Object.assign({}, ...imageResults);
+        setImages(newImages);
+        blobUrlsRef.current = newImages;
       } catch (err) {
         console.error('Failed to fetch customer:', err);
         toast({
@@ -86,6 +110,12 @@ const CustomerManagement = () => {
       }
     };
     fetchCustomer();
+
+    return () => {
+      Object.values(blobUrlsRef.current).forEach((url) => {
+        if (url) URL.revokeObjectURL(url);
+      });
+    };
   }, [customerId, toast]);
 
   const handleInputChange = (e) => {
@@ -95,7 +125,6 @@ const CustomerManagement = () => {
   const handlePriceSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-
     try {
       const token = localStorage.getItem('token');
       const response = await axios.put(
@@ -161,115 +190,287 @@ const CustomerManagement = () => {
 
   const remainingAmount = (customer.total_price || 0) - (customer.amount_paid || 0);
 
+  const statusConfig = {
+    Pending: { color: 'orange.500', icon: TimeIcon },
+    Submitted: { color: 'blue.500', icon: WarningIcon },
+    Verified: { color: 'green.500', icon: CheckCircleIcon },
+  };
+  const { color: statusColor, icon: StatusIcon } = statusConfig[customer.status] || {};
+
   return (
-    <Box minH="100vh" bg={bgGradient} p={{ base: 4, md: 6 }}>
-      <Box maxW="800px" mx="auto" bg={cardBg} borderRadius="lg" p={6} boxShadow="lg">
-        <Heading size="lg" mb={4} color="purple.600" textAlign="center">Customer Management</Heading>
+    <Box minH="100vh" bg={bgGradient} p={{ base: 2, sm: 4 }}>
+      <Box 
+        maxW={{ base: '100%', md: '800px' }} 
+        mx="auto" 
+        bg={cardBg} 
+        borderRadius={{ base: 'md', md: 'xl' }} 
+        p={{ base: 3, sm: 5 }} 
+        boxShadow={{ base: 'md', md: 'lg' }}
+      >
+        <Flex 
+          direction={{ base: 'column', sm: 'row' }} 
+          align={{ base: 'stretch', sm: 'center' }} 
+          justify="space-between" 
+          mb={4}
+          gap={2}
+        >
+          <HStack spacing={2} w={{ base: '100%', sm: 'auto' }}>
+            <IconButton
+              icon={<ArrowBackIcon />}
+              onClick={() => navigate('/sales-executive')}
+              variant="ghost"
+              colorScheme="blue"
+              size={{ base: 'md', sm: 'lg' }}
+              aria-label="Back to list"
+            />
+            <Heading 
+              size={{ base: 'md', md: 'lg' }} 
+              color={accentColor}
+              isTruncated
+            >
+              Customer Management
+            </Heading>
+          </HStack>
+          <HStack 
+            spacing={2} 
+            wrap="wrap" 
+            justify={{ base: 'center', sm: 'flex-end' }}
+            w={{ base: '100%', sm: 'auto' }}
+          >
+            <Badge
+              variant="subtle"
+              colorScheme={statusColor.split('.')[0]}
+              px={2}
+              py={1}
+              borderRadius="full"
+              fontSize={{ base: 'xs', sm: 'sm' }}
+            >
+              <StatusIcon boxSize={3} mr={1} />
+              {customer.status}
+            </Badge>
+            <Button 
+              leftIcon={<CheckIcon />} 
+              colorScheme="green" 
+              size={{ base: 'sm', sm: 'md' }}
+              variant="solid"
+            >
+              Verify
+            </Button>
+            <Button 
+              leftIcon={<DeleteIcon />} 
+              colorScheme="red" 
+              size={{ base: 'sm', sm: 'md' }}
+              variant="outline"
+            >
+              Delete
+            </Button>
+            <Button 
+              leftIcon={<ArrowForwardIcon />} 
+              colorScheme="blue" 
+              size={{ base: 'sm', sm: 'md' }}
+              variant="solid"
+            >
+              Delivered
+            </Button>
+          </HStack>
+        </Flex>
 
-        {/* Booking Details */}
-        <VStack spacing={3} mb={6} align="stretch">
-          <Text fontWeight="bold" color={textColor}>Booking Information</Text>
-          <Text color={textColor}>Name: {customer.customer_name}</Text>
-          <Text color={textColor}>Vehicle: {customer.vehicle}</Text>
-          <Text color={textColor}>Variant: {customer.variant || 'Not specified'}</Text>
-          <Text color={textColor}>Status: {customer.status}</Text>
-        </VStack>
+        <VStack spacing={{ base: 4, md: 6 }} align="stretch">
+          <VStack spacing={4} align="stretch">
+            <Card bg='gray.700' borderRadius="md">
+              <CardBody p={{ base: 3, sm: 4 }}>
+                <Text fontWeight="semibold" color={accentColor} mb={2}>
+                  Booking Info
+                </Text>
+                <VStack spacing={1} align="start" fontSize={{ base: 'sm', md: 'md' }}>
+                  <Text color={textColor}><strong>Name:</strong> {customer.customer_name}</Text>
+                  <Text color={textColor}><strong>Vehicle:</strong> {customer.vehicle}</Text>
+                  <Text color={textColor}><strong>Variant:</strong> {customer.variant || 'N/A'}</Text>
+                </VStack>
+              </CardBody>
+            </Card>
 
-        {/* Customer Uploaded Details */}
-        <VStack spacing={3} mb={6} align="stretch">
-          <Text fontWeight="bold" color={textColor}>Customer Details</Text>
-          <Text color={textColor}>Date of Birth: {customer.dob || 'Not provided'}</Text>
-          <Text color={textColor}>Address: {customer.address || 'Not provided'}</Text>
-          <Text color={textColor}>Mobile 1: {customer.mobile_1 || 'Not provided'}</Text>
-          <Text color={textColor}>Mobile 2: {customer.mobile_2 || 'Not provided'}</Text>
-          <Text color={textColor}>Email: {customer.email || 'Not provided'}</Text>
-          <Text color={textColor}>Nominee: {customer.nominee || 'Not provided'}</Text>
-          <Text color={textColor}>Nominee Relation: {customer.nominee_relation || 'Not provided'}</Text>
-          <Text color={textColor}>Payment Mode: {customer.payment_mode || 'Not provided'}</Text>
-          {customer.payment_mode === 'Finance' && (
-            <>
-              <Text color={textColor}>Finance Company: {customer.finance_company || 'Not provided'}</Text>
-              <Text color={textColor}>Finance Amount: ₹{customer.finance_amount?.toLocaleString() || 'Not provided'}</Text>
-            </>
-          )}
-        </VStack>
+            <Card bg='gray.700' borderRadius="md">
+              <CardBody p={{ base: 3, sm: 4 }}>
+                <Text fontWeight="semibold" color={accentColor} mb={2}>
+                  Customer Details
+                </Text>
+                <VStack spacing={1} align="start" fontSize={{ base: 'sm', md: 'md' }}>
+                  <Text color={textColor}><strong>DOB:</strong> {customer.dob || 'N/A'}</Text>
+                  <Text color={textColor}><strong>Address:</strong> {customer.address || 'N/A'}</Text>
+                  <Text color={textColor}><strong>Mobile:</strong> {customer.mobile_1 || 'N/A'}</Text>
+                  {customer.mobile_2 && <Text color={textColor}><strong>Mobile 2:</strong> {customer.mobile_2}</Text>}
+                  <Text color={textColor}><strong>Email:</strong> {customer.email || 'N/A'}</Text>
+                  <Text color={textColor}><strong>Nominee:</strong> {customer.nominee || 'N/A'}</Text>
+                  {customer.payment_mode === 'Finance' && (
+                    <>
+                      <Text color={textColor}><strong>Finance Co:</strong> {customer.finance_company || 'N/A'}</Text>
+                      <Text color={textColor}><strong>Finance Amount:</strong> ₹{customer.finance_amount?.toLocaleString() || 'N/A'}</Text>
+                    </>
+                  )}
+                </VStack>
+              </CardBody>
+            </Card>
 
-        {/* Uploaded Images */}
-        <VStack spacing={3} mb={6} align="stretch">
-          <Text fontWeight="bold" color={textColor}>Uploaded Images</Text>
-          <Grid templateColumns={{ base: '1fr', md: '1fr 1fr 1fr' }} gap={4}>
-            <Box>
-              <Text color={textColor}>Aadhar Front</Text>
-              {images.aadhar_front ? <Image src={images.aadhar_front} maxW="200px" /> : <Text color="gray.500">Not uploaded</Text>}
-            </Box>
-            <Box>
-              <Text color={textColor}>Aadhar Back</Text>
-              {images.aadhar_back ? <Image src={images.aadhar_back} maxW="200px" /> : <Text color="gray.500">Not uploaded</Text>}
-            </Box>
-            <Box>
-              <Text color={textColor}>Passport Photo</Text>
-              {images.passport_photo ? <Image src={images.passport_photo} maxW="200px" /> : <Text color="gray.500">Not uploaded</Text>}
-            </Box>
-          </Grid>
-        </VStack>
-
-        {/* Price Details Form */}
-        <form onSubmit={handlePriceSubmit}>
-          <VStack spacing={4} mb={6} align="stretch">
-            <Text fontWeight="bold" color={textColor}>Update Price Details</Text>
-            <FormControl>
-              <FormLabel color={textColor}>Ex-Showroom</FormLabel>
-              <Input name="ex_showroom" type="number" value={priceData.ex_showroom} onChange={handleInputChange} variant="filled" />
-            </FormControl>
-            <FormControl>
-              <FormLabel color={textColor}>Tax</FormLabel>
-              <Input name="tax" type="number" value={priceData.tax} onChange={handleInputChange} variant="filled" />
-            </FormControl>
-            <FormControl>
-              <FormLabel color={textColor}>Insurance</FormLabel>
-              <Input name="insurance" type="number" value={priceData.insurance} onChange={handleInputChange} variant="filled" />
-            </FormControl>
-            <FormControl>
-              <FormLabel color={textColor}>Booking Fee</FormLabel>
-              <Input name="booking_fee" type="number" value={priceData.booking_fee} onChange={handleInputChange} variant="filled" />
-            </FormControl>
-            <FormControl>
-              <FormLabel color={textColor}>Accessories</FormLabel>
-              <Input name="accessories" type="number" value={priceData.accessories} onChange={handleInputChange} variant="filled" />
-            </FormControl>
-            <Button type="submit" colorScheme="purple" size="lg" w="full" isLoading={isSubmitting}>Update Price</Button>
+            <Card bg='gray.700' borderRadius="md">
+              <CardBody p={{ base: 3, sm: 4 }}>
+                <Text fontWeight="semibold" color={accentColor} mb={2}>
+                  Documents
+                </Text>
+                <Grid 
+                  templateColumns={{ base: '1fr', sm: 'repeat(3, 1fr)' }} 
+                  gap={3}
+                >
+                  {['aadhar_front', 'aadhar_back', 'passport_photo'].map((type) => (
+                    <Box 
+                      key={type} 
+                      bg={cardBg} 
+                      p={2} 
+                      borderRadius="md" 
+                      border="1px" 
+                      borderColor={borderColor}
+                    >
+                      <Text 
+                        color={textColor} 
+                        fontSize="sm" 
+                        fontWeight="medium"
+                        mb={1}
+                      >
+                        {type.replace('_', ' ').toUpperCase()}
+                      </Text>
+                      {images[type] ? (
+                        <Image 
+                          src={images[type]} 
+                          maxW={{ base: '100%', sm: '120px' }} 
+                          borderRadius="md" 
+                          objectFit="cover"
+                          alt={`${type} document`}
+                          fallback={<Text color="gray.400">Loading...</Text>}
+                        />
+                      ) : (
+                        <Text color="gray.400" fontSize="xs">Not uploaded</Text>
+                      )}
+                    </Box>
+                  ))}
+                </Grid>
+              </CardBody>
+            </Card>
           </VStack>
-        </form>
 
-        {/* Payment Form */}
-        <form onSubmit={handlePaymentSubmit}>
-          <VStack spacing={4} mb={6} align="stretch">
-            <Text fontWeight="bold" color={textColor}>Add Payment</Text>
-            <FormControl>
-              <FormLabel color={textColor}>Amount Paid</FormLabel>
-              <Input name="amount_paid" type="number" value={priceData.amount_paid} onChange={handleInputChange} variant="filled" />
-            </FormControl>
-            <Button type="submit" colorScheme="purple" size="lg" w="full" isLoading={isSubmitting}>Add Payment</Button>
+          <VStack spacing={4} align="stretch">
+          <Card bg='gray.700' borderRadius="md">
+          <CardBody p={{ base: 3, sm: 4 }}>
+                <Text fontWeight="semibold" color={accentColor} mb={2}>
+                  Price Details
+                </Text>
+                <form onSubmit={handlePriceSubmit}>
+                  <VStack spacing={3}>
+                    {[
+                      { label: 'Ex-Showroom', name: 'ex_showroom' },
+                      { label: 'Tax', name: 'tax' },
+                      { label: 'Insurance', name: 'insurance' },
+                      { label: 'Booking Fee', name: 'booking_fee' },
+                      { label: 'Accessories', name: 'accessories' },
+                    ].map(({ label, name }) => (
+                      <FormControl key={name}>
+                        <FormLabel fontSize="sm" color={textColor}>{label}</FormLabel>
+                        <Input
+                          name={name}
+                          type="number"
+                          value={priceData[name]}
+                          onChange={handleInputChange}
+                          size="sm"
+                          variant="outline"
+                          bg="gray.600"
+                          borderColor="gray.200"
+                          _focus={{ borderColor: accentColor }}
+                        />
+                      </FormControl>
+                    ))}
+                    <Button
+                      type="submit"
+                      colorScheme="blue"
+                      size="md"
+                      w="full"
+                      isLoading={isSubmitting}
+                      mt={2}
+                    >
+                      Update Price
+                    </Button>
+                  </VStack>
+                </form>
+              </CardBody>
+            </Card>
+
+            <Card bg='gray.700' borderRadius="md">
+              <CardBody p={{ base: 3, sm: 4 }}>
+                <Text fontWeight="semibold" color={accentColor} mb={2}>
+                  Add Payment
+                </Text>
+                <form onSubmit={handlePaymentSubmit}>
+                  <VStack spacing={3}>
+                    <FormControl>
+                      <FormLabel fontSize="sm" color={textColor}>Amount Paid</FormLabel>
+                      <Input
+                        name="amount_paid"
+                        type="number"
+                        value={priceData.amount_paid}
+                        onChange={handleInputChange}
+                        size="sm"
+                        variant="outline"
+                        bg="gray.600"
+                        borderColor="gray.200"
+                        _focus={{ borderColor: accentColor }}
+                      />
+                    </FormControl>
+                    <Button
+                      type="submit"
+                      colorScheme="blue"
+                      size="md"
+                      w="full"
+                      isLoading={isSubmitting}
+                    >
+                      Add Payment
+                    </Button>
+                  </VStack>
+                </form>
+              </CardBody>
+            </Card>
+
+            <Card bg='gray.700' borderRadius="md">
+              <CardBody p={{ base: 3, sm: 4 }}>
+                <Text fontWeight="semibold" color={accentColor} mb={2}>
+                  Price Summary
+                </Text>
+                <VStack spacing={1} align="start" fontSize={{ base: 'sm', md: 'md' }}>
+                  <Grid templateColumns="1fr 1fr" gap={2} w="full">
+                    <Text color={textColor}>Ex-Showroom:</Text>
+                    <Text color={textColor}>₹{customer.ex_showroom?.toLocaleString() || '0'}</Text>
+                    <Text color={textColor}>Tax:</Text>
+                    <Text color={textColor}>₹{customer.tax?.toLocaleString() || '0'}</Text>
+                    <Text color={textColor}>Insurance:</Text>
+                    <Text color={textColor}>₹{customer.insurance?.toLocaleString() || '0'}</Text>
+                    <Text color={textColor}>Booking Fee:</Text>
+                    <Text color={textColor}>₹{customer.booking_fee?.toLocaleString() || '0'}</Text>
+                    <Text color={textColor}>Accessories:</Text>
+                    <Text color={textColor}>₹{customer.accessories?.toLocaleString() || '0'}</Text>
+                  </Grid>
+                  <Divider my={2} />
+                  
+                  <Text fontWeight="semibold" color={textColor}>
+                    Total: ₹{customer.total_price?.toLocaleString() || '0'}
+                  </Text>
+                  <Text color={textColor}>
+                    Paid: ₹{customer.amount_paid?.toLocaleString() || '0'}
+                  </Text>
+                  <Text color={remainingAmount > 0 ? 'red.500' : 'green.500'}>
+                    Remaining: ₹{remainingAmount.toLocaleString()}
+                  </Text>
+                </VStack>
+              </CardBody>
+            </Card>
           </VStack>
-        </form>
-
-        {/* Price Summary */}
-        <VStack spacing={3} align="stretch">
-          <Text fontWeight="bold" color={textColor}>Price Summary</Text>
-          <Grid templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={2}>
-            <GridItem><Text color={textColor}>Ex-Showroom: ₹{customer.ex_showroom?.toLocaleString() || '0'}</Text></GridItem>
-            <GridItem><Text color={textColor}>Tax: ₹{customer.tax?.toLocaleString() || '0'}</Text></GridItem>
-            <GridItem><Text color={textColor}>Insurance: ₹{customer.insurance?.toLocaleString() || '0'}</Text></GridItem>
-            <GridItem><Text color={textColor}>Booking Fee: ₹{customer.booking_fee?.toLocaleString() || '0'}</Text></GridItem>
-            <GridItem><Text color={textColor}>Accessories: ₹{customer.accessories?.toLocaleString() || '0'}</Text></GridItem>
-          </Grid>
-          <Divider />
-          <Text fontWeight="bold" color={textColor}>Total Price: ₹{customer.total_price?.toLocaleString() || '0'}</Text>
-          <Text color={textColor}>Amount Paid: ₹{customer.amount_paid?.toLocaleString() || '0'}</Text>
-          <Text color={textColor}>Remaining Amount: ₹{remainingAmount.toLocaleString()}</Text>
         </VStack>
-
-        <Button mt={6} colorScheme="gray" onClick={() => navigate('/sales-executive')}>Back to List</Button>
       </Box>
     </Box>
   );
