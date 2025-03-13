@@ -190,8 +190,8 @@ const SalesExecutive = () => {
     }
   };
 
-  const handleCustomerClick = (id) => {
-    navigate(`/customer-details/${id}`);
+  const handleCustomerClick = (customerId) => {
+    navigate(`/customer-management/${customerId}`);
   };
 
   const handleCopyLink = () => {

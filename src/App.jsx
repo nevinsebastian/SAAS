@@ -5,7 +5,9 @@ import SalesExecutive from './pages/SalesExecutive';
 import Login from './pages/Login';
 import Admin from './pages/Admin';
 import CustomerDetails from './pages/CustomerDetails'; // Import updated component
+import CustomerManagement from './pages/CustomerManagement'; // New import
 import Accounts from './pages/Accounts';
+
 import RtoDashboard from './pages/RtoDashboard';
 
 // Chakra UI Theme (unchanged)
@@ -73,6 +75,7 @@ const App = () => {
           <Route path="/" element={userRole ? <Navigate to={`/${userRole === 'sales' ? 'sales-executive' : userRole}`} replace /> : <Navigate to="/login" replace />} />
           <Route path="/login" element={<Login setUserRole={setUserRole} />} />
           <Route path="/sales-executive" element={<ProtectedRoute allowedRoles={['sales']}><SalesExecutive /></ProtectedRoute>} />
+          <Route path="/customer-management/:customerId" element={<ProtectedRoute allowedRoles={['sales']}><CustomerManagement /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><Admin /></ProtectedRoute>} />
           <Route path="/accounts" element={<ProtectedRoute allowedRoles={['accounts']}><Accounts /></ProtectedRoute>} />
           <Route path="/rto" element={<ProtectedRoute allowedRoles={['rto']}><RtoDashboard /></ProtectedRoute>} />

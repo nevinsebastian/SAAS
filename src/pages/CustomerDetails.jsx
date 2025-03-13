@@ -11,9 +11,10 @@ import {
   Text,
   Select,
   useToast,
-  Flex,
   useColorModeValue,
-  Image,
+  Divider,
+  Grid,
+  GridItem,
 } from '@chakra-ui/react';
 import axios from 'axios';
 
@@ -50,7 +51,20 @@ const CustomerDetails = () => {
       try {
         const response = await axios.get(`http://localhost:3000/customers/${customerId}`);
         setCustomer(response.data.customer);
-        setFormData(prev => ({ ...prev, name: response.data.customer.customer_name, mobile_1: response.data.customer.phone_number }));
+        setFormData(prev => ({
+          ...prev,
+          name: response.data.customer.customer_name,
+          mobile_1: response.data.customer.phone_number,
+          dob: response.data.customer.dob || '',
+          address: response.data.customer.address || '',
+          mobile_2: response.data.customer.mobile_2 || '',
+          email: response.data.customer.email || '',
+          nominee: response.data.customer.nominee || '',
+          nominee_relation: response.data.customer.nominee_relation || '',
+          payment_mode: response.data.customer.payment_mode || '',
+          finance_company: response.data.customer.finance_company || '',
+          finance_amount: response.data.customer.finance_amount || '',
+        }));
       } catch (err) {
         console.error('Failed to fetch customer:', err);
         toast({
@@ -78,24 +92,23 @@ const CustomerDetails = () => {
     setIsSubmitting(true);
 
     const formDataToSend = new FormData();
-    formDataToSend.append('status', 'Submitted');
     Object.keys(formData).forEach(key => formData[key] && formDataToSend.append(key, formData[key]));
     if (files.aadhar_front) formDataToSend.append('aadhar_front', files.aadhar_front);
     if (files.aadhar_back) formDataToSend.append('aadhar_back', files.aadhar_back);
     if (files.passport_photo) formDataToSend.append('passport_photo', files.passport_photo);
 
     try {
-      await axios.put(`http://localhost:3000/customers/${customerId}`, formDataToSend, {
+      const response = await axios.put(`http://localhost:3000/customers/${customerId}`, formDataToSend, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
+      setCustomer(response.data.customer);
       toast({
-        title: 'Success',
-        description: 'Details submitted successfully!',
+        title: ' TectSuccess',
+        description: response.data.customer.status === 'Submitted' ? 'Details fully submitted!' : 'Details updated successfully!',
         status: 'success',
         duration: 3000,
         isClosable: true,
       });
-      setCustomer(prev => ({ ...prev, status: 'Submitted' }));
     } catch (err) {
       console.error('Failed to submit details:', err);
       toast({
@@ -112,6 +125,8 @@ const CustomerDetails = () => {
 
   if (!customer) return <Text>Loading...</Text>;
 
+  const remainingAmount = (customer.total_price || 0) - (customer.amount_paid || 0);
+
   return (
     <Box minH="100vh" bg={bgGradient} p={{ base: 4, md: 6 }} display="flex" justifyContent="center" alignItems="center">
       <Box maxW={{ base: '100%', md: '600px' }} w="full" bg={cardBg} borderRadius="lg" p={6} boxShadow="lg">
@@ -122,29 +137,29 @@ const CustomerDetails = () => {
           <Text fontWeight="bold" color={textColor}>Booking Information</Text>
           <Text color={textColor}>Name: {customer.customer_name}</Text>
           <Text color={textColor}>Vehicle: {customer.vehicle}</Text>
-          <Text color={textColor}>Variant: {customer.variant || 'Not specified'}</Text>
+          <Text color={textColor}>Variant: {customer.variant || 'Not specified Eco'}</Text>
           <Text color={textColor}>Status: {customer.status}</Text>
         </VStack>
 
-        {/* Form for Additional Details */}
         {customer.status === 'Pending' ? (
+          // Form for Partial Submission
           <form onSubmit={handleSubmit}>
             <VStack spacing={4} align="stretch">
               <FormControl>
                 <FormLabel color={textColor}>Full Name</FormLabel>
-                <Input name="name" value={formData.name} onChange={handleInputChange} variant="filled" isRequired />
+                <Input name="name" value={formData.name} onChange={handleInputChange} variant="filled" isDisabled />
               </FormControl>
               <FormControl>
                 <FormLabel color={textColor}>Date of Birth</FormLabel>
-                <Input name="dob" type="date" value={formData.dob} onChange={handleInputChange} variant="filled" isRequired />
+                <Input name="dob" type="date" value={formData.dob} onChange={handleInputChange} variant="filled" />
               </FormControl>
               <FormControl>
                 <FormLabel color={textColor}>Address</FormLabel>
-                <Input name="address" value={formData.address} onChange={handleInputChange} variant="filled" isRequired />
+                <Input name="address" value={formData.address} onChange={handleInputChange} variant="filled" />
               </FormControl>
               <FormControl>
                 <FormLabel color={textColor}>Mobile 1</FormLabel>
-                <Input name="mobile_1" value={formData.mobile_1} onChange={handleInputChange} variant="filled" isRequired />
+                <Input name="mobile_1" value={formData.mobile_1} onChange={handleInputChange} variant="filled" isDisabled />
               </FormControl>
               <FormControl>
                 <FormLabel color={textColor}>Mobile 2 (Optional)</FormLabel>
@@ -152,19 +167,19 @@ const CustomerDetails = () => {
               </FormControl>
               <FormControl>
                 <FormLabel color={textColor}>Email</FormLabel>
-                <Input name="email" type="email" value={formData.email} onChange={handleInputChange} variant="filled" isRequired />
+                <Input name="email" type="email" value={formData.email} onChange={handleInputChange} variant="filled" />
               </FormControl>
               <FormControl>
                 <FormLabel color={textColor}>Nominee</FormLabel>
-                <Input name="nominee" value={formData.nominee} onChange={handleInputChange} variant="filled" isRequired />
+                <Input name="nominee" value={formData.nominee} onChange={handleInputChange} variant="filled" />
               </FormControl>
               <FormControl>
                 <FormLabel color={textColor}>Relation with Nominee</FormLabel>
-                <Input name="nominee_relation" value={formData.nominee_relation} onChange={handleInputChange} variant="filled" isRequired />
+                <Input name="nominee_relation" value={formData.nominee_relation} onChange={handleInputChange} variant="filled" />
               </FormControl>
               <FormControl>
                 <FormLabel color={textColor}>Payment Mode</FormLabel>
-                <Select name="payment_mode" value={formData.payment_mode} onChange={handleInputChange} variant="filled" isRequired placeholder="Select payment mode">
+                <Select name="payment_mode" value={formData.payment_mode} onChange={handleInputChange} variant="filled" placeholder="Select payment mode">
                   <option value="Cash">Cash</option>
                   <option value="Finance">Finance</option>
                 </Select>
@@ -173,31 +188,68 @@ const CustomerDetails = () => {
                 <>
                   <FormControl>
                     <FormLabel color={textColor}>Finance Company</FormLabel>
-                    <Input name="finance_company" value={formData.finance_company} onChange={handleInputChange} variant="filled" isRequired />
+                    <Input name="finance_company" value={formData.finance_company} onChange={handleInputChange} variant="filled" />
                   </FormControl>
                   <FormControl>
                     <FormLabel color={textColor}>Finance Amount</FormLabel>
-                    <Input name="finance_amount" type="number" value={formData.finance_amount} onChange={handleInputChange} variant="filled" isRequired />
+                    <Input name="finance_amount" type="number" value={formData.finance_amount} onChange={handleInputChange} variant="filled" />
                   </FormControl>
                 </>
               )}
               <FormControl>
                 <FormLabel color={textColor}>Aadhar Front</FormLabel>
-                <Input name="aadhar_front" type="file" accept="image/*" onChange={handleFileChange} variant="filled" isRequired />
+                <Input name="aadhar_front" type="file" accept="image/*" onChange={handleFileChange} variant="filled" />
               </FormControl>
               <FormControl>
                 <FormLabel color={textColor}>Aadhar Back</FormLabel>
-                <Input name="aadhar_back" type="file" accept="image/*" onChange={handleFileChange} variant="filled" isRequired />
+                <Input name="aadhar_back" type="file" accept="image/*" onChange={handleFileChange} variant="filled" />
               </FormControl>
               <FormControl>
                 <FormLabel color={textColor}>Passport-Size Photo</FormLabel>
-                <Input name="passport_photo" type="file" accept="image/*" onChange={handleFileChange} variant="filled" isRequired />
+                <Input name="passport_photo" type="file" accept="image/*" onChange={handleFileChange} variant="filled" />
               </FormControl>
-              <Button type="submit" colorScheme="purple" size="lg" w="full" isLoading={isSubmitting}>Submit Details</Button>
+              <Button type="submit" colorScheme="purple" size="lg" w="full" isLoading={isSubmitting}>Update Details</Button>
             </VStack>
           </form>
         ) : (
-          <Text color="green.500" textAlign="center">Details already submitted. Thank you!</Text>
+          // Display Submitted Details and Price Breakdown
+          <VStack spacing={6} align="stretch">
+            <VStack spacing={3} align="stretch">
+              <Text fontWeight="bold" color={textColor}>Submitted Details</Text>
+              <Text color={textColor}>Name: {customer.customer_name}</Text>
+              <Text color={textColor}>Date of Birth: {customer.dob || 'Not provided'}</Text>
+              <Text color={textColor}>Address: {customer.address || 'Not provided'}</Text>
+              <Text color={textColor}>Mobile 1: {customer.mobile_1 || 'Not provided'}</Text>
+              <Text color={textColor}>Mobile 2: {customer.mobile_2 || 'Not provided'}</Text>
+              <Text color={textColor}>Email: {customer.email || 'Not provided'}</Text>
+              <Text color={textColor}>Nominee: {customer.nominee || 'Not provided'}</Text>
+              <Text color={textColor}>Nominee Relation: {customer.nominee_relation || 'Not provided'}</Text>
+              <Text color={textColor}>Payment Mode: {customer.payment_mode || 'Not provided'}</Text>
+              {customer.payment_mode === 'Finance' && (
+                <>
+                  <Text color={textColor}>Finance Company: {customer.finance_company || 'Not provided'}</Text>
+                  <Text color={textColor}>Finance Amount: ₹{customer.finance_amount?.toLocaleString() || 'Not provided'}</Text>
+                </>
+              )}
+            </VStack>
+
+            <Divider />
+
+            <VStack spacing={3} align="stretch">
+              <Text fontWeight="bold" color={textColor}>Price Details</Text>
+              <Grid templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={2}>
+                <GridItem><Text color={textColor}>Ex-Showroom: ₹{customer.ex_showroom?.toLocaleString() || '0'}</Text></GridItem>
+                <GridItem><Text color={textColor}>Tax: ₹{customer.tax?.toLocaleString() || '0'}</Text></GridItem>
+                <GridItem><Text color={textColor}>Insurance: ₹{customer.insurance?.toLocaleString() || '0'}</Text></GridItem>
+                <GridItem><Text color={textColor}>Booking Fee: ₹{customer.booking_fee?.toLocaleString() || '0'}</Text></GridItem>
+                <GridItem><Text color={textColor}>Accessories: ₹{customer.accessories?.toLocaleString() || '0'}</Text></GridItem>
+              </Grid>
+              <Divider />
+              <Text fontWeight="bold" color={textColor}>Total Price: ₹{customer.total_price?.toLocaleString() || '0'}</Text>
+              <Text color={textColor}>Amount Paid: ₹{customer.amount_paid?.toLocaleString() || '0'}</Text>
+              <Text color={textColor}>Remaining Amount: ₹{remainingAmount.toLocaleString()}</Text>
+            </VStack>
+          </VStack>
         )}
       </Box>
     </Box>
