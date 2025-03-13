@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import api from '../api'; // Assuming you have an api.js file for axios instance
+import api from '../api';
 import {
   Box,
   Button,
@@ -38,7 +38,7 @@ import {
   ModalFooter,
   ModalCloseButton,
 } from '@chakra-ui/react';
-import { AddIcon, CopyIcon, HamburgerIcon, SearchIcon, SettingsIcon, BellIcon, ChatIcon, ArrowBackIcon } from '@chakra-ui/icons';
+import { AddIcon, CopyIcon, HamburgerIcon, SearchIcon, SettingsIcon, BellIcon, ChatIcon, ArrowBackIcon, CheckIcon } from '@chakra-ui/icons';
 import { FaWhatsapp } from 'react-icons/fa';
 import Analytics from '../components/Analytics';
 import Notifications from '../components/Notifications';
@@ -53,7 +53,7 @@ const SalesExecutive = () => {
   const { isOpen: isMessagesOpen, onOpen: onMessagesOpen, onClose: onMessagesClose } = useDisclosure();
   const { isOpen: isSuccessModalOpen, onOpen: onSuccessModalOpen, onClose: onSuccessModalClose } = useDisclosure();
 
-  const [stats] = useState({ totalCustomers: 0, pending: 0, submitted: 0, reviewsPending: 0, reviewsDone: 0 }); // Update later with real data
+  const [stats] = useState({ totalCustomers: 0, pending: 0, submitted: 0, verified: 0 }); // Update with real data later
   const [customers, setCustomers] = useState([]);
   const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -81,7 +81,7 @@ const SalesExecutive = () => {
           name: c.customer_name,
           phone: c.phone_number,
           vehicle: c.vehicle,
-          status: 'Pending', // Adjust based on backend status if added later
+          status: c.status, // Use backend status
           date: new Date(c.created_at).toISOString().split('T')[0],
         }));
         setCustomers(fetchedCustomers);
@@ -90,13 +90,14 @@ const SalesExecutive = () => {
         console.error('Failed to fetch customers:', err);
         toast.error('Failed to load customers', { position: 'top-center' });
         if (err.response?.status === 401) {
-          handleLogout(); // Token expired or 
+          handleLogout();
         }
       }
     };
 
     fetchCustomers();
-  }, );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array for mount-only fetch
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -146,7 +147,7 @@ const SalesExecutive = () => {
         name: response.data.customer.customer_name,
         phone: response.data.customer.phone_number,
         vehicle: response.data.customer.vehicle,
-        status: 'Pending', // Default status
+        status: response.data.customer.status, // Use backend status
         date: new Date(response.data.customer.created_at).toISOString().split('T')[0],
       };
 
@@ -161,6 +162,31 @@ const SalesExecutive = () => {
     } catch (err) {
       console.error('Failed to add customer:', err);
       toast.error(err.response?.data?.error || 'Failed to add customer', { position: 'top-center' });
+    }
+  };
+
+  const handleVerifyCustomer = async (customerId) => {
+    try {
+      const response = await api.put(`/customers/${customerId}`, { status: 'Verified' });
+      const updatedCustomer = {
+        id: response.data.customer.id,
+        name: response.data.customer.customer_name,
+        phone: response.data.customer.phone_number,
+        vehicle: response.data.customer.vehicle,
+        status: response.data.customer.status,
+        date: new Date(response.data.customer.created_at).toISOString().split('T')[0],
+      };
+
+      setCustomers(prev =>
+        prev.map(c => (c.id === customerId ? updatedCustomer : c))
+      );
+      setFilteredCustomers(prev =>
+        prev.map(c => (c.id === customerId ? updatedCustomer : c))
+      );
+      toast.success('Customer verified successfully!', { position: 'top-center' });
+    } catch (err) {
+      console.error('Failed to verify customer:', err);
+      toast.error(err.response?.data?.error || 'Failed to verify customer', { position: 'top-center' });
     }
   };
 
@@ -190,7 +216,7 @@ const SalesExecutive = () => {
         </HStack>
         <Menu>
           <MenuButton>
-            <Avatar name="Sales User" size="sm" /> {/* Update with real user data if available */}
+            <Avatar name="Sales User" size="sm" />
           </MenuButton>
           <MenuList>
             <MenuItem onClick={handleLogout}>Sign Out</MenuItem>
@@ -207,7 +233,7 @@ const SalesExecutive = () => {
           </InputGroup>
           <HStack spacing={2} overflowX="auto" w="full" justify="center">
             {['All', 'Pending', 'Submitted', 'Verified'].map(status => (
-              <Button key={status} size="sm" variant={filteredCustomers.some(c => c.status === status) ? 'solid' : 'outline'} colorScheme="purple" onClick={() => handleFilter(status)} flexShrink={0}>
+              <Button key={status} size="sm" variant={filteredCustomers.some(c => c.status === status) || (status === 'All' && filteredCustomers.length > 0) ? 'solid' : 'outline'} colorScheme="purple" onClick={() => handleFilter(status)} flexShrink={0}>
                 {status}
               </Button>
             ))}
@@ -219,7 +245,22 @@ const SalesExecutive = () => {
             <Box key={customer.id} bg={cardBg} borderRadius="lg" p={3} boxShadow="sm" _hover={{ boxShadow: 'md', transform: 'translateY(-2px)' }} transition="all 0.2s" cursor="pointer" onClick={() => handleCustomerClick(customer.id)}>
               <Flex justify="space-between" align="center" mb={2}>
                 <Text fontWeight="medium" color={textColor} isTruncated>{customer.name}</Text>
-                <Badge colorScheme={customer.status === 'Pending' ? 'yellow' : customer.status === 'Submitted' ? 'purple' : 'green'} variant="subtle">{customer.status}</Badge>
+                <HStack spacing={2}>
+                  <Badge colorScheme={customer.status === 'Pending' ? 'yellow' : customer.status === 'Submitted' ? 'purple' : 'green'} variant="subtle">{customer.status}</Badge>
+                  {customer.status === 'Submitted' && (
+                    <IconButton
+                      icon={<CheckIcon />}
+                      size="sm"
+                      colorScheme="green"
+                      variant="outline"
+                      aria-label="Verify customer"
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent navigation
+                        handleVerifyCustomer(customer.id);
+                      }}
+                    />
+                  )}
+                </HStack>
               </Flex>
               <Text fontSize="sm" color="gray.500">Phone: {customer.phone}</Text>
               <Text fontSize="sm" color="gray.500">Vehicle: {customer.vehicle}</Text>
