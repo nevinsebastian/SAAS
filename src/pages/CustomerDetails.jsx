@@ -41,6 +41,7 @@ const CustomerDetails = () => {
     passport_photo: null,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   const bgGradient = useColorModeValue('gray.50', 'gray.900');
   const cardBg = useColorModeValue('white', 'gray.800');
@@ -49,7 +50,7 @@ const CustomerDetails = () => {
   useEffect(() => {
     const fetchCustomer = async () => {
       try {
-        const response = await axios.get(`http://localhost:3000/customers/${customerId}`);
+        const response = await axios.get(`http://172.20.10.8:3000/customers/${customerId}`);
         setCustomer(response.data.customer);
         setFormData(prev => ({
           ...prev,
@@ -65,8 +66,8 @@ const CustomerDetails = () => {
           finance_company: response.data.customer.finance_company || '',
           finance_amount: response.data.customer.finance_amount || '',
         }));
-      } catch (err) {
-        console.error('Failed to fetch customer:', err);
+      } catch (error) {
+        console.error('Error fetching customer:', error);
         toast({
           title: 'Error',
           description: 'Failed to load customer details',
@@ -90,6 +91,7 @@ const CustomerDetails = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError('');
 
     const formDataToSend = new FormData();
     Object.keys(formData).forEach(key => formData[key] && formDataToSend.append(key, formData[key]));
@@ -98,8 +100,10 @@ const CustomerDetails = () => {
     if (files.passport_photo) formDataToSend.append('passport_photo', files.passport_photo);
 
     try {
-      const response = await axios.put(`http://localhost:3000/customers/${customerId}`, formDataToSend, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      const response = await axios.put(`http://172.20.10.8:3000/customers/${customerId}`, formDataToSend, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
       setCustomer(response.data.customer);
       toast({

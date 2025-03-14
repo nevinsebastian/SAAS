@@ -194,9 +194,38 @@ const SalesExecutive = () => {
   };
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(generatedLink);
-    toast.info('Link copied to clipboard!', { position: 'top-center' });
+    if (!generatedLink) {
+      toast.error('No link available to copy', { position: 'top-center' });
+      return;
+    }
+  
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(generatedLink)
+        .then(() => {
+          toast.success('Link copied to clipboard!', { position: 'top-center' });
+        })
+        .catch(() => {
+          toast.error('Failed to copy link. Please copy manually.', { position: 'top-center' });
+        });
+    } else {
+      // Fallback for older browsers
+      const tempInput = document.createElement('input');
+      tempInput.value = generatedLink;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      tempInput.setSelectionRange(0, 99999);
+      
+      try {
+        document.execCommand('copy');
+        toast.success('Link copied to clipboard!', { position: 'top-center' });
+      } catch (err) {
+        toast.error('Failed to copy link. Please copy manually.', { position: 'top-center' });
+      }
+  
+      document.body.removeChild(tempInput);
+    }
   };
+  
 
   const handleShareWhatsApp = () => {
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(generatedLink)}`;
@@ -322,7 +351,7 @@ const SalesExecutive = () => {
             <VStack spacing={4} align="stretch">
               <Text fontSize="sm" color={textColor} wordBreak="break-all">{generatedLink}</Text>
               <HStack spacing={2}>
-                <Button leftIcon={<CopyIcon />} colorScheme="purple" variant="solid" size="md" onClick={handleCopyLink}>
+                <Button leftIcon={<CopyIcon />} colorScheme="purple" variant="solid" size="md" onClick={() => handleCopyLink(generatedLink)}>
                   Copy
                 </Button>
                 <Button leftIcon={<FaWhatsapp />} colorScheme="green" variant="solid" size="md" onClick={handleShareWhatsApp}>

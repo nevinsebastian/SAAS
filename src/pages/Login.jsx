@@ -106,12 +106,16 @@ export default function Login({ setUserRole }) {
     setError('');
 
     try {
-      const response = await axios.post('http://localhost:3000/auth/login', {
-        email,
-        password,
+      const response = await fetch('http://172.20.10.8:3000/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+        credentials: 'include',
       });
 
-      const { token } = response.data;
+      const { token } = await response.json();
 
       // Save token to localStorage
       localStorage.setItem('token', token);
@@ -126,7 +130,7 @@ export default function Login({ setUserRole }) {
       // Navigate based on role
       navigateToRole(role);
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed. Please try again.');
+      setError(err.message || 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
