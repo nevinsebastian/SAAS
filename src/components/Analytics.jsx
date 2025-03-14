@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Flex,
@@ -16,14 +16,23 @@ import {
   CircularProgress,
   CircularProgressLabel,
   SimpleGrid,
+  Spinner,
+  useToast,
+  Button,
 } from '@chakra-ui/react';
 import { HamburgerIcon, StarIcon } from '@chakra-ui/icons';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+import api from '../api';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-const Analytics = ({ onClose, stats, user, onMenuOpen }) => {
+const Analytics = ({ onClose, user, onMenuOpen }) => {
+  const [loading, setLoading] = useState(true);
+  const [analyticsData, setAnalyticsData] = useState(null);
+  const [error, setError] = useState(null);
+  const toast = useToast();
+
   const bgGradient = useColorModeValue('linear(to-br, purple.50, blue.50)', 'linear(to-br, purple.900, blue.900)');
   const cardBg = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.800', 'gray.100');
@@ -31,143 +40,251 @@ const Analytics = ({ onClose, stats, user, onMenuOpen }) => {
   const highlightBg = useColorModeValue('purple.50', 'purple.800');
   const userHighlightBg = useColorModeValue('purple.100', 'purple.700');
 
-  // Sample leaderboard data
-  const leaderboard = [
-    { rank: 1, name: 'Alex Carter', rating: 4.8, vehiclesDelivered: 35, totalCustomers: 40, bonus: 1200 },
-    { rank: 2, name: 'Sam Wilson', rating: 4.5, vehiclesDelivered: 28, totalCustomers: 32, bonus: 800 },
-    { rank: 3, name: user.username, rating: 4.2, vehiclesDelivered: 20, totalCustomers: 25, bonus: 500 },
-    { rank: 4, name: 'Emma Davis', rating: 4.0, vehiclesDelivered: 15, totalCustomers: 18, bonus: 300 },
-  ];
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await api.get('/analytics');
+        setAnalyticsData(response.data);
+      } catch (err) {
+        console.error('Failed to fetch analytics:', err);
+        setError(err.response?.data?.error || 'Failed to load analytics data');
+        toast({
+          title: 'Error',
+          description: err.response?.data?.error || 'Failed to load analytics data',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Trends data
+    fetchAnalytics();
+  }, [toast]);
+
+  if (loading) {
+    return (
+      <Flex height="100vh" align="center" justify="center">
+        <Spinner size="xl" color={accentColor} />
+      </Flex>
+    );
+  }
+
+  if (error) {
+    return (
+      <Flex height="100vh" align="center" justify="center" direction="column" gap={4}>
+        <Text color="red.500">{error}</Text>
+        <Button colorScheme="purple" onClick={() => window.location.reload()}>
+          Retry
+        </Button>
+      </Flex>
+    );
+  }
+
+  if (!analyticsData?.current) {
+    return (
+      <Flex height="100vh" align="center" justify="center">
+        <Text>No analytics data available</Text>
+      </Flex>
+    );
+  }
+
+  const { current, trends, topSales } = analyticsData;
+
+  // Format trends data for chart
   const trendsData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
-    datasets: [{
-      label: 'Vehicles Delivered',
-      data: [10, 15, 20, 25, 30],
-      borderColor: accentColor,
-      backgroundColor: 'rgba(139, 92, 246, 0.2)',
-      tension: 0.4,
-    }],
-  };
-
-  // Customer satisfaction data
-  const satisfaction = {
-    averageRating: 4.2,
-    totalReviews: 18,
-    reviews: [
-      { id: 1, customer: 'John Doe', rating: 4, comment: 'Great service, but delivery was late.' },
-      { id: 2, customer: 'Jane Smith', rating: 5, comment: 'Excellent experience!' },
+    labels: trends.map(t => new Date(t.month).toLocaleDateString('default', { month: 'short', year: 'numeric' })),
+    datasets: [
+      {
+        label: 'Total Customers',
+        data: trends.map(t => t.total_customers),
+        borderColor: accentColor,
+        backgroundColor: 'rgba(139, 92, 246, 0.2)',
+        tension: 0.4,
+      },
+      {
+        label: 'Verified Customers',
+        data: trends.map(t => t.verified_customers),
+        borderColor: 'green',
+        backgroundColor: 'rgba(0, 255, 0, 0.2)',
+        tension: 0.4,
+      }
     ],
   };
 
   return (
-    <Box bg={bgGradient} minH="100vh" overflowY="auto" pb={{ base: 20, md: 8 }}>
-      {/* Header */}
-      <Flex justify="space-between" align="center" bg={cardBg} borderRadius="lg" p={3} mb={6} boxShadow="lg" position="sticky" top={0} zIndex={10}>
-        <HStack spacing={3}>
-          <IconButton icon={<HamburgerIcon />} variant="ghost" onClick={onMenuOpen} aria-label="Open menu" />
-          <Heading size="md" color={accentColor}>Analytics</Heading>
-        </HStack>
+    <Box 
+      minH="100vh" 
+      bg={bgGradient} 
+      position="relative"
+      overflowY="auto"
+      maxH="100vh"
+    >
+      {/* Fixed Header */}
+      <Flex 
+        justify="space-between" 
+        align="center" 
+        p={4}
+        bg={cardBg}
+        position="sticky"
+        top={0}
+        zIndex={10}
+        boxShadow="sm"
+      >
+        <IconButton
+          icon={<HamburgerIcon />}
+          variant="ghost"
+          onClick={onMenuOpen}
+          aria-label="Open menu"
+        />
+        <Heading size={{ base: "md", md: "lg" }} color={textColor}>Analytics Dashboard</Heading>
         <Menu>
           <MenuButton>
             <Avatar name={user.username} size="sm" />
           </MenuButton>
           <MenuList>
-            <MenuItem onClick={onClose}>Back to Dashboard</MenuItem>
+            <MenuItem onClick={onClose}>Close Analytics</MenuItem>
           </MenuList>
         </Menu>
       </Flex>
 
-      {/* Main Content */}
-      <VStack spacing={6} maxW="1200px" mx="auto" px={{ base: 2, md: 4 }} align="stretch">
-        {/* Dashboard Overview */}
-        <Box bg={cardBg} borderRadius="lg" p={6} boxShadow="md">
-          <Heading size="md" mb={4} color={textColor}>Dashboard Overview</Heading>
-          <SimpleGrid columns={{ base: 2, md: 3, lg: 5 }} spacing={4}>
-            {Object.entries(stats).map(([key, value]) => (
-              <VStack
-                key={key}
-                p={4}
-                bg={highlightBg}
-                borderRadius="md"
-                minW="100px"
-                h="100px"
-                justify="center"
-              >
-                <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.500" textAlign="center" isTruncated>{key.replace(/([A-Z])/g, ' $1').trim()}</Text>
-                <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color={accentColor}>{value}</Text>
-              </VStack>
-            ))}
-          </SimpleGrid>
-        </Box>
-
-        {/* Sales Leaderboard */}
-        <Box bg={cardBg} borderRadius="lg" p={6} boxShadow="md">
-          <Heading size="md" mb={4} color={textColor}>Sales Leaderboard</Heading>
-          <VStack spacing={1} align="stretch">
-            {leaderboard.map((employee) => (
-              <Flex
-                key={employee.rank}
-                p={{ base: 2, md: 3 }}
-                bg={employee.name === user.username ? userHighlightBg : cardBg}
-                borderRadius="md"
-                align="center"
-                justify="space-between"
-                fontSize={{ base: 'sm', md: 'md' }}
-              >
-                <HStack spacing={{ base: 2, md: 4 }} flex="1" overflow="hidden">
-                  <Text fontWeight="bold" color={textColor} minW="20px">#{employee.rank}</Text>
-                  <Text color={textColor} isTruncated>{employee.name}</Text>
-                  <Text color="gray.600" whiteSpace="nowrap">{employee.rating}/5</Text>
-                  <Text color={accentColor} whiteSpace="nowrap">{employee.vehiclesDelivered} Del.</Text>
-                  <Text color={accentColor} whiteSpace="nowrap">{employee.totalCustomers} Cust.</Text>
-                  <Text color="green.600" whiteSpace="nowrap">${employee.bonus}</Text>
-                </HStack>
-              </Flex>
-            ))}
-          </VStack>
-        </Box>
-
-        {/* Delivery Trends */}
-        <Box bg={cardBg} borderRadius="lg" p={6} boxShadow="md">
-          <Heading size="md" mb={4} color={textColor}>Delivery Trends</Heading>
-          <Box h={{ base: '250px', md: '350px' }}>
-            <Line data={trendsData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }} />
+      {/* Scrollable Content */}
+      <Box p={4} pb={{ base: 20, md: 4 }}>
+        {/* Stats Cards */}
+        <SimpleGrid 
+          columns={{ base: 2, md: 2, lg: 4 }} 
+          spacing={{ base: 3, md: 6 }} 
+          mb={8}
+        >
+          <Box bg={cardBg} p={{ base: 3, md: 6 }} borderRadius="xl" boxShadow="md">
+            <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Total Customers</Text>
+            <Text fontSize={{ base: "2xl", md: "3xl" }} fontWeight="bold" color={textColor}>
+              {current.total_customers}
+            </Text>
           </Box>
-        </Box>
+          <Box bg={cardBg} p={{ base: 3, md: 6 }} borderRadius="xl" boxShadow="md">
+            <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Pending</Text>
+            <Text fontSize={{ base: "2xl", md: "3xl" }} fontWeight="bold" color="orange.500">
+              {current.pending_customers}
+            </Text>
+          </Box>
+          <Box bg={cardBg} p={{ base: 3, md: 6 }} borderRadius="xl" boxShadow="md">
+            <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Submitted</Text>
+            <Text fontSize={{ base: "2xl", md: "3xl" }} fontWeight="bold" color="blue.500">
+              {current.submitted_customers}
+            </Text>
+          </Box>
+          <Box bg={cardBg} p={{ base: 3, md: 6 }} borderRadius="xl" boxShadow="md">
+            <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Verified</Text>
+            <Text fontSize={{ base: "2xl", md: "3xl" }} fontWeight="bold" color="green.500">
+              {current.verified_customers}
+            </Text>
+          </Box>
+        </SimpleGrid>
 
-        {/* Customer Satisfaction */}
-        <Box bg={cardBg} borderRadius="lg" p={6} boxShadow="md">
-          <Heading size="md" mb={4} color={textColor}>Customer Satisfaction</Heading>
-          <HStack spacing={6} wrap="wrap" justify="center" mb={6}>
-            <VStack>
-              <CircularProgress value={satisfaction.averageRating * 20} color={accentColor} size="120px" thickness="12px" capIsRound>
-                <CircularProgressLabel fontSize="xl" fontWeight="bold" color={textColor}>{satisfaction.averageRating}/5</CircularProgressLabel>
-              </CircularProgress>
-              <Text fontSize="sm" color="gray.600">Avg. Rating</Text>
+        {/* Charts and Tables */}
+        <SimpleGrid 
+          columns={{ base: 1, lg: 2 }} 
+          spacing={{ base: 4, md: 6 }}
+          mb={{ base: 4, md: 0 }}
+        >
+          {/* Trends Chart */}
+          <Box 
+            bg={cardBg} 
+            p={{ base: 3, md: 6 }} 
+            borderRadius="xl" 
+            boxShadow="md"
+            h={{ base: "350px", md: "400px" }}
+          >
+            <Heading size={{ base: "sm", md: "md" }} mb={4}>Customer Trends</Heading>
+            <Box height={{ base: "280px", md: "330px" }}>
+              <Line 
+                data={trendsData} 
+                options={{ 
+                  responsive: true, 
+                  maintainAspectRatio: false,
+                  scales: {
+                    y: { beginAtZero: true },
+                    x: {
+                      ticks: {
+                        maxRotation: 45,
+                        minRotation: 45
+                      }
+                    }
+                  },
+                  plugins: {
+                    legend: {
+                      position: 'top',
+                      labels: {
+                        boxWidth: 10,
+                        padding: 10,
+                        font: {
+                          size: 10
+                        }
+                      }
+                    }
+                  }
+                }} 
+              />
+            </Box>
+          </Box>
+
+          {/* Top Sales Executives */}
+          <Box 
+            bg={cardBg} 
+            p={{ base: 3, md: 6 }} 
+            borderRadius="xl" 
+            boxShadow="md"
+            overflowY="auto"
+            maxH={{ base: "350px", md: "400px" }}
+          >
+            <Heading size={{ base: "sm", md: "md" }} mb={4}>Top Performing Sales Executives</Heading>
+            <VStack spacing={3} align="stretch">
+              {topSales.map((exec) => (
+                <Box
+                  key={exec.sales_executive_id}
+                  bg={highlightBg}
+                  p={3}
+                  borderRadius="lg"
+                  _hover={{ transform: 'translateY(-2px)', transition: 'all 0.2s' }}
+                >
+                  <Flex 
+                    justify="space-between" 
+                    align="center"
+                    flexDir={{ base: "column", sm: "row" }}
+                    gap={2}
+                  >
+                    <VStack align="start" spacing={0.5} flex={1}>
+                      <Text fontWeight="bold" fontSize={{ base: "sm", md: "md" }}>
+                        {exec.sales_executive_name || `Sales Executive #${exec.sales_executive_id}`}
+                      </Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">
+                        {exec.verified_customers} verified out of {exec.total_customers} customers
+                      </Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="green.500">
+                        Revenue: ₹{exec.total_revenue.toLocaleString()}
+                      </Text>
+                    </VStack>
+                    <CircularProgress 
+                      value={(exec.verified_customers / exec.total_customers) * 100} 
+                      color={accentColor} 
+                      size={{ base: "40px", md: "50px" }}
+                      thickness="8px"
+                    >
+                      <CircularProgressLabel fontSize={{ base: "xs", md: "sm" }}>
+                        {Math.round((exec.verified_customers / exec.total_customers) * 100)}%
+                      </CircularProgressLabel>
+                    </CircularProgress>
+                  </Flex>
+                </Box>
+              ))}
             </VStack>
-            <VStack>
-              <Text fontSize="2xl" fontWeight="bold" color={accentColor}>{satisfaction.totalReviews}</Text>
-              <Text fontSize="sm" color="gray.600">Total Reviews</Text>
-            </VStack>
-          </HStack>
-          <VStack spacing={4} align="stretch">
-            {satisfaction.reviews.map(review => (
-              <Box key={review.id} p={4} bg={highlightBg} borderRadius="md">
-                <HStack justify="space-between" flexWrap="wrap">
-                  <Text fontWeight="medium" color={textColor} isTruncated maxW={{ base: '150px', md: 'none' }}>{review.customer}</Text>
-                  <HStack>
-                    <StarIcon color="yellow.400" />
-                    <Text color={accentColor}>{review.rating}/5</Text>
-                  </HStack>
-                </HStack>
-                <Text fontSize="sm" color="gray.600" mt={1}>{review.comment}</Text>
-              </Box>
-            ))}
-          </VStack>
-        </Box>
-      </VStack>
+          </Box>
+        </SimpleGrid>
+      </Box>
     </Box>
   );
 };

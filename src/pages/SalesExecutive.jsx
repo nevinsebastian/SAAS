@@ -53,7 +53,6 @@ const SalesExecutive = () => {
   const { isOpen: isMessagesOpen, onOpen: onMessagesOpen, onClose: onMessagesClose } = useDisclosure();
   const { isOpen: isSuccessModalOpen, onOpen: onSuccessModalOpen, onClose: onSuccessModalClose } = useDisclosure();
 
-  const [stats] = useState({ totalCustomers: 0, pending: 0, submitted: 0, verified: 0 }); // Update with real data later
   const [customers, setCustomers] = useState([]);
   const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -338,11 +337,11 @@ const SalesExecutive = () => {
         </ModalContent>
       </Modal>
 
-      {/* Analytics, Notifications, Messages Drawers */}
+      {/* Analytics Drawer */}
       <Drawer isOpen={isAnalyticsOpen} placement="right" onClose={onAnalyticsClose} size="full">
         <DrawerOverlay />
         <DrawerContent>
-          <Analytics onClose={onAnalyticsClose} stats={stats} user={{ username: 'Sales User' }} onMenuOpen={onMenuOpen} />
+          <Analytics onClose={onAnalyticsClose} user={{ username: 'Sales User' }} onMenuOpen={onMenuOpen} />
         </DrawerContent>
       </Drawer>
       <Drawer isOpen={isNotificationsOpen} placement="right" onClose={onNotificationsClose} size="full">
