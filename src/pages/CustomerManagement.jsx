@@ -27,7 +27,9 @@ import {
   ModalFooter,
   ModalBody,
   ModalCloseButton,
+  SimpleGrid,
 } from '@chakra-ui/react';
+import { keyframes } from '@emotion/react';
 import {
   ArrowBackIcon,
   CheckCircleIcon,
@@ -38,6 +40,17 @@ import {
   ArrowForwardIcon,
 } from '@chakra-ui/icons';
 import axios from 'axios';
+
+// Define animations
+const fadeIn = keyframes`
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+const slideIn = keyframes`
+  from { transform: translateX(-20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+`;
 
 const CustomerManagement = () => {
   const { customerId } = useParams();
@@ -69,12 +82,34 @@ const CustomerManagement = () => {
     delivery_photo: null,
   });
   const blobUrlsRef = useRef({});
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false);
 
+  // Move all useColorModeValue hooks to the top
+  const mainBg = useColorModeValue(
+    'linear-gradient(135deg, #f6f8ff 0%, #f0e7ff 100%)',
+    'linear-gradient(135deg, #0f1729 0%, #1a1f35 100%)'
+  );
+  
+  const glassEffect = {
+    backgroundColor: useColorModeValue('rgba(255, 255, 255, 0.7)', 'rgba(13, 15, 25, 0.7)'),
+    backdropFilter: 'blur(5px)',
+    boxShadow: useColorModeValue(
+      '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+      '0 8px 32px 0 rgba(0, 0, 0, 0.3)'
+    ),
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+  };
+
+  const accentGradient = 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)';
+  const cardBg = useColorModeValue('rgba(255, 255, 255, 0.7)', 'rgba(26, 32, 44, 0.7)');
+  const inputBg = useColorModeValue('rgba(255, 255, 255, 0.5)', 'rgba(45, 55, 72, 0.3)');
+  const hoverInputBg = useColorModeValue('rgba(255, 255, 255, 0.6)', 'rgba(45, 55, 72, 0.4)');
   const bgGradient = useColorModeValue('linear(to-b, gray.50, gray.100)', 'linear(to-b, gray.800, gray.900)');
-  const cardBg = useColorModeValue('gray', 'gray.800');
   const textColor = useColorModeValue('gray.600', 'gray.200');
   const accentColor = useColorModeValue('blue.600', 'blue.300');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
+  const modalBg = useColorModeValue('rgba(255, 255, 255, 0.9)', 'rgba(13, 15, 25, 0.9)');
 
   useEffect(() => {
     const fetchCustomer = async () => {
@@ -323,33 +358,71 @@ const CustomerManagement = () => {
   };
   const { color: statusColor, icon: StatusIcon } = statusConfig[customer.status] || {};
 
+  // Update Input components to use the pre-computed hover background
+  const inputProps = {
+    bg: inputBg,
+    border: 'none',
+    _focus: {
+      boxShadow: '0 0 0 2px rgba(99, 102, 241, 0.4)',
+      borderColor: 'transparent'
+    },
+    _hover: { bg: hoverInputBg },
+    transition: 'all 0.2s'
+  };
+
   return (
-    <Box minH="100vh" bg={bgGradient} p={{ base: 2, sm: 4 }}>
+    <Box 
+      minH="100vh" 
+      bgGradient={mainBg}
+      p={{ base: 2, sm: 4 }}
+      overflowY="auto"
+      sx={{
+        '&::-webkit-scrollbar': {
+          width: '4px',
+        },
+        '&::-webkit-scrollbar-track': {
+          width: '6px',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          background: accentGradient,
+          borderRadius: '24px',
+        },
+      }}
+    >
       <Box
-        maxW={{ base: '100%', md: '800px' }}
+        maxW={{ base: '100%', md: '1000px' }}
         mx="auto"
-        bg={cardBg}
-        borderRadius={{ base: 'md', md: 'xl' }}
-        p={{ base: 3, sm: 5 }}
-        boxShadow={{ base: 'md', md: 'lg' }}
+        {...glassEffect}
+        borderRadius={{ base: 'xl', md: '2xl' }}
+        p={{ base: 4, sm: 6 }}
+        animation={`${fadeIn} 0.5s ease-out`}
       >
         <Flex
           direction={{ base: 'column', sm: 'row' }}
           align={{ base: 'stretch', sm: 'center' }}
           justify="space-between"
-          mb={4}
-          gap={2}
+          mb={6}
+          gap={3}
         >
-          <HStack spacing={2} w={{ base: '100%', sm: 'auto' }}>
+          <HStack spacing={3} w={{ base: '100%', sm: 'auto' }}>
             <IconButton
               icon={<ArrowBackIcon />}
               onClick={() => navigate('/sales-executive')}
               variant="ghost"
-              colorScheme="blue"
               size={{ base: 'md', sm: 'lg' }}
               aria-label="Back to list"
+              _hover={{ 
+                transform: 'translateX(-3px)',
+                bg: 'rgba(255, 255, 255, 0.1)',
+                transition: 'all 0.2s'
+              }}
             />
-            <Heading size={{ base: 'md', md: 'lg' }} color={accentColor} isTruncated>
+            <Heading 
+              size={{ base: 'md', md: 'lg' }} 
+              bgGradient={accentGradient}
+              bgClip="text"
+              letterSpacing="tight"
+            >
               Customer Management
             </Heading>
           </HStack>
@@ -362,40 +435,63 @@ const CustomerManagement = () => {
             <Badge
               variant="subtle"
               colorScheme={statusColor.split('.')[0]}
-              px={2}
-              py={1}
+              px={3}
+              py={1.5}
               borderRadius="full"
               fontSize={{ base: 'xs', sm: 'sm' }}
+              {...glassEffect}
+              display="flex"
+              alignItems="center"
+              animation={`${slideIn} 0.5s ease-out`}
             >
-              <StatusIcon boxSize={3} mr={1} />
+              <StatusIcon boxSize={3} mr={1.5} />
               {customer.status}
             </Badge>
             <Button
               leftIcon={<CheckIcon />}
-              colorScheme="green"
+              bgGradient="linear(to-r, green.400, green.600)"
+              color="white"
               size={{ base: 'sm', sm: 'md' }}
-              variant="solid"
               onClick={handleVerify}
               isDisabled={customer.status === 'Verified' || customer.status === 'Delivered'}
+              _hover={{ 
+                transform: 'translateY(-2px)',
+                bgGradient: 'linear(to-r, green.500, green.700)',
+                boxShadow: 'lg'
+              }}
+              transition="all 0.2s"
             >
               Verify
             </Button>
             <Button
               leftIcon={<DeleteIcon />}
-              colorScheme="red"
-              size={{ base: 'sm', sm: 'md' }}
               variant="outline"
+              size={{ base: 'sm', sm: 'md' }}
               onClick={() => setIsDeleteModalOpen(true)}
+              borderColor="red.400"
+              color="red.400"
+              _hover={{ 
+                transform: 'translateY(-2px)',
+                bg: 'rgba(255, 0, 0, 0.1)',
+                boxShadow: 'lg'
+              }}
+              transition="all 0.2s"
             >
               Delete
             </Button>
             <Button
               leftIcon={<ArrowForwardIcon />}
-              colorScheme="blue"
+              bgGradient={accentGradient}
+              color="white"
               size={{ base: 'sm', sm: 'md' }}
-              variant="solid"
               onClick={() => setIsDeliveryModalOpen(true)}
               isDisabled={customer.status === 'Delivered'}
+              _hover={{ 
+                transform: 'translateY(-2px)',
+                opacity: 0.9,
+                boxShadow: 'lg'
+              }}
+              transition="all 0.2s"
             >
               Delivered
             </Button>
@@ -403,88 +499,178 @@ const CustomerManagement = () => {
         </Flex>
 
         <VStack spacing={{ base: 4, md: 6 }} align="stretch">
-          <VStack spacing={4} align="stretch">
-            <Card bg="gray.700" borderRadius="md">
-              <CardBody p={{ base: 3, sm: 4 }}>
-                <Text fontWeight="semibold" color={accentColor} mb={2}>
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+            {/* Booking Info Card */}
+            <Card 
+              {...glassEffect} 
+              borderRadius="xl"
+              animation={`${fadeIn} 0.6s ease-out`}
+              _hover={{ transform: 'translateY(-3px)', transition: 'all 0.2s' }}
+            >
+              <CardBody p={{ base: 4, sm: 6 }}>
+                <Text 
+                  fontWeight="semibold" 
+                  bgGradient={accentGradient}
+                  bgClip="text"
+                  mb={4}
+                  fontSize="lg"
+                >
                   Booking Info
                 </Text>
-                <VStack spacing={1} align="start" fontSize={{ base: 'sm', md: 'md' }}>
-                  <Text color={textColor}><strong>Name:</strong> {customer.customer_name}</Text>
-                  <Text color={textColor}><strong>Vehicle:</strong> {customer.vehicle}</Text>
-                  <Text color={textColor}><strong>Variant:</strong> {customer.variant || 'N/A'}</Text>
+                <VStack spacing={3} align="start">
+                  <HStack spacing={4} width="100%">
+                    <Text color="gray.500" fontSize="sm">Name:</Text>
+                    <Text fontWeight="medium">{customer.customer_name}</Text>
+                  </HStack>
+                  <HStack spacing={4} width="100%">
+                    <Text color="gray.500" fontSize="sm">Vehicle:</Text>
+                    <Text fontWeight="medium">{customer.vehicle}</Text>
+                  </HStack>
+                  <HStack spacing={4} width="100%">
+                    <Text color="gray.500" fontSize="sm">Variant:</Text>
+                    <Text fontWeight="medium">{customer.variant || 'N/A'}</Text>
+                  </HStack>
                 </VStack>
               </CardBody>
             </Card>
 
-            <Card bg="gray.700" borderRadius="md">
-              <CardBody p={{ base: 3, sm: 4 }}>
-                <Text fontWeight="semibold" color={accentColor} mb={2}>
+            {/* Customer Details Card */}
+            <Card 
+              {...glassEffect} 
+              borderRadius="xl"
+              animation={`${fadeIn} 0.7s ease-out`}
+              _hover={{ transform: 'translateY(-3px)', transition: 'all 0.2s' }}
+            >
+              <CardBody p={{ base: 4, sm: 6 }}>
+                <Text 
+                  fontWeight="semibold" 
+                  bgGradient={accentGradient}
+                  bgClip="text"
+                  mb={4}
+                  fontSize="lg"
+                >
                   Customer Details
                 </Text>
-                <VStack spacing={1} align="start" fontSize={{ base: 'sm', md: 'md' }}>
-                  <Text color={textColor}><strong>DOB:</strong> {customer.dob || 'N/A'}</Text>
-                  <Text color={textColor}><strong>Address:</strong> {customer.address || 'N/A'}</Text>
-                  <Text color={textColor}><strong>Mobile:</strong> {customer.mobile_1 || 'N/A'}</Text>
-                  {customer.mobile_2 && <Text color={textColor}><strong>Mobile 2:</strong> {customer.mobile_2}</Text>}
-                  <Text color={textColor}><strong>Email:</strong> {customer.email || 'N/A'}</Text>
-                  <Text color={textColor}><strong>Nominee:</strong> {customer.nominee || 'N/A'}</Text>
-                  {customer.payment_mode === 'Finance' && (
-                    <>
-                      <Text color={textColor}><strong>Finance Co:</strong> {customer.finance_company || 'N/A'}</Text>
-                      <Text color={textColor}><strong>Finance Amount:</strong> ₹{customer.finance_amount?.toLocaleString() || 'N/A'}</Text>
-                    </>
+                <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={3}>
+                  <HStack spacing={4}>
+                    <Text color="gray.500" fontSize="sm">DOB:</Text>
+                    <Text fontWeight="medium">{customer.dob || 'N/A'}</Text>
+                  </HStack>
+                  <HStack spacing={4}>
+                    <Text color="gray.500" fontSize="sm">Mobile:</Text>
+                    <Text fontWeight="medium">{customer.mobile_1 || 'N/A'}</Text>
+                  </HStack>
+                  {customer.mobile_2 && (
+                    <HStack spacing={4}>
+                      <Text color="gray.500" fontSize="sm">Mobile 2:</Text>
+                      <Text fontWeight="medium">{customer.mobile_2}</Text>
+                    </HStack>
                   )}
-                  <Divider my={2} />
-                  <Text color={textColor}><strong>Sales Verified:</strong> {customer.sales_verified ? 'Yes' : 'No'}</Text>
-                  <Text color={textColor}><strong>Accounts Verified:</strong> {customer.accounts_verified ? 'Yes' : 'No'}</Text>
-                  <Text color={textColor}><strong>Manager Verified:</strong> {customer.manager_verified ? 'Yes' : 'No'}</Text>
-                  <Text color={textColor}><strong>RTO Verified:</strong> {customer.rto_verified ? 'Yes' : 'No'}</Text>
-                </VStack>
+                  <HStack spacing={4}>
+                    <Text color="gray.500" fontSize="sm">Email:</Text>
+                    <Text fontWeight="medium">{customer.email || 'N/A'}</Text>
+                  </HStack>
+                </SimpleGrid>
+                <Divider my={4} opacity={0.1} />
+                <Text fontWeight="medium" mb={2}>Address:</Text>
+                <Text fontSize="sm" color="gray.500">{customer.address || 'N/A'}</Text>
               </CardBody>
             </Card>
 
-            <Card bg="gray.700" borderRadius="md">
-              <CardBody p={{ base: 3, sm: 4 }}>
-                <Text fontWeight="semibold" color={accentColor} mb={2}>
+            {/* Documents Section */}
+            <Card 
+              {...glassEffect} 
+              borderRadius="xl" 
+              gridColumn={{ base: "1", md: "span 2" }}
+              animation={`${fadeIn} 0.8s ease-out`}
+            >
+              <CardBody p={{ base: 4, sm: 6 }}>
+                <Text 
+                  fontWeight="semibold" 
+                  bgGradient={accentGradient}
+                  bgClip="text"
+                  mb={4}
+                  fontSize="lg"
+                >
                   Documents
                 </Text>
-                <Grid templateColumns={{ base: '1fr', sm: 'repeat(3, 1fr)' }} gap={3}>
+                <Grid 
+                  templateColumns={{ base: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)', md: 'repeat(6, 1fr)' }} 
+                  gap={4}
+                >
                   {[
                     'aadhar_front', 'aadhar_back', 'passport_photo',
                     'front_delivery_photo', 'back_delivery_photo', 'delivery_photo'
-                  ].map((type) => (
-                    <Box key={type} bg={cardBg} p={2} borderRadius="md" border="1px" borderColor={borderColor}>
-                      <Text color={textColor} fontSize="sm" fontWeight="medium" mb={1}>
-                        {type.replace('_', ' ').toUpperCase()}
+                  ].map((type, index) => (
+                    <Box
+                      key={type}
+                      {...glassEffect}
+                      p={3}
+                      borderRadius="lg"
+                      transition="all 0.2s"
+                      _hover={{ transform: 'scale(1.05)' }}
+                      animation={`${fadeIn} ${0.9 + index * 0.1}s ease-out`}
+                    >
+                      <Text 
+                        color="gray.500" 
+                        fontSize="xs" 
+                        fontWeight="medium" 
+                        mb={2}
+                        textTransform="capitalize"
+                      >
+                        {type.split('_').join(' ')}
                       </Text>
                       {images[type] ? (
                         <Image
                           src={images[type]}
-                          maxW={{ base: '100%', sm: '120px' }}
+                          maxW="100%"
                           borderRadius="md"
                           objectFit="cover"
                           alt={`${type} document`}
                           fallback={<Text color="gray.400">Loading...</Text>}
+                          transition="all 0.2s"
+                          _hover={{ transform: 'scale(1.05)', cursor: 'pointer' }}
+                          onClick={() => {
+                            setSelectedImage({ url: images[type], title: type.split('_').join(' ') });
+                            setIsImagePreviewOpen(true);
+                          }}
                         />
                       ) : (
-                        <Text color="gray.400" fontSize="xs">Not uploaded</Text>
+                        <Flex 
+                          align="center" 
+                          justify="center" 
+                          bg="gray.700" 
+                          borderRadius="md" 
+                          p={2}
+                          opacity={0.5}
+                        >
+                          <Text color="gray.400" fontSize="xs">Not uploaded</Text>
+                        </Flex>
                       )}
                     </Box>
                   ))}
                 </Grid>
               </CardBody>
             </Card>
-          </VStack>
 
-          <VStack spacing={4} align="stretch">
-            <Card bg="gray.700" borderRadius="md">
-              <CardBody p={{ base: 3, sm: 4 }}>
-                <Text fontWeight="semibold" color={accentColor} mb={2}>
+            {/* Price Details Form */}
+            <Card 
+              {...glassEffect} 
+              borderRadius="xl"
+              animation={`${fadeIn} 0.9s ease-out`}
+            >
+              <CardBody p={{ base: 4, sm: 6 }}>
+                <Text 
+                  fontWeight="semibold" 
+                  bgGradient={accentGradient}
+                  bgClip="text"
+                  mb={4}
+                  fontSize="lg"
+                >
                   Price Details
                 </Text>
                 <form onSubmit={handlePriceSubmit}>
-                  <VStack spacing={3}>
+                  <VStack spacing={4}>
                     {[
                       { label: 'Ex-Showroom', name: 'ex_showroom' },
                       { label: 'Tax', name: 'tax' },
@@ -493,27 +679,29 @@ const CustomerManagement = () => {
                       { label: 'Accessories', name: 'accessories' },
                     ].map(({ label, name }) => (
                       <FormControl key={name}>
-                        <FormLabel fontSize="sm" color={textColor}>{label}</FormLabel>
+                        <FormLabel fontSize="sm" color="gray.500">{label}</FormLabel>
                         <Input
                           name={name}
                           type="number"
                           value={priceData[name]}
                           onChange={handleInputChange}
-                          size="sm"
-                          variant="outline"
-                          bg="gray.600"
-                          borderColor="gray.200"
-                          _focus={{ borderColor: accentColor }}
+                          {...inputProps}
                         />
                       </FormControl>
                     ))}
                     <Button
                       type="submit"
-                      colorScheme="blue"
-                      size="md"
+                      bgGradient={accentGradient}
+                      color="white"
+                      size="lg"
                       w="full"
                       isLoading={isSubmitting}
-                      mt={2}
+                      _hover={{ 
+                        transform: 'translateY(-2px)',
+                        opacity: 0.9,
+                        boxShadow: 'lg'
+                      }}
+                      transition="all 0.2s"
                     >
                       Update Price
                     </Button>
@@ -522,33 +710,47 @@ const CustomerManagement = () => {
               </CardBody>
             </Card>
 
-            <Card bg="gray.700" borderRadius="md">
-              <CardBody p={{ base: 3, sm: 4 }}>
-                <Text fontWeight="semibold" color={accentColor} mb={2}>
+            {/* Add Payment Form */}
+            <Card 
+              {...glassEffect} 
+              borderRadius="xl"
+              animation={`${fadeIn} 1s ease-out`}
+            >
+              <CardBody p={{ base: 4, sm: 6 }}>
+                <Text 
+                  fontWeight="semibold" 
+                  bgGradient={accentGradient}
+                  bgClip="text"
+                  mb={4}
+                  fontSize="lg"
+                >
                   Add Payment
                 </Text>
                 <form onSubmit={handlePaymentSubmit}>
-                  <VStack spacing={3}>
+                  <VStack spacing={4}>
                     <FormControl>
-                      <FormLabel fontSize="sm" color={textColor}>Amount Paid</FormLabel>
+                      <FormLabel fontSize="sm" color="gray.500">Amount Paid</FormLabel>
                       <Input
                         name="amount_paid"
                         type="number"
                         value={priceData.amount_paid}
                         onChange={handleInputChange}
-                        size="sm"
-                        variant="outline"
-                        bg="gray.600"
-                        borderColor="gray.200"
-                        _focus={{ borderColor: accentColor }}
+                        {...inputProps}
                       />
                     </FormControl>
                     <Button
                       type="submit"
-                      colorScheme="blue"
-                      size="md"
+                      bgGradient={accentGradient}
+                      color="white"
+                      size="lg"
                       w="full"
                       isLoading={isSubmitting}
+                      _hover={{ 
+                        transform: 'translateY(-2px)',
+                        opacity: 0.9,
+                        boxShadow: 'lg'
+                      }}
+                      transition="all 0.2s"
                     >
                       Add Payment
                     </Button>
@@ -557,55 +759,118 @@ const CustomerManagement = () => {
               </CardBody>
             </Card>
 
-            <Card bg="gray.700" borderRadius="md">
-              <CardBody p={{ base: 3, sm: 4 }}>
-                <Text fontWeight="semibold" color={accentColor} mb={2}>
+            {/* Price Summary */}
+            <Card 
+              {...glassEffect} 
+              borderRadius="xl"
+              animation={`${fadeIn} 1.1s ease-out`}
+              gridColumn={{ base: "1", md: "span 2" }}
+            >
+              <CardBody p={{ base: 4, sm: 6 }}>
+                <Text 
+                  fontWeight="semibold" 
+                  bgGradient={accentGradient}
+                  bgClip="text"
+                  mb={4}
+                  fontSize="lg"
+                >
                   Price Summary
                 </Text>
-                <VStack spacing={1} align="start" fontSize={{ base: 'sm', md: 'md' }}>
-                  <Grid templateColumns="1fr 1fr" gap={2} w="full">
-                    <Text color={textColor}>Ex-Showroom:</Text>
-                    <Text color={textColor}>₹{customer.ex_showroom?.toLocaleString() || '0'}</Text>
-                    <Text color={textColor}>Tax:</Text>
-                    <Text color={textColor}>₹{customer.tax?.toLocaleString() || '0'}</Text>
-                    <Text color={textColor}>Insurance:</Text>
-                    <Text color={textColor}>₹{customer.insurance?.toLocaleString() || '0'}</Text>
-                    <Text color={textColor}>Booking Fee:</Text>
-                    <Text color={textColor}>₹{customer.booking_fee?.toLocaleString() || '0'}</Text>
-                    <Text color={textColor}>Accessories:</Text>
-                    <Text color={textColor}>₹{customer.accessories?.toLocaleString() || '0'}</Text>
-                  </Grid>
-                  <Divider my={2} />
-                  <Text fontWeight="semibold" color={textColor}>
-                    Total: ₹{customer.total_price?.toLocaleString() || '0'}
-                  </Text>
-                  <Text color={textColor}>
-                    Paid: ₹{customer.amount_paid?.toLocaleString() || '0'}
-                  </Text>
-                  <Text color={remainingAmount > 0 ? 'red.500' : 'green.500'}>
-                    Remaining: ₹{remainingAmount.toLocaleString()}
-                  </Text>
-                </VStack>
+                <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={4}>
+                  <Box>
+                    <Text color="gray.500" fontSize="sm">Ex-Showroom</Text>
+                    <Text fontSize="lg" fontWeight="bold">₹{customer.ex_showroom?.toLocaleString() || '0'}</Text>
+                  </Box>
+                  <Box>
+                    <Text color="gray.500" fontSize="sm">Tax</Text>
+                    <Text fontSize="lg" fontWeight="bold">₹{customer.tax?.toLocaleString() || '0'}</Text>
+                  </Box>
+                  <Box>
+                    <Text color="gray.500" fontSize="sm">Insurance</Text>
+                    <Text fontSize="lg" fontWeight="bold">₹{customer.insurance?.toLocaleString() || '0'}</Text>
+                  </Box>
+                  <Box>
+                    <Text color="gray.500" fontSize="sm">Booking Fee</Text>
+                    <Text fontSize="lg" fontWeight="bold">₹{customer.booking_fee?.toLocaleString() || '0'}</Text>
+                  </Box>
+                  <Box>
+                    <Text color="gray.500" fontSize="sm">Accessories</Text>
+                    <Text fontSize="lg" fontWeight="bold">₹{customer.accessories?.toLocaleString() || '0'}</Text>
+                  </Box>
+                </SimpleGrid>
+                <Divider my={4} opacity={0.1} />
+                <SimpleGrid columns={{ base: 1, sm: 3 }} spacing={4} mt={4}>
+                  <Box>
+                    <Text color="gray.500" fontSize="sm">Total Amount</Text>
+                    <Text 
+                      fontSize="xl" 
+                      fontWeight="bold"
+                      bgGradient={accentGradient}
+                      bgClip="text"
+                    >
+                      ₹{customer.total_price?.toLocaleString() || '0'}
+                    </Text>
+                  </Box>
+                  <Box>
+                    <Text color="gray.500" fontSize="sm">Amount Paid</Text>
+                    <Text 
+                      fontSize="xl" 
+                      fontWeight="bold" 
+                      color="green.400"
+                    >
+                      ₹{customer.amount_paid?.toLocaleString() || '0'}
+                    </Text>
+                  </Box>
+                  <Box>
+                    <Text color="gray.500" fontSize="sm">Remaining</Text>
+                    <Text 
+                      fontSize="xl" 
+                      fontWeight="bold"
+                      color={remainingAmount > 0 ? 'red.400' : 'green.400'}
+                    >
+                      ₹{remainingAmount.toLocaleString()}
+                    </Text>
+                  </Box>
+                </SimpleGrid>
               </CardBody>
             </Card>
-          </VStack>
+          </SimpleGrid>
         </VStack>
       </Box>
 
       {/* Delete Confirmation Modal */}
       <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Confirm Deletion</ModalHeader>
+        <ModalOverlay backdropFilter="blur(10px)" />
+        <ModalContent {...glassEffect} borderRadius="xl">
+          <ModalHeader 
+            bgGradient={accentGradient}
+            bgClip="text"
+          >
+            Confirm Deletion
+          </ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <Text>Are you sure you want to delete this customer? This action cannot be undone.</Text>
           </ModalBody>
           <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={() => setIsDeleteModalOpen(false)}>
+            <Button 
+              variant="ghost" 
+              mr={3} 
+              onClick={() => setIsDeleteModalOpen(false)}
+              _hover={{ bg: 'rgba(255, 255, 255, 0.1)' }}
+            >
               Cancel
             </Button>
-            <Button colorScheme="red" onClick={handleDelete}>
+            <Button 
+              bgGradient="linear(to-r, red.400, red.600)"
+              color="white"
+              onClick={handleDelete}
+              _hover={{ 
+                transform: 'translateY(-2px)',
+                opacity: 0.9
+              }}
+              transition="all 0.2s"
+            >
               Delete
             </Button>
           </ModalFooter>
@@ -614,53 +879,114 @@ const CustomerManagement = () => {
 
       {/* Delivery Photos Modal */}
       <Modal isOpen={isDeliveryModalOpen} onClose={() => setIsDeliveryModalOpen(false)}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Mark as Delivered</ModalHeader>
+        <ModalOverlay backdropFilter="blur(10px)" />
+        <ModalContent {...glassEffect} borderRadius="xl">
+          <ModalHeader
+            bgGradient={accentGradient}
+            bgClip="text"
+          >
+            Mark as Delivered
+          </ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <form onSubmit={handleDeliveredSubmit}>
               <VStack spacing={4}>
-                <FormControl>
-                  <FormLabel>Front Delivery Photo</FormLabel>
-                  <Input
-                    type="file"
-                    name="front_delivery_photo"
-                    accept="image/*"
-                    onChange={handleDeliveryPhotoChange}
-                    variant="outline"
-                  />
-                </FormControl>
-                <FormControl>
-                  <FormLabel>Back Delivery Photo</FormLabel>
-                  <Input
-                    type="file"
-                    name="back_delivery_photo"
-                    accept="image/*"
-                    onChange={handleDeliveryPhotoChange}
-                    variant="outline"
-                  />
-                </FormControl>
-                <FormControl>
-                  <FormLabel>Delivery Photo</FormLabel>
-                  <Input
-                    type="file"
-                    name="delivery_photo"
-                    accept="image/*"
-                    onChange={handleDeliveryPhotoChange}
-                    variant="outline"
-                  />
-                </FormControl>
+                {[
+                  { label: 'Front Delivery Photo', name: 'front_delivery_photo' },
+                  { label: 'Back Delivery Photo', name: 'back_delivery_photo' },
+                  { label: 'Delivery Photo', name: 'delivery_photo' },
+                ].map(({ label, name }) => (
+                  <FormControl key={name}>
+                    <FormLabel>{label}</FormLabel>
+                    <Input
+                      type="file"
+                      name={name}
+                      accept="image/*"
+                      onChange={handleDeliveryPhotoChange}
+                      {...inputProps}
+                      p={2}
+                      sx={{
+                        '&::file-selector-button': {
+                          border: 'none',
+                          bgGradient: accentGradient,
+                          color: 'white',
+                          borderRadius: 'md',
+                          px: 4,
+                          py: 1,
+                          mr: 4,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          _hover: {
+                            opacity: 0.9,
+                            transform: 'translateY(-1px)'
+                          }
+                        }
+                      }}
+                    />
+                  </FormControl>
+                ))}
                 <Button
                   type="submit"
-                  colorScheme="blue"
+                  bgGradient={accentGradient}
+                  color="white"
                   w="full"
+                  size="lg"
                   isLoading={isSubmitting}
+                  _hover={{ 
+                    transform: 'translateY(-2px)',
+                    opacity: 0.9,
+                    boxShadow: 'lg'
+                  }}
+                  transition="all 0.2s"
                 >
                   Submit Delivery Photos
                 </Button>
               </VStack>
             </form>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+
+      {/* Image Preview Modal */}
+      <Modal 
+        isOpen={isImagePreviewOpen} 
+        onClose={() => setIsImagePreviewOpen(false)}
+        size="4xl"
+      >
+        <ModalOverlay backdropFilter="blur(10px)" />
+        <ModalContent 
+          {...glassEffect} 
+          borderRadius="xl"
+          bg={modalBg}
+          maxW={{ base: "95vw", md: "90vw" }}
+          maxH={{ base: "95vh", md: "90vh" }}
+          overflow="hidden"
+        >
+          <ModalHeader
+            bgGradient={accentGradient}
+            bgClip="text"
+          >
+            {selectedImage?.title}
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody p={0}>
+            <Box
+              position="relative"
+              width="100%"
+              height={{ base: "60vh", md: "70vh" }}
+              overflow="hidden"
+            >
+              {selectedImage && (
+                <Image
+                  src={selectedImage.url}
+                  alt={selectedImage.title}
+                  objectFit="contain"
+                  width="100%"
+                  height="100%"
+                  p={4}
+                />
+              )}
+            </Box>
           </ModalBody>
         </ModalContent>
       </Modal>

@@ -20,6 +20,7 @@ import {
   useToast,
   Button,
 } from '@chakra-ui/react';
+import { keyframes } from '@emotion/react';
 import { HamburgerIcon, StarIcon } from '@chakra-ui/icons';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
@@ -33,12 +34,43 @@ const Analytics = ({ onClose, user, onMenuOpen }) => {
   const [error, setError] = useState(null);
   const toast = useToast();
 
-  const bgGradient = useColorModeValue('linear(to-br, purple.50, blue.50)', 'linear(to-br, purple.900, blue.900)');
-  const cardBg = useColorModeValue('white', 'gray.800');
+  // Move all useColorModeValue hooks to the top
+  const gridLightColor = useColorModeValue('rgba(0,0,0,0.1)', 'rgba(255,255,255,0.1)');
+  const mainBgGradient = useColorModeValue(
+    'linear-gradient(135deg, #f6f8ff 0%, #f0e7ff 100%)',
+    'linear-gradient(135deg, #0f1729 0%, #1a1f35 100%)'
+  );
+
+  // Define animations
+  const fadeIn = keyframes`
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  `;
+
+  const pulse = keyframes`
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  `;
+
+  // Modern styling
+  const bgGradient = useColorModeValue(
+    'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.4) 100%)',
+    'linear-gradient(135deg, rgba(13,15,25,0.9) 0%, rgba(27,32,52,0.95) 100%)'
+  );
+  const glassEffect = {
+    backgroundColor: useColorModeValue('rgba(255, 255, 255, 0.1)', 'rgba(13, 15, 25, 0.3)'),
+    backdropFilter: 'blur(10px)',
+    boxShadow: useColorModeValue(
+      '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+      '0 8px 32px 0 rgba(0, 0, 0, 0.3)'
+    ),
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+  };
+  const cardBg = useColorModeValue('rgba(255, 255, 255, 0.7)', 'rgba(26, 32, 44, 0.7)');
   const textColor = useColorModeValue('gray.800', 'gray.100');
-  const accentColor = 'purple.500';
-  const highlightBg = useColorModeValue('purple.50', 'purple.800');
-  const userHighlightBg = useColorModeValue('purple.100', 'purple.700');
+  const accentGradient = 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)';
+  const highlightBg = useColorModeValue('rgba(255, 255, 255, 0.8)', 'rgba(45, 55, 72, 0.8)');
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -68,7 +100,7 @@ const Analytics = ({ onClose, user, onMenuOpen }) => {
   if (loading) {
     return (
       <Flex height="100vh" align="center" justify="center">
-        <Spinner size="xl" color={accentColor} />
+        <Spinner size="xl" color={accentGradient.split(' ')[2]} />
       </Flex>
     );
   }
@@ -101,7 +133,7 @@ const Analytics = ({ onClose, user, onMenuOpen }) => {
       {
         label: 'Total Customers',
         data: trends.map(t => t.total_customers),
-        borderColor: accentColor,
+        borderColor: accentGradient.split(' ')[2],
         backgroundColor: 'rgba(139, 92, 246, 0.2)',
         tension: 0.4,
       },
@@ -118,71 +150,103 @@ const Analytics = ({ onClose, user, onMenuOpen }) => {
   return (
     <Box 
       minH="100vh" 
-      bg={bgGradient} 
+      bgGradient={mainBgGradient}
       position="relative"
       overflowY="auto"
       maxH="100vh"
+      sx={{
+        '&::-webkit-scrollbar': {
+          width: '4px',
+        },
+        '&::-webkit-scrollbar-track': {
+          width: '6px',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          background: accentGradient,
+          borderRadius: '24px',
+        },
+      }}
     >
       {/* Fixed Header */}
       <Flex 
         justify="space-between" 
         align="center" 
         p={4}
-        bg={cardBg}
+        {...glassEffect}
         position="sticky"
         top={0}
         zIndex={10}
-        boxShadow="sm"
+        backdropFilter="blur(10px)"
+        animation={`${fadeIn} 0.5s ease-out`}
       >
         <IconButton
           icon={<HamburgerIcon />}
           variant="ghost"
           onClick={onMenuOpen}
           aria-label="Open menu"
+          _hover={{ bg: 'rgba(255, 255, 255, 0.1)' }}
         />
-        <Heading size={{ base: "md", md: "lg" }} color={textColor}>Analytics Dashboard</Heading>
+        <Heading 
+          size={{ base: "md", md: "lg" }} 
+          bgGradient={accentGradient}
+          bgClip="text"
+          letterSpacing="tight"
+        >
+          Analytics Dashboard
+        </Heading>
         <Menu>
           <MenuButton>
-            <Avatar name={user.username} size="sm" />
+            <Avatar 
+              name={user.username} 
+              size="sm" 
+              bg={accentGradient}
+              _hover={{ transform: 'scale(1.1)', transition: '0.2s' }}
+            />
           </MenuButton>
-          <MenuList>
-            <MenuItem onClick={onClose}>Close Analytics</MenuItem>
+          <MenuList {...glassEffect}>
+            <MenuItem _hover={{ bg: 'rgba(255, 255, 255, 0.1)' }} onClick={onClose}>
+              Close Analytics
+            </MenuItem>
           </MenuList>
         </Menu>
       </Flex>
 
       {/* Scrollable Content */}
-      <Box p={4} pb={{ base: 20, md: 4 }}>
+      <Box p={{ base: 3, md: 6 }} pb={{ base: 20, md: 6 }}>
         {/* Stats Cards */}
         <SimpleGrid 
-          columns={{ base: 2, md: 2, lg: 4 }} 
+          columns={{ base: 2, md: 4 }} 
           spacing={{ base: 3, md: 6 }} 
           mb={8}
         >
-          <Box bg={cardBg} p={{ base: 3, md: 6 }} borderRadius="xl" boxShadow="md">
-            <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Total Customers</Text>
-            <Text fontSize={{ base: "2xl", md: "3xl" }} fontWeight="bold" color={textColor}>
-              {current.total_customers}
-            </Text>
-          </Box>
-          <Box bg={cardBg} p={{ base: 3, md: 6 }} borderRadius="xl" boxShadow="md">
-            <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Pending</Text>
-            <Text fontSize={{ base: "2xl", md: "3xl" }} fontWeight="bold" color="orange.500">
-              {current.pending_customers}
-            </Text>
-          </Box>
-          <Box bg={cardBg} p={{ base: 3, md: 6 }} borderRadius="xl" boxShadow="md">
-            <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Submitted</Text>
-            <Text fontSize={{ base: "2xl", md: "3xl" }} fontWeight="bold" color="blue.500">
-              {current.submitted_customers}
-            </Text>
-          </Box>
-          <Box bg={cardBg} p={{ base: 3, md: 6 }} borderRadius="xl" boxShadow="md">
-            <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Verified</Text>
-            <Text fontSize={{ base: "2xl", md: "3xl" }} fontWeight="bold" color="green.500">
-              {current.verified_customers}
-            </Text>
-          </Box>
+          {[
+            { label: 'Total Customers', value: current.total_customers, color: accentGradient },
+            { label: 'Pending', value: current.pending_customers, color: 'linear-gradient(135deg, #f6ad55 0%, #ed8936 100%)' },
+            { label: 'Submitted', value: current.submitted_customers, color: 'linear-gradient(135deg, #4299e1 0%, #3182ce 100%)' },
+            { label: 'Verified', value: current.verified_customers, color: 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)' }
+          ].map((stat, index) => (
+            <Box
+              key={stat.label}
+              {...glassEffect}
+              p={{ base: 4, md: 6 }}
+              borderRadius="2xl"
+              transition="all 0.3s"
+              _hover={{ transform: 'translateY(-5px)' }}
+              animation={`${fadeIn} ${0.2 + index * 0.1}s ease-out`}
+            >
+              <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500" mb={2}>
+                {stat.label}
+              </Text>
+              <Text 
+                fontSize={{ base: "2xl", md: "3xl" }} 
+                fontWeight="bold"
+                bgGradient={stat.color}
+                bgClip="text"
+              >
+                {stat.value}
+              </Text>
+            </Box>
+          ))}
         </SimpleGrid>
 
         {/* Charts and Tables */}
@@ -193,13 +257,20 @@ const Analytics = ({ onClose, user, onMenuOpen }) => {
         >
           {/* Trends Chart */}
           <Box 
-            bg={cardBg} 
-            p={{ base: 3, md: 6 }} 
-            borderRadius="xl" 
-            boxShadow="md"
+            {...glassEffect}
+            p={{ base: 4, md: 6 }} 
+            borderRadius="2xl"
             h={{ base: "350px", md: "400px" }}
+            animation={`${fadeIn} 0.6s ease-out`}
           >
-            <Heading size={{ base: "sm", md: "md" }} mb={4}>Customer Trends</Heading>
+            <Heading 
+              size={{ base: "sm", md: "md" }} 
+              mb={4}
+              bgGradient={accentGradient}
+              bgClip="text"
+            >
+              Customer Trends
+            </Heading>
             <Box height={{ base: "280px", md: "330px" }}>
               <Line 
                 data={trendsData} 
@@ -207,11 +278,19 @@ const Analytics = ({ onClose, user, onMenuOpen }) => {
                   responsive: true, 
                   maintainAspectRatio: false,
                   scales: {
-                    y: { beginAtZero: true },
+                    y: { 
+                      beginAtZero: true,
+                      grid: {
+                        color: gridLightColor
+                      }
+                    },
                     x: {
                       ticks: {
                         maxRotation: 45,
                         minRotation: 45
+                      },
+                      grid: {
+                        color: gridLightColor
                       }
                     }
                   },
@@ -223,7 +302,8 @@ const Analytics = ({ onClose, user, onMenuOpen }) => {
                         padding: 10,
                         font: {
                           size: 10
-                        }
+                        },
+                        usePointStyle: true
                       }
                     }
                   }
@@ -234,47 +314,79 @@ const Analytics = ({ onClose, user, onMenuOpen }) => {
 
           {/* Top Sales Executives */}
           <Box 
-            bg={cardBg} 
-            p={{ base: 3, md: 6 }} 
-            borderRadius="xl" 
-            boxShadow="md"
+            {...glassEffect}
+            p={{ base: 4, md: 6 }} 
+            borderRadius="2xl"
             overflowY="auto"
             maxH={{ base: "350px", md: "400px" }}
+            animation={`${fadeIn} 0.7s ease-out`}
+            sx={{
+              '&::-webkit-scrollbar': {
+                width: '4px',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: accentGradient,
+                borderRadius: '24px',
+              },
+            }}
           >
-            <Heading size={{ base: "sm", md: "md" }} mb={4}>Top Performing Sales Executives</Heading>
-            <VStack spacing={3} align="stretch">
-              {topSales.map((exec) => (
+            <Heading 
+              size={{ base: "sm", md: "md" }} 
+              mb={4}
+              bgGradient={accentGradient}
+              bgClip="text"
+            >
+              Top Performing Sales Executives
+            </Heading>
+            <VStack spacing={4} align="stretch">
+              {topSales.map((exec, index) => (
                 <Box
                   key={exec.sales_executive_id}
-                  bg={highlightBg}
-                  p={3}
-                  borderRadius="lg"
-                  _hover={{ transform: 'translateY(-2px)', transition: 'all 0.2s' }}
+                  {...glassEffect}
+                  p={4}
+                  borderRadius="xl"
+                  transition="all 0.3s"
+                  _hover={{ transform: 'scale(1.02)' }}
+                  animation={`${fadeIn} ${0.8 + index * 0.1}s ease-out`}
                 >
                   <Flex 
                     justify="space-between" 
                     align="center"
-                    flexDir={{ base: "column", sm: "row" }}
-                    gap={2}
+                    flexDir={{ base: "row", sm: "row" }}
+                    gap={4}
                   >
-                    <VStack align="start" spacing={0.5} flex={1}>
-                      <Text fontWeight="bold" fontSize={{ base: "sm", md: "md" }}>
+                    <VStack align="start" spacing={1} flex={1}>
+                      <Text 
+                        fontWeight="bold" 
+                        fontSize={{ base: "sm", md: "md" }}
+                        bgGradient={accentGradient}
+                        bgClip="text"
+                      >
                         {exec.sales_executive_name || `Sales Executive #${exec.sales_executive_id}`}
                       </Text>
                       <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">
                         {exec.verified_customers} verified out of {exec.total_customers} customers
                       </Text>
-                      <Text fontSize={{ base: "xs", md: "sm" }} color="green.500">
+                      <Text 
+                        fontSize={{ base: "xs", md: "sm" }} 
+                        bgGradient="linear(to-r, green.400, teal.400)"
+                        bgClip="text"
+                        fontWeight="bold"
+                      >
                         Revenue: ₹{exec.total_revenue.toLocaleString()}
                       </Text>
                     </VStack>
                     <CircularProgress 
                       value={(exec.verified_customers / exec.total_customers) * 100} 
-                      color={accentColor} 
-                      size={{ base: "40px", md: "50px" }}
+                      size={{ base: "50px", md: "60px" }}
                       thickness="8px"
+                      capIsRound
+                      color={accentGradient.split(' ')[2]}
                     >
-                      <CircularProgressLabel fontSize={{ base: "xs", md: "sm" }}>
+                      <CircularProgressLabel 
+                        fontSize={{ base: "xs", md: "sm" }}
+                        fontWeight="bold"
+                      >
                         {Math.round((exec.verified_customers / exec.total_customers) * 100)}%
                       </CircularProgressLabel>
                     </CircularProgress>
