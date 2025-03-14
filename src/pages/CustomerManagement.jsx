@@ -20,6 +20,13 @@ import {
   Badge,
   Card,
   CardBody,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
 } from '@chakra-ui/react';
 import {
   ArrowBackIcon,
@@ -49,8 +56,18 @@ const CustomerManagement = () => {
     aadhar_front: null,
     aadhar_back: null,
     passport_photo: null,
+    front_delivery_photo: null,
+    back_delivery_photo: null,
+    delivery_photo: null,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
+  const [deliveryPhotos, setDeliveryPhotos] = useState({
+    front_delivery_photo: null,
+    back_delivery_photo: null,
+    delivery_photo: null,
+  });
   const blobUrlsRef = useRef({});
 
   const bgGradient = useColorModeValue('linear(to-b, gray.50, gray.100)', 'linear(to-b, gray.800, gray.900)');
@@ -66,7 +83,7 @@ const CustomerManagement = () => {
         const response = await axios.get(`http://localhost:3000/customers/${customerId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log('Customer data:', response.data.customer); // Debug customer response
+        console.log('Customer data:', response.data.customer);
         setCustomer(response.data.customer);
         setPriceData({
           ex_showroom: response.data.customer.ex_showroom || '',
@@ -77,7 +94,10 @@ const CustomerManagement = () => {
           amount_paid: '',
         });
 
-        const imageTypes = ['aadhar_front', 'aadhar_back', 'passport_photo'];
+        const imageTypes = [
+          'aadhar_front', 'aadhar_back', 'passport_photo',
+          'front_delivery_photo', 'back_delivery_photo', 'delivery_photo'
+        ];
         const imagePromises = imageTypes.map(async (type) => {
           try {
             console.log(`Fetching ${type} for customer ${customerId}`);
@@ -186,6 +206,111 @@ const CustomerManagement = () => {
     }
   };
 
+  const handleVerify = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.put(
+        `http://localhost:3000/customers/${customerId}/verify`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setCustomer(response.data.customer);
+      toast({
+        title: 'Success',
+        description: 'Customer verified successfully!',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (err) {
+      console.error('Failed to verify customer:', err);
+      toast({
+        title: 'Error',
+        description: err.response?.data?.error || 'Failed to verify customer',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`http://localhost:3000/customers/${customerId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast({
+        title: 'Success',
+        description: 'Customer deleted successfully!',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+      navigate('/sales-executive');
+    } catch (err) {
+      console.error('Failed to delete customer:', err);
+      toast({
+        title: 'Error',
+        description: err.response?.data?.error || 'Failed to delete customer',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setIsDeleteModalOpen(false);
+    }
+  };
+
+  const handleDeliveryPhotoChange = (e) => {
+    setDeliveryPhotos({ ...deliveryPhotos, [e.target.name]: e.target.files[0] });
+  };
+
+  const handleDeliveredSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    const formData = new FormData();
+    if (deliveryPhotos.front_delivery_photo) formData.append('front_delivery_photo', deliveryPhotos.front_delivery_photo);
+    if (deliveryPhotos.back_delivery_photo) formData.append('back_delivery_photo', deliveryPhotos.back_delivery_photo);
+    if (deliveryPhotos.delivery_photo) formData.append('delivery_photo', deliveryPhotos.delivery_photo);
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.put(
+        `http://localhost:3000/customers/${customerId}/delivered`,
+        formData,
+        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } }
+      );
+      setCustomer(response.data.customer);
+      setImages(prev => ({
+        ...prev,
+        front_delivery_photo: deliveryPhotos.front_delivery_photo ? URL.createObjectURL(deliveryPhotos.front_delivery_photo) : prev.front_delivery_photo,
+        back_delivery_photo: deliveryPhotos.back_delivery_photo ? URL.createObjectURL(deliveryPhotos.back_delivery_photo) : prev.back_delivery_photo,
+        delivery_photo: deliveryPhotos.delivery_photo ? URL.createObjectURL(deliveryPhotos.delivery_photo) : prev.delivery_photo,
+      }));
+      toast({
+        title: 'Success',
+        description: 'Customer marked as delivered successfully!',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+      setIsDeliveryModalOpen(false);
+    } catch (err) {
+      console.error('Failed to mark customer as delivered:', err);
+      toast({
+        title: 'Error',
+        description: err.response?.data?.error || 'Failed to mark customer as delivered',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (!customer) return <Text>Loading...</Text>;
 
   const remainingAmount = (customer.total_price || 0) - (customer.amount_paid || 0);
@@ -194,23 +319,24 @@ const CustomerManagement = () => {
     Pending: { color: 'orange.500', icon: TimeIcon },
     Submitted: { color: 'blue.500', icon: WarningIcon },
     Verified: { color: 'green.500', icon: CheckCircleIcon },
+    Delivered: { color: 'purple.500', icon: ArrowForwardIcon },
   };
   const { color: statusColor, icon: StatusIcon } = statusConfig[customer.status] || {};
 
   return (
     <Box minH="100vh" bg={bgGradient} p={{ base: 2, sm: 4 }}>
-      <Box 
-        maxW={{ base: '100%', md: '800px' }} 
-        mx="auto" 
-        bg={cardBg} 
-        borderRadius={{ base: 'md', md: 'xl' }} 
-        p={{ base: 3, sm: 5 }} 
+      <Box
+        maxW={{ base: '100%', md: '800px' }}
+        mx="auto"
+        bg={cardBg}
+        borderRadius={{ base: 'md', md: 'xl' }}
+        p={{ base: 3, sm: 5 }}
         boxShadow={{ base: 'md', md: 'lg' }}
       >
-        <Flex 
-          direction={{ base: 'column', sm: 'row' }} 
-          align={{ base: 'stretch', sm: 'center' }} 
-          justify="space-between" 
+        <Flex
+          direction={{ base: 'column', sm: 'row' }}
+          align={{ base: 'stretch', sm: 'center' }}
+          justify="space-between"
           mb={4}
           gap={2}
         >
@@ -223,17 +349,13 @@ const CustomerManagement = () => {
               size={{ base: 'md', sm: 'lg' }}
               aria-label="Back to list"
             />
-            <Heading 
-              size={{ base: 'md', md: 'lg' }} 
-              color={accentColor}
-              isTruncated
-            >
+            <Heading size={{ base: 'md', md: 'lg' }} color={accentColor} isTruncated>
               Customer Management
             </Heading>
           </HStack>
-          <HStack 
-            spacing={2} 
-            wrap="wrap" 
+          <HStack
+            spacing={2}
+            wrap="wrap"
             justify={{ base: 'center', sm: 'flex-end' }}
             w={{ base: '100%', sm: 'auto' }}
           >
@@ -248,27 +370,32 @@ const CustomerManagement = () => {
               <StatusIcon boxSize={3} mr={1} />
               {customer.status}
             </Badge>
-            <Button 
-              leftIcon={<CheckIcon />} 
-              colorScheme="green" 
+            <Button
+              leftIcon={<CheckIcon />}
+              colorScheme="green"
               size={{ base: 'sm', sm: 'md' }}
               variant="solid"
+              onClick={handleVerify}
+              isDisabled={customer.status === 'Verified' || customer.status === 'Delivered'}
             >
               Verify
             </Button>
-            <Button 
-              leftIcon={<DeleteIcon />} 
-              colorScheme="red" 
+            <Button
+              leftIcon={<DeleteIcon />}
+              colorScheme="red"
               size={{ base: 'sm', sm: 'md' }}
               variant="outline"
+              onClick={() => setIsDeleteModalOpen(true)}
             >
               Delete
             </Button>
-            <Button 
-              leftIcon={<ArrowForwardIcon />} 
-              colorScheme="blue" 
+            <Button
+              leftIcon={<ArrowForwardIcon />}
+              colorScheme="blue"
               size={{ base: 'sm', sm: 'md' }}
               variant="solid"
+              onClick={() => setIsDeliveryModalOpen(true)}
+              isDisabled={customer.status === 'Delivered'}
             >
               Delivered
             </Button>
@@ -277,7 +404,7 @@ const CustomerManagement = () => {
 
         <VStack spacing={{ base: 4, md: 6 }} align="stretch">
           <VStack spacing={4} align="stretch">
-            <Card bg='gray.700' borderRadius="md">
+            <Card bg="gray.700" borderRadius="md">
               <CardBody p={{ base: 3, sm: 4 }}>
                 <Text fontWeight="semibold" color={accentColor} mb={2}>
                   Booking Info
@@ -290,7 +417,7 @@ const CustomerManagement = () => {
               </CardBody>
             </Card>
 
-            <Card bg='gray.700' borderRadius="md">
+            <Card bg="gray.700" borderRadius="md">
               <CardBody p={{ base: 3, sm: 4 }}>
                 <Text fontWeight="semibold" color={accentColor} mb={2}>
                   Customer Details
@@ -308,41 +435,34 @@ const CustomerManagement = () => {
                       <Text color={textColor}><strong>Finance Amount:</strong> ₹{customer.finance_amount?.toLocaleString() || 'N/A'}</Text>
                     </>
                   )}
+                  <Divider my={2} />
+                  <Text color={textColor}><strong>Sales Verified:</strong> {customer.sales_verified ? 'Yes' : 'No'}</Text>
+                  <Text color={textColor}><strong>Accounts Verified:</strong> {customer.accounts_verified ? 'Yes' : 'No'}</Text>
+                  <Text color={textColor}><strong>Manager Verified:</strong> {customer.manager_verified ? 'Yes' : 'No'}</Text>
+                  <Text color={textColor}><strong>RTO Verified:</strong> {customer.rto_verified ? 'Yes' : 'No'}</Text>
                 </VStack>
               </CardBody>
             </Card>
 
-            <Card bg='gray.700' borderRadius="md">
+            <Card bg="gray.700" borderRadius="md">
               <CardBody p={{ base: 3, sm: 4 }}>
                 <Text fontWeight="semibold" color={accentColor} mb={2}>
                   Documents
                 </Text>
-                <Grid 
-                  templateColumns={{ base: '1fr', sm: 'repeat(3, 1fr)' }} 
-                  gap={3}
-                >
-                  {['aadhar_front', 'aadhar_back', 'passport_photo'].map((type) => (
-                    <Box 
-                      key={type} 
-                      bg={cardBg} 
-                      p={2} 
-                      borderRadius="md" 
-                      border="1px" 
-                      borderColor={borderColor}
-                    >
-                      <Text 
-                        color={textColor} 
-                        fontSize="sm" 
-                        fontWeight="medium"
-                        mb={1}
-                      >
+                <Grid templateColumns={{ base: '1fr', sm: 'repeat(3, 1fr)' }} gap={3}>
+                  {[
+                    'aadhar_front', 'aadhar_back', 'passport_photo',
+                    'front_delivery_photo', 'back_delivery_photo', 'delivery_photo'
+                  ].map((type) => (
+                    <Box key={type} bg={cardBg} p={2} borderRadius="md" border="1px" borderColor={borderColor}>
+                      <Text color={textColor} fontSize="sm" fontWeight="medium" mb={1}>
                         {type.replace('_', ' ').toUpperCase()}
                       </Text>
                       {images[type] ? (
-                        <Image 
-                          src={images[type]} 
-                          maxW={{ base: '100%', sm: '120px' }} 
-                          borderRadius="md" 
+                        <Image
+                          src={images[type]}
+                          maxW={{ base: '100%', sm: '120px' }}
+                          borderRadius="md"
                           objectFit="cover"
                           alt={`${type} document`}
                           fallback={<Text color="gray.400">Loading...</Text>}
@@ -358,8 +478,8 @@ const CustomerManagement = () => {
           </VStack>
 
           <VStack spacing={4} align="stretch">
-          <Card bg='gray.700' borderRadius="md">
-          <CardBody p={{ base: 3, sm: 4 }}>
+            <Card bg="gray.700" borderRadius="md">
+              <CardBody p={{ base: 3, sm: 4 }}>
                 <Text fontWeight="semibold" color={accentColor} mb={2}>
                   Price Details
                 </Text>
@@ -402,7 +522,7 @@ const CustomerManagement = () => {
               </CardBody>
             </Card>
 
-            <Card bg='gray.700' borderRadius="md">
+            <Card bg="gray.700" borderRadius="md">
               <CardBody p={{ base: 3, sm: 4 }}>
                 <Text fontWeight="semibold" color={accentColor} mb={2}>
                   Add Payment
@@ -437,7 +557,7 @@ const CustomerManagement = () => {
               </CardBody>
             </Card>
 
-            <Card bg='gray.700' borderRadius="md">
+            <Card bg="gray.700" borderRadius="md">
               <CardBody p={{ base: 3, sm: 4 }}>
                 <Text fontWeight="semibold" color={accentColor} mb={2}>
                   Price Summary
@@ -456,7 +576,6 @@ const CustomerManagement = () => {
                     <Text color={textColor}>₹{customer.accessories?.toLocaleString() || '0'}</Text>
                   </Grid>
                   <Divider my={2} />
-                  
                   <Text fontWeight="semibold" color={textColor}>
                     Total: ₹{customer.total_price?.toLocaleString() || '0'}
                   </Text>
@@ -472,6 +591,79 @@ const CustomerManagement = () => {
           </VStack>
         </VStack>
       </Box>
+
+      {/* Delete Confirmation Modal */}
+      <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Confirm Deletion</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Text>Are you sure you want to delete this customer? This action cannot be undone.</Text>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="ghost" mr={3} onClick={() => setIsDeleteModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button colorScheme="red" onClick={handleDelete}>
+              Delete
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Delivery Photos Modal */}
+      <Modal isOpen={isDeliveryModalOpen} onClose={() => setIsDeliveryModalOpen(false)}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Mark as Delivered</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <form onSubmit={handleDeliveredSubmit}>
+              <VStack spacing={4}>
+                <FormControl>
+                  <FormLabel>Front Delivery Photo</FormLabel>
+                  <Input
+                    type="file"
+                    name="front_delivery_photo"
+                    accept="image/*"
+                    onChange={handleDeliveryPhotoChange}
+                    variant="outline"
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>Back Delivery Photo</FormLabel>
+                  <Input
+                    type="file"
+                    name="back_delivery_photo"
+                    accept="image/*"
+                    onChange={handleDeliveryPhotoChange}
+                    variant="outline"
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>Delivery Photo</FormLabel>
+                  <Input
+                    type="file"
+                    name="delivery_photo"
+                    accept="image/*"
+                    onChange={handleDeliveryPhotoChange}
+                    variant="outline"
+                  />
+                </FormControl>
+                <Button
+                  type="submit"
+                  colorScheme="blue"
+                  w="full"
+                  isLoading={isSubmitting}
+                >
+                  Submit Delivery Photos
+                </Button>
+              </VStack>
+            </form>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 };
