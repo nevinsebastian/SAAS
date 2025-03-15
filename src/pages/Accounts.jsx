@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -25,10 +25,14 @@ import {
   MenuItem,
   Avatar,
   Input,
+  InputGroup,
+  InputLeftElement,
   Select,
   Tabs,
   TabList,
   Tab,
+  TabPanels,
+  TabPanel,
   Checkbox,
   Modal,
   ModalOverlay,
@@ -41,14 +45,17 @@ import {
   Radio,
   RadioGroup,
   Image,
+  Tooltip,
+  Divider,
 } from '@chakra-ui/react';
-import { HamburgerIcon, BellIcon, EditIcon, ArrowBackIcon, DeleteIcon, WarningTwoIcon } from '@chakra-ui/icons';
-import { Chart as ChartJS, ArcElement, BarElement, LineElement, CategoryScale, LinearScale, PointElement, Title, Tooltip, Legend } from 'chart.js';
+import { HamburgerIcon, BellIcon, EditIcon, ArrowBackIcon, DeleteIcon, WarningTwoIcon, SearchIcon, CheckIcon, ViewIcon } from '@chakra-ui/icons';
+import { Chart as ChartJS, ArcElement, BarElement, LineElement, CategoryScale, LinearScale, PointElement, Title, Tooltip as ChartTooltip, Legend } from 'chart.js';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Dashboard from '../components/AccountDashboard';
+import api from '../api';
 
-ChartJS.register(ArcElement, BarElement, LineElement, CategoryScale, LinearScale, PointElement, Title, Tooltip, Legend);
+ChartJS.register(ArcElement, BarElement, LineElement, CategoryScale, LinearScale, PointElement, Title, ChartTooltip, Legend);
 
 const Accounts = () => {
   const navigate = useNavigate();
@@ -58,11 +65,11 @@ const Accounts = () => {
   const { isOpen: isDeletOpen, onOpen: onDeletOpen, onClose: onDeletClose } = useDisclosure();
 
   const { colorMode, toggleColorMode } = useColorMode();
-  const bgGradient = useColorModeValue('linear(to-br, gray.50, gray.100)', 'linear(to-br, gray.900, gray.800)');
+  const bgGradient = useColorModeValue('linear(to-br, purple.50, pink.50)', 'linear(to-br, gray.900, purple.900)');
   const cardBg = useColorModeValue('white', 'gray.800');
-  const textColor = useColorModeValue('gray.800', 'gray.100');
+  const textColor = useColorModeValue('gray.700', 'gray.200');
   const accentColor = 'blue.500';
-  const borderColor = useColorModeValue('gray.200', 'gray.600');
+  const borderColor = useColorModeValue('gray.200', 'gray.700');
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -78,40 +85,61 @@ const Accounts = () => {
   const [customReport, setCustomReport] = useState('');
   const [deleteMessage, setDeleteMessage] = useState('');
   const [customDelete, setCustomDelete] = useState('');
+  const [customers, setCustomers] = useState([]);
+  const [filteredCustomers, setFilteredCustomers] = useState([]);
+  const [activeTab, setActiveTab] = useState('pending');
 
   const user = JSON.parse(localStorage.getItem('user')) || { username: 'account_user' };
 
-  // Dummy customer data with personal info
-  const customers = [
-    {
-      id: 'B001', name: 'John Doe', status: 'Pending', vehicle: 'Toyota Corolla', date: '2025-03-01', errors: 0,
-      fullName: 'John Michael Doe', address: '123 Main St, Springfield', fathersName: 'Robert Doe',
-      panNumber: 'ABCDE1234F', aadharNumber: '1234-5678-9012', photo: 'https://via.placeholder.com/100',
-    },
-    {
-      id: 'B002', name: 'Jane Smith', status: 'Done', vehicle: 'Honda City', date: '2025-02-28', errors: 0,
-      fullName: 'Jane Elizabeth Smith', address: '456 Oak Ave, Rivertown', fathersName: 'James Smith',
-      panNumber: 'FGHIJ5678K', aadharNumber: '9876-5432-1098', photo: 'https://via.placeholder.com/100',
-    },
-    {
-      id: 'B003', name: 'Mike Johnson', status: 'Errors', vehicle: 'Hyundai Creta', date: '2025-03-02', errors: 1, errorReason: 'Wrong Transaction ID',
-      fullName: 'Michael David Johnson', address: '789 Pine Rd, Hillcity', fathersName: 'David Johnson',
-      panNumber: 'KLMNO9012P', aadharNumber: '4567-8901-2345', photo: 'https://via.placeholder.com/100',
-    },
-  ];
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
 
-  const filteredCustomers = customers.filter(c =>
-    c.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-    (tabIndex === 0 ? c.status === 'Done' : tabIndex === 1 ? c.status === 'Pending' : c.status === 'Errors')
-  );
+  const fetchCustomers = async () => {
+    try {
+      const response = await api.get('/accounts/customers');
+      setCustomers(response.data.customers);
+      setFilteredCustomers(response.data.customers);
+    } catch (err) {
+      console.error('Failed to fetch customers:', err);
+      toast.error('Failed to load customers');
+    }
+  };
 
-  const notifications = [
-    { id: 1, message: 'New customer added: John Doe', time: '2025-03-01 10:00 AM', seen: false },
-    { id: 2, message: 'Error reported for Mike Johnson', time: '2025-03-02 09:00 AM', seen: false },
-    { id: 3, message: 'Verification completed for Jane Smith', time: '2025-02-28 12:00 PM', seen: true },
-  ];
+  const handleSearch = (e) => {
+    const query = e.target.value.toLowerCase();
+    setSearchQuery(query);
+    const filtered = customers.filter(
+      c =>
+        c.customer_name.toLowerCase().includes(query) ||
+        c.phone_number.includes(query) ||
+        c.vehicle.toLowerCase().includes(query)
+    );
+    setFilteredCustomers(filtered);
+  };
 
-  const unseenNotifications = notifications.filter(n => !n.seen);
+  const handleCustomerClick = async (customer) => {
+    try {
+      const response = await api.get(`/accounts/customers/${customer.id}`);
+      setSelectedCustomer(response.data.customer);
+      onVerifyOpen();
+    } catch (err) {
+      console.error('Failed to fetch customer details:', err);
+      toast.error('Failed to load customer details');
+    }
+  };
+
+  const handleVerifyCustomer = async (customerId) => {
+    try {
+      await api.put(`/accounts/customers/${customerId}/verify`);
+      toast.success('Customer verified successfully!');
+      fetchCustomers(); // Refresh the list
+      onVerifyClose(); // Close the modal
+    } catch (err) {
+      console.error('Failed to verify customer:', err);
+      toast.error('Failed to verify customer');
+    }
+  };
 
   const handleScreenSelect = (screen) => {
     setSelectedScreen(screen);
@@ -122,27 +150,27 @@ const Accounts = () => {
   const handleCustomerSelect = (customer) => {
     setSelectedCustomer(customer);
     setCustomerData({
-      fullName: customer.fullName,
+      fullName: customer.customer_name,
       address: customer.address,
-      fathersName: customer.fathersName,
-      panNumber: customer.panNumber,
-      aadharNumber: customer.aadharNumber,
-      photo: customer.photo,
-      name: customer.name,
+      fathersName: customer.fathers_name,
+      panNumber: customer.pan_number,
+      aadharNumber: customer.aadhar_number,
+      photo: customer.front_photo_base64 ? `data:image/jpeg;base64,${customer.front_photo_base64}` : '',
+      name: customer.customer_name,
       vehicle: customer.vehicle,
-      variant: 'LE',
-      color: 'Black',
-      exShowroom: '50000',
-      tax: '5000',
-      onRoad: '55000',
-      insurance: '2000',
-      bookingCharge: '1000',
-      deliveryCharge: '1500',
-      hasFinance: false,
-      financeProvider: '',
-      financeAmount: '',
-      emi: '',
-      tenure: '',
+      variant: customer.variant,
+      color: customer.color,
+      exShowroom: customer.ex_showroom,
+      tax: customer.tax,
+      onRoad: customer.on_road,
+      insurance: customer.insurance,
+      bookingCharge: customer.booking_charge,
+      deliveryCharge: customer.delivery_charge,
+      hasFinance: customer.has_finance,
+      financeProvider: customer.finance_provider,
+      financeAmount: customer.finance_amount,
+      emi: customer.emi,
+      tenure: customer.tenure,
     });
     setIsEditing(false);
   };
@@ -163,13 +191,6 @@ const Accounts = () => {
   const handleSave = () => {
     setIsEditing(false);
     toast.success('Customer details saved!', { position: 'top-center' });
-  };
-
-  const handleVerify = () => {
-    setCustomerData(prev => ({ ...prev, status: 'Done' }));
-    setSelectedCustomer(null);
-    onVerifyClose();
-    toast.success('Customer verified successfully!', { position: 'top-center' });
   };
 
   const handleCancelVerify = () => {
@@ -202,6 +223,210 @@ const Accounts = () => {
     }
   };
 
+  const getFilteredCustomers = () => {
+    return filteredCustomers.filter(customer => 
+      activeTab === 'pending' ? !customer.accounts_verified : customer.accounts_verified
+    );
+  };
+
+  const renderCustomerCard = (customer) => (
+    <Box
+      key={customer.id}
+      bg={cardBg}
+      p={6}
+      borderRadius="xl"
+      boxShadow="lg"
+      border="1px solid"
+      borderColor={borderColor}
+      _hover={{ transform: 'translateY(-2px)', boxShadow: 'xl' }}
+      transition="all 0.2s"
+    >
+      <VStack align="stretch" spacing={4}>
+        <Flex justify="space-between" align="center">
+          <VStack align="start" spacing={1}>
+            <Text fontSize="lg" fontWeight="bold" color={textColor}>
+              {customer.customer_name}
+            </Text>
+            <Text fontSize="sm" color="gray.500">
+              {customer.phone_number}
+            </Text>
+          </VStack>
+          <Badge
+            colorScheme={customer.accounts_verified ? 'green' : 'yellow'}
+            p={2}
+            borderRadius="md"
+          >
+            {customer.accounts_verified ? 'Verified' : 'Pending'}
+          </Badge>
+        </Flex>
+        
+        <Divider />
+        
+        <VStack align="start" spacing={2}>
+          <Text fontSize="sm" color="gray.500">
+            Vehicle: {customer.vehicle}
+          </Text>
+          <Text fontSize="sm" color="gray.500">
+            Price: ₹{customer.price?.toLocaleString() || 'N/A'}
+          </Text>
+        </VStack>
+
+        <HStack spacing={2} justify="flex-end">
+          <Tooltip label="View Details">
+            <IconButton
+              icon={<ViewIcon />}
+              colorScheme="purple"
+              variant="ghost"
+              onClick={() => handleCustomerClick(customer)}
+            />
+          </Tooltip>
+          {!customer.accounts_verified && (
+            <Tooltip label="Verify Customer">
+              <IconButton
+                icon={<CheckIcon />}
+                colorScheme="green"
+                variant="ghost"
+                onClick={() => handleVerifyCustomer(customer.id)}
+              />
+            </Tooltip>
+          )}
+        </HStack>
+      </VStack>
+    </Box>
+  );
+
+  const renderCustomerModal = () => (
+    <Modal isOpen={isVerifyOpen} onClose={onVerifyClose} size="6xl">
+      <ModalOverlay backdropFilter="blur(4px)" />
+      <ModalContent bg={cardBg}>
+        <ModalHeader color={textColor}>Customer Details</ModalHeader>
+        <ModalCloseButton />
+        <ModalBody pb={6}>
+          {selectedCustomer && (
+            <VStack spacing={6} align="stretch">
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+                <Box>
+                  <VStack align="start" spacing={4}>
+                    <Heading size="md" color={textColor}>Personal Information</Heading>
+                    <SimpleGrid columns={2} spacing={4} w="full">
+                      <VStack align="start">
+                        <Text fontWeight="bold" color="gray.500">Name</Text>
+                        <Text>{selectedCustomer.customer_name}</Text>
+                      </VStack>
+                      <VStack align="start">
+                        <Text fontWeight="bold" color="gray.500">Phone</Text>
+                        <Text>{selectedCustomer.phone_number}</Text>
+                      </VStack>
+                      <VStack align="start">
+                        <Text fontWeight="bold" color="gray.500">Vehicle</Text>
+                        <Text>{selectedCustomer.vehicle}</Text>
+                      </VStack>
+                      <VStack align="start">
+                        <Text fontWeight="bold" color="gray.500">Price</Text>
+                        <Text>₹{selectedCustomer.price?.toLocaleString() || 'N/A'}</Text>
+                      </VStack>
+                    </SimpleGrid>
+                  </VStack>
+                </Box>
+
+                <Box>
+                  <VStack align="start" spacing={4}>
+                    <Heading size="md" color={textColor}>Vehicle Details</Heading>
+                    <SimpleGrid columns={2} spacing={4} w="full">
+                      <VStack align="start">
+                        <Text fontWeight="bold" color="gray.500">Variant</Text>
+                        <Text>{selectedCustomer.variant || 'N/A'}</Text>
+                      </VStack>
+                      <VStack align="start">
+                        <Text fontWeight="bold" color="gray.500">Color</Text>
+                        <Text>{selectedCustomer.color || 'N/A'}</Text>
+                      </VStack>
+                    </SimpleGrid>
+                  </VStack>
+                </Box>
+              </SimpleGrid>
+
+              <Divider />
+
+              <Box>
+                <Heading size="md" mb={4} color={textColor}>Documents</Heading>
+                <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={4}>
+                  {selectedCustomer.front_photo_base64 && (
+                    <VStack>
+                      <Text fontWeight="bold" color="gray.500">Front Photo</Text>
+                      <Image
+                        src={`data:image/jpeg;base64,${selectedCustomer.front_photo_base64}`}
+                        alt="Front"
+                        borderRadius="md"
+                        objectFit="cover"
+                      />
+                    </VStack>
+                  )}
+                  {selectedCustomer.back_photo_base64 && (
+                    <VStack>
+                      <Text fontWeight="bold" color="gray.500">Back Photo</Text>
+                      <Image
+                        src={`data:image/jpeg;base64,${selectedCustomer.back_photo_base64}`}
+                        alt="Back"
+                        borderRadius="md"
+                        objectFit="cover"
+                      />
+                    </VStack>
+                  )}
+                  {selectedCustomer.aadhar_photo_base64 && (
+                    <VStack>
+                      <Text fontWeight="bold" color="gray.500">Aadhar Card</Text>
+                      <Image
+                        src={`data:image/jpeg;base64,${selectedCustomer.aadhar_photo_base64}`}
+                        alt="Aadhar"
+                        borderRadius="md"
+                        objectFit="cover"
+                      />
+                    </VStack>
+                  )}
+                  {selectedCustomer.pan_photo_base64 && (
+                    <VStack>
+                      <Text fontWeight="bold" color="gray.500">PAN Card</Text>
+                      <Image
+                        src={`data:image/jpeg;base64,${selectedCustomer.pan_photo_base64}`}
+                        alt="PAN"
+                        borderRadius="md"
+                        objectFit="cover"
+                      />
+                    </VStack>
+                  )}
+                  {selectedCustomer.bank_photo_base64 && (
+                    <VStack>
+                      <Text fontWeight="bold" color="gray.500">Bank Details</Text>
+                      <Image
+                        src={`data:image/jpeg;base64,${selectedCustomer.bank_photo_base64}`}
+                        alt="Bank"
+                        borderRadius="md"
+                        objectFit="cover"
+                      />
+                    </VStack>
+                  )}
+                </SimpleGrid>
+              </Box>
+
+              {!selectedCustomer.accounts_verified && (
+                <Button
+                  colorScheme="green"
+                  size="lg"
+                  onClick={() => handleVerifyCustomer(selectedCustomer.id)}
+                  w="full"
+                  mt={4}
+                >
+                  Verify Customer
+                </Button>
+              )}
+            </VStack>
+          )}
+        </ModalBody>
+      </ModalContent>
+    </Modal>
+  );
+
   return (
     <Box minH="100vh" bg={bgGradient} position="relative">
       {/* Header */}
@@ -223,23 +448,10 @@ const Accounts = () => {
         <HStack spacing={4}>
           <Menu>
             <MenuButton as={IconButton} icon={<BellIcon />} variant="ghost" aria-label="Notifications" position="relative">
-              {unseenNotifications.length > 0 && (
-                <Badge colorScheme="red" borderRadius="full" position="absolute" top="-1" right="-1">{unseenNotifications.length}</Badge>
-              )}
+              {/* Notifications logic */}
             </MenuButton>
             <MenuList maxH="300px" overflowY="auto">
-              {unseenNotifications.length > 0 ? (
-                unseenNotifications.map(n => (
-                  <MenuItem key={n.id}>
-                    <VStack align="start" spacing={1}>
-                      <Text fontSize="sm" color={textColor}>{n.message}</Text>
-                      <Text fontSize="xs" color="gray.500">{n.time}</Text>
-                    </VStack>
-                  </MenuItem>
-                ))
-              ) : (
-                <MenuItem>No new notifications</MenuItem>
-              )}
+              {/* Notifications content */}
             </MenuList>
           </Menu>
           <Menu>
@@ -282,7 +494,7 @@ const Accounts = () => {
                   onClick={() => setSelectedCustomer(null)}
                   aria-label="Back to list"
                 />
-                <Heading size="md" color={textColor}>{selectedCustomer.name} - {selectedCustomer.id}</Heading>
+                <Heading size="md" color={textColor}>{selectedCustomer.customer_name} - {selectedCustomer.id}</Heading>
               </HStack>
               <Button size="sm" leftIcon={<EditIcon />} variant="outline" colorScheme="blue" onClick={handleEditToggle}>
                 {isEditing ? 'Cancel' : 'Edit'}
@@ -434,11 +646,10 @@ const Accounts = () => {
         ) : (
           // Customer List (Default Mobile View)
           <Box>
-            <Tabs variant="soft-rounded" colorScheme="blue" index={tabIndex} onChange={setTabIndex}>
+            <Tabs variant="soft-rounded" colorScheme="purple" index={activeTab} onChange={(index) => setActiveTab(index === 0 ? 'pending' : 'done')}>
               <TabList mb={4}>
-                <Tab>Done</Tab>
                 <Tab>Pending</Tab>
-                <Tab>Errors</Tab>
+                <Tab>Done</Tab>
               </TabList>
             </Tabs>
             <HStack mb={4}>
@@ -447,37 +658,10 @@ const Accounts = () => {
                 <option value="name">Name</option>
                 <option value="status">Status</option>
               </Select>
-              <Input placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} size="sm" />
+              <Input placeholder="Search..." value={searchQuery} onChange={handleSearch} size="sm" />
             </HStack>
             <VStack spacing={2} align="stretch" maxH={{ base: 'calc(100vh - 200px)', md: '70vh' }} overflowY="auto">
-              {filteredCustomers.map(customer => (
-                <Box
-                  key={customer.id}
-                  bg={cardBg}
-                  borderRadius="md"
-                  p={3}
-                  boxShadow="sm"
-                  _hover={{ boxShadow: 'md', transform: 'scale(1.02)' }}
-                  transition="all 0.2s"
-                  cursor="pointer"
-                  onClick={() => handleCustomerSelect(customer)}
-                >
-                  <Flex justify="space-between" align="center">
-                    <VStack align="start" spacing={1} flex="1">
-                      <Text fontWeight="bold" color={textColor}>{customer.name}</Text>
-                      <Text fontSize="sm" color="gray.500">{customer.id}</Text>
-                      <Text fontSize="sm" color="gray.500">{customer.vehicle}</Text>
-                      {customer.status === 'Errors' && (
-                        <Text fontSize="sm" color="red.500">{customer.errorReason}</Text>
-                      )}
-                    </VStack>
-                    <VStack align="end" spacing={1}>
-                      <Badge colorScheme={customer.status === 'Pending' ? 'orange' : customer.status === 'Done' ? 'green' : 'red'}>{customer.status}</Badge>
-                      <Text fontSize="xs" color="gray.500">{customer.date}</Text>
-                    </VStack>
-                  </Flex>
-                </Box>
-              ))}
+              {getFilteredCustomers().map(renderCustomerCard)}
             </VStack>
           </Box>
         )}
@@ -514,24 +698,6 @@ const Accounts = () => {
         </DrawerContent>
       </Drawer>
 
-      {/* Verification Modal */}
-      <Modal isOpen={isVerifyOpen} onClose={onVerifyClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Verify</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <VStack spacing={4}>
-              <Text>Are you sure you want to verify the customer?</Text>
-            </VStack>
-          </ModalBody>
-          <ModalFooter>
-            <Button colorScheme="red" mr={4} onClick={handleCancelVerify}>No</Button>
-            <Button colorScheme="blue" onClick={handleVerify}>Yes</Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-
       {/* Report Customer Modal */}
       <Modal isOpen={isReportOpen} onClose={onReportClose}>
         <ModalOverlay />
@@ -543,7 +709,7 @@ const Accounts = () => {
               <RadioGroup value={reportMessage} onChange={setReportMessage}>
                 <VStack align="start" spacing={2}>
                   <Radio value="Payment Pending">Payment Pending</Radio>
-                  <Radio value="Can’t Confirm Payment">Can’t Confirm Payment</Radio>
+                  <Radio value="Can't Confirm Payment">Can't Confirm Payment</Radio>
                   <Radio value="Wrong Transaction ID">Wrong Transaction ID</Radio>
                   <Radio value="Payment Not Received">Payment Not Received</Radio>
                 </VStack>
@@ -578,7 +744,7 @@ const Accounts = () => {
                 <VStack align="start" spacing={2}>
                   <Radio value="Payment Not Received">Payment Not Received</Radio>
                   <Radio value="Canceled Booking">Canceled Booking</Radio>
-                  <Radio value="Customer doesn’t exist">Customer doesn’t exist</Radio>
+                  <Radio value="Customer doesn't exist">Customer doesn't exist</Radio>
                 </VStack>
               </RadioGroup>
               <Input
@@ -599,7 +765,7 @@ const Accounts = () => {
         </ModalContent>
       </Modal>
 
-      {/* Toast Container */}
+      {renderCustomerModal()}
       <ToastContainer position="top-center" autoClose={2000} style={{ zIndex: 1500 }} />
     </Box>
   );
