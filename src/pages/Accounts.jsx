@@ -50,7 +50,22 @@ import {
   FormControl,
   FormLabel,
 } from '@chakra-ui/react';
-import { HamburgerIcon, BellIcon, EditIcon, ArrowBackIcon, DeleteIcon, WarningTwoIcon, SearchIcon, CheckIcon, ViewIcon, FilterIcon, ChevronLeftIcon, ChevronRightIcon, ChartIcon } from '@chakra-ui/icons';
+import { 
+  HamburgerIcon, 
+  BellIcon, 
+  EditIcon, 
+  ArrowBackIcon, 
+  DeleteIcon, 
+  WarningTwoIcon, 
+  SearchIcon, 
+  CheckIcon, 
+  ViewIcon, 
+  FilterIcon, 
+  ChevronLeftIcon, 
+  ChevronRightIcon, 
+  ChartIcon,
+  SettingsIcon 
+} from '@chakra-ui/icons';
 import { Chart as ChartJS, ArcElement, BarElement, LineElement, CategoryScale, LinearScale, PointElement, Title, Tooltip as ChartTooltip, Legend } from 'chart.js';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -82,6 +97,7 @@ const Accounts = () => {
   const accentColor = 'purple.500';
   const borderColor = useColorModeValue('rgba(0, 0, 0, 0.1)', 'rgba(255, 255, 255, 0.1)');
   const scrollbarColor = useColorModeValue('purple.200', 'purple.700');
+  const paymentBoxBg = useColorModeValue('white', 'gray.800');
 
   const glassEffect = {
     backdropFilter: 'blur(10px)',
@@ -89,11 +105,9 @@ const Accounts = () => {
     border: '1px solid',
     borderColor: borderColor,
     boxShadow: 'lg',
-    '@media (max-width: 768px)': {
-      borderRadius: '0',
-      borderLeft: 'none',
-      borderRight: 'none',
-    }
+    borderRadius: { base: '0', md: 'lg' },
+    borderLeft: { base: 'none', md: '1px solid' },
+    borderRight: { base: 'none', md: '1px solid' }
   };
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -399,12 +413,19 @@ const Accounts = () => {
   const renderCustomerDetails = () => (
     <Box
       {...glassEffect}
-      p={6}
+      p={{ base: 4, md: 6 }}
       borderRadius="xl"
       mx={{ base: 0, md: 4 }}
       mt={{ base: 4, md: 4 }}
     >
-      <Flex justify="space-between" align="center" mb={6}>
+      {/* Header Section */}
+      <Flex 
+        direction={{ base: 'column', md: 'row' }} 
+        justify="space-between" 
+        align={{ base: 'stretch', md: 'center' }} 
+        mb={6}
+        gap={4}
+      >
         <HStack spacing={3}>
           <IconButton
             icon={<ArrowBackIcon />}
@@ -413,7 +434,7 @@ const Accounts = () => {
             aria-label="Back to list"
             size="sm"
           />
-          <Heading size="lg" color={textColor}>{selectedCustomer.customer_name}</Heading>
+          <Heading size={{ base: 'md', md: 'lg' }} color={textColor}>{selectedCustomer.customer_name}</Heading>
         </HStack>
         <HStack spacing={2}>
           <Button
@@ -456,6 +477,7 @@ const Accounts = () => {
         </HStack>
       </Flex>
 
+      {/* Main Content Grid */}
       <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
         {/* Personal Information */}
         <Box>
@@ -496,44 +518,106 @@ const Accounts = () => {
               <Text fontSize="sm" color="gray.500">Color</Text>
               <Text fontSize="md">{selectedCustomer.color || 'N/A'}</Text>
             </Box>
-            <Box>
-              <Text fontSize="sm" color="gray.500">Price</Text>
-              <Text fontSize="md">₹{selectedCustomer.price?.toLocaleString() || 'N/A'}</Text>
-            </Box>
           </VStack>
         </Box>
 
-        {/* Payment Information */}
-        <Box>
-          <Heading size="md" color={textColor} mb={4}>Payment Information</Heading>
-          <VStack align="stretch" spacing={3}>
-            <Box>
-              <Text fontSize="sm" color="gray.500">Payment Mode</Text>
-              <Text fontSize="md">{selectedCustomer.payment_mode || 'N/A'}</Text>
-            </Box>
-            {selectedCustomer.payment_mode === 'Finance' && (
-              <>
-                <Box>
+        {/* Payment Breakdown */}
+        <Box gridColumn={{ base: '1 / -1', md: '1 / -1' }}>
+          <Heading size="md" color={textColor} mb={4}>Payment Breakdown</Heading>
+          <Box 
+            bg={paymentBoxBg}
+            p={4} 
+            borderRadius="lg" 
+            boxShadow="sm"
+          >
+            <VStack align="stretch" spacing={3}>
+              <Flex justify="space-between" align="center">
+                <Text fontSize="sm" color="gray.500">Ex-Showroom Price</Text>
+                <Text fontSize="md">₹{selectedCustomer.ex_showroom?.toLocaleString() || '0'}</Text>
+              </Flex>
+              <Flex justify="space-between" align="center">
+                <Text fontSize="sm" color="gray.500">Tax</Text>
+                <Text fontSize="md">₹{selectedCustomer.tax?.toLocaleString() || '0'}</Text>
+              </Flex>
+              <Flex justify="space-between" align="center">
+                <Text fontSize="sm" color="gray.500">Insurance</Text>
+                <Text fontSize="md">₹{selectedCustomer.insurance?.toLocaleString() || '0'}</Text>
+              </Flex>
+              <Flex justify="space-between" align="center">
+                <Text fontSize="sm" color="gray.500">Booking Charge</Text>
+                <Text fontSize="md">₹{selectedCustomer.booking_charge?.toLocaleString() || '0'}</Text>
+              </Flex>
+              <Flex justify="space-between" align="center">
+                <Text fontSize="sm" color="gray.500">Delivery Charge</Text>
+                <Text fontSize="md">₹{selectedCustomer.delivery_charge?.toLocaleString() || '0'}</Text>
+              </Flex>
+              <Divider />
+              <Flex justify="space-between" align="center">
+                <Text fontSize="lg" fontWeight="bold" color={textColor}>Total Amount</Text>
+                <Text fontSize="lg" fontWeight="bold" color={textColor}>
+                  ₹{(Number(selectedCustomer.ex_showroom || 0) + 
+                     Number(selectedCustomer.tax || 0) + 
+                     Number(selectedCustomer.insurance || 0) + 
+                     Number(selectedCustomer.booking_charge || 0) + 
+                     Number(selectedCustomer.delivery_charge || 0)).toLocaleString()}
+                </Text>
+              </Flex>
+              <Flex justify="space-between" align="center">
+                <Text fontSize="sm" color="gray.500">Amount Paid</Text>
+                <Text fontSize="md" color="green.500">₹{selectedCustomer.amount_paid?.toLocaleString() || '0'}</Text>
+              </Flex>
+              <Divider />
+              <Flex justify="space-between" align="center">
+                <Text fontSize="lg" fontWeight="bold" color={textColor}>Remaining Amount</Text>
+                <Text fontSize="lg" fontWeight="bold" color="red.500">
+                  ₹{(Number(selectedCustomer.ex_showroom || 0) + 
+                     Number(selectedCustomer.tax || 0) + 
+                     Number(selectedCustomer.insurance || 0) + 
+                     Number(selectedCustomer.booking_charge || 0) + 
+                     Number(selectedCustomer.delivery_charge || 0) - 
+                     Number(selectedCustomer.amount_paid || 0)).toLocaleString()}
+                </Text>
+              </Flex>
+            </VStack>
+          </Box>
+        </Box>
+
+        {/* Finance Information */}
+        {selectedCustomer.payment_mode === 'Finance' && (
+          <Box gridColumn={{ base: '1 / -1', md: '1 / -1' }}>
+            <Heading size="md" color={textColor} mb={4}>Finance Details</Heading>
+            <Box 
+              bg={paymentBoxBg}
+              p={4} 
+              borderRadius="lg" 
+              boxShadow="sm"
+            >
+              <VStack align="stretch" spacing={3}>
+                <Flex justify="space-between" align="center">
                   <Text fontSize="sm" color="gray.500">Finance Company</Text>
                   <Text fontSize="md">{selectedCustomer.finance_company || 'N/A'}</Text>
-                </Box>
-                <Box>
+                </Flex>
+                <Flex justify="space-between" align="center">
                   <Text fontSize="sm" color="gray.500">Finance Amount</Text>
-                  <Text fontSize="md">₹{selectedCustomer.finance_amount?.toLocaleString() || 'N/A'}</Text>
-                </Box>
-              </>
-            )}
-            <Box>
-              <Text fontSize="sm" color="gray.500">Amount Paid</Text>
-              <Text fontSize="md">₹{selectedCustomer.amount_paid?.toLocaleString() || 'N/A'}</Text>
+                  <Text fontSize="md">₹{selectedCustomer.finance_amount?.toLocaleString() || '0'}</Text>
+                </Flex>
+                <Flex justify="space-between" align="center">
+                  <Text fontSize="sm" color="gray.500">EMI</Text>
+                  <Text fontSize="md">₹{selectedCustomer.emi?.toLocaleString() || '0'}</Text>
+                </Flex>
+                <Flex justify="space-between" align="center">
+                  <Text fontSize="sm" color="gray.500">Tenure</Text>
+                  <Text fontSize="md">{selectedCustomer.tenure || 'N/A'} months</Text>
+                </Flex>
+              </VStack>
             </Box>
-          </VStack>
-        </Box>
+          </Box>
+        )}
 
         {/* Documents */}
-        <Box>
+        <Box gridColumn={{ base: '1 / -1', md: '1 / -1' }}>
           <Heading size="md" color={textColor} mb={4}>Documents</Heading>
-          <SimpleGrid columns={2} spacing={4}>
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
             {selectedCustomer.aadhar_front_base64 && (
               <Box>
                 <Text fontSize="sm" color="gray.500" mb={2}>Aadhar Front</Text>
@@ -576,45 +660,6 @@ const Accounts = () => {
           </SimpleGrid>
         </Box>
       </SimpleGrid>
-
-      {/* Finance Management Section */}
-      <Box mt={6}>
-        <Heading size="md" color={textColor} mb={4}>Finance Management</Heading>
-        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-          <Box>
-            <VStack align="stretch" spacing={3}>
-              <Box>
-                <Text fontSize="sm" color="gray.500">Payment Mode</Text>
-                <Text fontSize="md">{selectedCustomer.payment_mode || 'Not Set'}</Text>
-              </Box>
-              {selectedCustomer.payment_mode === 'Finance' && (
-                <>
-                  <Box>
-                    <Text fontSize="sm" color="gray.500">Finance Company</Text>
-                    <Text fontSize="md">{selectedCustomer.finance_company || 'N/A'}</Text>
-                  </Box>
-                  <Box>
-                    <Text fontSize="sm" color="gray.500">Finance Amount</Text>
-                    <Text fontSize="md">₹{selectedCustomer.finance_amount?.toLocaleString() || 'N/A'}</Text>
-                  </Box>
-                  <Box>
-                    <Text fontSize="sm" color="gray.500">EMI</Text>
-                    <Text fontSize="md">₹{selectedCustomer.emi?.toLocaleString() || 'N/A'}</Text>
-                  </Box>
-                  <Box>
-                    <Text fontSize="sm" color="gray.500">Tenure</Text>
-                    <Text fontSize="md">{selectedCustomer.tenure || 'N/A'}</Text>
-                  </Box>
-                </>
-              )}
-              <Box>
-                <Text fontSize="sm" color="gray.500">Amount Paid</Text>
-                <Text fontSize="md">₹{selectedCustomer.amount_paid?.toLocaleString() || '0'}</Text>
-              </Box>
-            </VStack>
-          </Box>
-        </SimpleGrid>
-      </Box>
 
       {!selectedCustomer.accounts_verified && (
         <Button
@@ -959,7 +1004,7 @@ const Accounts = () => {
                 isActive={selectedScreen === 'Dashboard'} 
                 onClick={() => handleScreenSelect('Dashboard')}
                 justifyContent="flex-start"
-                leftIcon={<ChartIcon />}
+                leftIcon={<SettingsIcon />}
               >
                 Dashboard
               </Button>
