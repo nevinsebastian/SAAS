@@ -644,7 +644,7 @@ const CustomerManagement = () => {
                           p={2}
                           opacity={0.5}
                         >
-                          <Text color="gray.400" fontSize="xs">Not uploaded</Text>
+                        <Text color="gray.400" fontSize="xs">Not uploaded</Text>
                         </Flex>
                       )}
                     </Box>
@@ -809,7 +809,7 @@ const CustomerManagement = () => {
                       bgClip="text"
                     >
                       ₹{customer.total_price?.toLocaleString() || '0'}
-                    </Text>
+                  </Text>
                   </Box>
                   <Box>
                     <Text color="gray.500" fontSize="sm">Amount Paid</Text>
@@ -819,7 +819,7 @@ const CustomerManagement = () => {
                       color="green.400"
                     >
                       ₹{customer.amount_paid?.toLocaleString() || '0'}
-                    </Text>
+                  </Text>
                   </Box>
                   <Box>
                     <Text color="gray.500" fontSize="sm">Remaining</Text>
@@ -829,7 +829,7 @@ const CustomerManagement = () => {
                       color={remainingAmount > 0 ? 'red.400' : 'green.400'}
                     >
                       ₹{remainingAmount.toLocaleString()}
-                    </Text>
+                  </Text>
                   </Box>
                 </SimpleGrid>
               </CardBody>
@@ -898,11 +898,11 @@ const CustomerManagement = () => {
                 ].map(({ label, name }) => (
                   <FormControl key={name}>
                     <FormLabel>{label}</FormLabel>
-                    <Input
-                      type="file"
+                  <Input
+                    type="file"
                       name={name}
-                      accept="image/*"
-                      onChange={handleDeliveryPhotoChange}
+                    accept="image/*"
+                    onChange={handleDeliveryPhotoChange}
                       {...inputProps}
                       p={2}
                       sx={{
@@ -922,8 +922,8 @@ const CustomerManagement = () => {
                           }
                         }
                       }}
-                    />
-                  </FormControl>
+                  />
+                </FormControl>
                 ))}
                 <Button
                   type="submit"

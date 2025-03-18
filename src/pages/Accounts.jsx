@@ -47,8 +47,10 @@ import {
   Image,
   Tooltip,
   Divider,
+  FormControl,
+  FormLabel,
 } from '@chakra-ui/react';
-import { HamburgerIcon, BellIcon, EditIcon, ArrowBackIcon, DeleteIcon, WarningTwoIcon, SearchIcon, CheckIcon, ViewIcon, FilterIcon, ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
+import { HamburgerIcon, BellIcon, EditIcon, ArrowBackIcon, DeleteIcon, WarningTwoIcon, SearchIcon, CheckIcon, ViewIcon, FilterIcon, ChevronLeftIcon, ChevronRightIcon, ChartIcon } from '@chakra-ui/icons';
 import { Chart as ChartJS, ArcElement, BarElement, LineElement, CategoryScale, LinearScale, PointElement, Title, Tooltip as ChartTooltip, Legend } from 'chart.js';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -87,6 +89,11 @@ const Accounts = () => {
     border: '1px solid',
     borderColor: borderColor,
     boxShadow: 'lg',
+    '@media (max-width: 768px)': {
+      borderRadius: '0',
+      borderLeft: 'none',
+      borderRight: 'none',
+    }
   };
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -111,6 +118,17 @@ const Accounts = () => {
   const customersPerPage = 7;
 
   const user = JSON.parse(localStorage.getItem('user')) || { username: 'account_user' };
+
+  const [isFinanceModalOpen, setIsFinanceModalOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [financeData, setFinanceData] = useState({
+    payment_mode: '',
+    finance_company: '',
+    finance_amount: '',
+    emi: '',
+    tenure: '',
+    amount_paid: ''
+  });
 
   useEffect(() => {
     fetchCustomers();
@@ -286,21 +304,23 @@ const Accounts = () => {
     <Box
       key={customer.id}
       {...glassEffect}
-      p={6}
-      borderRadius="xl"
+      p={4}
+      borderRadius={{ base: '0', md: 'xl' }}
       _hover={{ transform: 'translateY(-2px)', boxShadow: 'xl' }}
       transition="all 0.2s"
       animation={`${fadeIn} 0.5s ease-out`}
       cursor="pointer"
       onClick={() => handleCustomerClick(customer)}
+      mb={{ base: 2, md: 4 }}
+      mx={{ base: 0, md: 4 }}
     >
-      <VStack align="stretch" spacing={4}>
+      <VStack align="stretch" spacing={3}>
         <Flex justify="space-between" align="center">
           <VStack align="start" spacing={1}>
-            <Text fontSize="lg" fontWeight="bold" color={textColor}>
+            <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color={textColor}>
               {customer.customer_name}
             </Text>
-            <Text fontSize="sm" color="gray.500">
+            <Text fontSize={{ base: 'sm', md: 'md' }} color="gray.500">
               {customer.phone_number}
             </Text>
           </VStack>
@@ -308,7 +328,7 @@ const Accounts = () => {
             colorScheme={customer.accounts_verified ? 'green' : 'yellow'}
             p={2}
             borderRadius="md"
-            fontSize="sm"
+            fontSize={{ base: 'xs', md: 'sm' }}
           >
             {customer.accounts_verified ? 'Verified' : 'Pending'}
           </Badge>
@@ -316,20 +336,65 @@ const Accounts = () => {
         
         <Divider />
         
-        <VStack align="start" spacing={2}>
-          <Text fontSize="sm" color="gray.500">
-            Vehicle: {customer.vehicle}
-          </Text>
-          <Text fontSize="sm" color="gray.500">
-            Price: ₹{customer.price?.toLocaleString() || 'N/A'}
-          </Text>
-          <Text fontSize="sm" color="gray.500">
-            Payment: {customer.payment_mode || 'N/A'}
-          </Text>
-        </VStack>
+        <SimpleGrid columns={{ base: 2, md: 3 }} spacing={4}>
+          <Box>
+            <Text fontSize="xs" color="gray.500" mb={1}>Vehicle</Text>
+            <Text fontSize={{ base: 'sm', md: 'md' }}>{customer.vehicle}</Text>
+          </Box>
+          <Box>
+            <Text fontSize="xs" color="gray.500" mb={1}>Price</Text>
+            <Text fontSize={{ base: 'sm', md: 'md' }}>₹{customer.price?.toLocaleString() || 'N/A'}</Text>
+          </Box>
+          <Box>
+            <Text fontSize="xs" color="gray.500" mb={1}>Payment</Text>
+            <Text fontSize={{ base: 'sm', md: 'md' }}>{customer.payment_mode || 'N/A'}</Text>
+          </Box>
+        </SimpleGrid>
       </VStack>
     </Box>
   );
+
+  const handleFinanceSubmit = async () => {
+    try {
+      await api.put(`/accounts/customers/${selectedCustomer.id}/finance`, financeData);
+      toast.success('Finance details updated successfully!');
+      setIsFinanceModalOpen(false);
+      handleCustomerClick(selectedCustomer); // Refresh customer details
+    } catch (err) {
+      console.error('Failed to update finance details:', err);
+      toast.error('Failed to update finance details');
+    }
+  };
+
+  const handleRemoveFinance = async () => {
+    try {
+      await api.delete(`/accounts/customers/${selectedCustomer.id}/finance`);
+      toast.success('Finance details removed successfully!');
+      handleCustomerClick(selectedCustomer); // Refresh customer details
+    } catch (err) {
+      console.error('Failed to remove finance details:', err);
+      toast.error('Failed to remove finance details');
+    }
+  };
+
+  const handlePaymentSubmit = async () => {
+    try {
+      await api.put(`/accounts/customers/${selectedCustomer.id}/payment`, {
+        amount_paid: financeData.amount_paid
+      });
+      toast.success('Payment amount updated successfully!');
+      setIsPaymentModalOpen(false);
+      handleCustomerClick(selectedCustomer); // Refresh customer details
+    } catch (err) {
+      console.error('Failed to update payment amount:', err);
+      toast.error('Failed to update payment amount');
+    }
+  };
+
+  const handleFinanceInputChange = (e) => {
+    const { name, value } = e.target;
+    setFinanceData(prev => ({ ...prev, [name]: value }));
+  };
 
   const renderCustomerDetails = () => (
     <Box
@@ -350,14 +415,45 @@ const Accounts = () => {
           />
           <Heading size="lg" color={textColor}>{selectedCustomer.customer_name}</Heading>
         </HStack>
-        <Badge
-          colorScheme={selectedCustomer.accounts_verified ? 'green' : 'yellow'}
-          p={2}
-          borderRadius="md"
-          fontSize="sm"
-        >
-          {selectedCustomer.accounts_verified ? 'Verified' : 'Pending'}
-        </Badge>
+        <HStack spacing={2}>
+          <Button
+            colorScheme="purple"
+            size="sm"
+            onClick={() => {
+              setFinanceData({
+                payment_mode: selectedCustomer.payment_mode || '',
+                finance_company: selectedCustomer.finance_company || '',
+                finance_amount: selectedCustomer.finance_amount || '',
+                emi: selectedCustomer.emi || '',
+                tenure: selectedCustomer.tenure || '',
+                amount_paid: selectedCustomer.amount_paid || ''
+              });
+              setIsFinanceModalOpen(true);
+            }}
+          >
+            Edit Finance
+          </Button>
+          <Button
+            colorScheme="purple"
+            size="sm"
+            onClick={() => {
+              setFinanceData({
+                amount_paid: selectedCustomer.amount_paid || ''
+              });
+              setIsPaymentModalOpen(true);
+            }}
+          >
+            Update Payment
+          </Button>
+          <Badge
+            colorScheme={selectedCustomer.accounts_verified ? 'green' : 'yellow'}
+            p={2}
+            borderRadius="md"
+            fontSize="sm"
+          >
+            {selectedCustomer.accounts_verified ? 'Verified' : 'Pending'}
+          </Badge>
+        </HStack>
       </Flex>
 
       <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
@@ -481,6 +577,45 @@ const Accounts = () => {
         </Box>
       </SimpleGrid>
 
+      {/* Finance Management Section */}
+      <Box mt={6}>
+        <Heading size="md" color={textColor} mb={4}>Finance Management</Heading>
+        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+          <Box>
+            <VStack align="stretch" spacing={3}>
+              <Box>
+                <Text fontSize="sm" color="gray.500">Payment Mode</Text>
+                <Text fontSize="md">{selectedCustomer.payment_mode || 'Not Set'}</Text>
+              </Box>
+              {selectedCustomer.payment_mode === 'Finance' && (
+                <>
+                  <Box>
+                    <Text fontSize="sm" color="gray.500">Finance Company</Text>
+                    <Text fontSize="md">{selectedCustomer.finance_company || 'N/A'}</Text>
+                  </Box>
+                  <Box>
+                    <Text fontSize="sm" color="gray.500">Finance Amount</Text>
+                    <Text fontSize="md">₹{selectedCustomer.finance_amount?.toLocaleString() || 'N/A'}</Text>
+                  </Box>
+                  <Box>
+                    <Text fontSize="sm" color="gray.500">EMI</Text>
+                    <Text fontSize="md">₹{selectedCustomer.emi?.toLocaleString() || 'N/A'}</Text>
+                  </Box>
+                  <Box>
+                    <Text fontSize="sm" color="gray.500">Tenure</Text>
+                    <Text fontSize="md">{selectedCustomer.tenure || 'N/A'}</Text>
+                  </Box>
+                </>
+              )}
+              <Box>
+                <Text fontSize="sm" color="gray.500">Amount Paid</Text>
+                <Text fontSize="md">₹{selectedCustomer.amount_paid?.toLocaleString() || '0'}</Text>
+              </Box>
+            </VStack>
+          </Box>
+        </SimpleGrid>
+      </Box>
+
       {!selectedCustomer.accounts_verified && (
         <Button
           colorScheme="green"
@@ -492,6 +627,131 @@ const Accounts = () => {
           Verify Customer
         </Button>
       )}
+
+      {/* Finance Modal */}
+      <Modal isOpen={isFinanceModalOpen} onClose={() => setIsFinanceModalOpen(false)} size="xl">
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Update Finance Details</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <VStack spacing={4}>
+              <FormControl>
+                <FormLabel>Payment Mode</FormLabel>
+                <Select
+                  name="payment_mode"
+                  value={financeData.payment_mode}
+                  onChange={handleFinanceInputChange}
+                >
+                  <option value="">Select Payment Mode</option>
+                  <option value="Cash">Cash</option>
+                  <option value="Finance">Finance</option>
+                </Select>
+              </FormControl>
+
+              {financeData.payment_mode === 'Finance' && (
+                <>
+                  <FormControl>
+                    <FormLabel>Finance Company</FormLabel>
+                    <Input
+                      name="finance_company"
+                      value={financeData.finance_company}
+                      onChange={handleFinanceInputChange}
+                      placeholder="Enter finance company name"
+                    />
+                  </FormControl>
+
+                  <FormControl>
+                    <FormLabel>Finance Amount</FormLabel>
+                    <Input
+                      name="finance_amount"
+                      type="number"
+                      value={financeData.finance_amount}
+                      onChange={handleFinanceInputChange}
+                      placeholder="Enter finance amount"
+                    />
+                  </FormControl>
+
+                  <FormControl>
+                    <FormLabel>EMI</FormLabel>
+                    <Input
+                      name="emi"
+                      type="number"
+                      value={financeData.emi}
+                      onChange={handleFinanceInputChange}
+                      placeholder="Enter EMI amount"
+                    />
+                  </FormControl>
+
+                  <FormControl>
+                    <FormLabel>Tenure (months)</FormLabel>
+                    <Input
+                      name="tenure"
+                      type="number"
+                      value={financeData.tenure}
+                      onChange={handleFinanceInputChange}
+                      placeholder="Enter tenure in months"
+                    />
+                  </FormControl>
+                </>
+              )}
+
+              <FormControl>
+                <FormLabel>Amount Paid</FormLabel>
+                <Input
+                  name="amount_paid"
+                  type="number"
+                  value={financeData.amount_paid}
+                  onChange={handleFinanceInputChange}
+                  placeholder="Enter amount paid"
+                />
+              </FormControl>
+            </VStack>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="ghost" mr={3} onClick={() => setIsFinanceModalOpen(false)}>
+              Cancel
+            </Button>
+            {selectedCustomer.payment_mode === 'Finance' && (
+              <Button colorScheme="red" mr={3} onClick={handleRemoveFinance}>
+                Remove Finance
+              </Button>
+            )}
+            <Button colorScheme="blue" onClick={handleFinanceSubmit}>
+              Save Changes
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Payment Modal */}
+      <Modal isOpen={isPaymentModalOpen} onClose={() => setIsPaymentModalOpen(false)}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Update Payment Amount</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <FormControl>
+              <FormLabel>Amount Paid</FormLabel>
+              <Input
+                name="amount_paid"
+                type="number"
+                value={financeData.amount_paid}
+                onChange={handleFinanceInputChange}
+                placeholder="Enter amount paid"
+              />
+            </FormControl>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="ghost" mr={3} onClick={() => setIsPaymentModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button colorScheme="blue" onClick={handlePaymentSubmit}>
+              Save Changes
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 
@@ -517,8 +777,9 @@ const Accounts = () => {
             onClick={onMenuOpen} 
             aria-label="Open menu"
             size="sm"
+            color={accentColor}
           />
-          <Heading size="md" color={accentColor}>{selectedScreen}</Heading>
+          <Heading size={{ base: 'md', md: 'lg' }} color={accentColor}>{selectedScreen}</Heading>
         </HStack>
         <HStack spacing={4}>
           <Menu>
@@ -531,7 +792,7 @@ const Accounts = () => {
           </Menu>
           <Menu>
             <MenuButton>
-              <Avatar name="Account User" size="sm" />
+              <Avatar name="Account User" size="sm" bg={accentColor} />
             </MenuButton>
             <MenuList>
               <MenuItem onClick={toggleColorMode}>{colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}</MenuItem>
@@ -542,7 +803,7 @@ const Accounts = () => {
       </Flex>
 
       {/* Main Layout */}
-      <Box maxW="1400px" mx="auto" mt={4} px={{ base: 2, md: 4 }} pb={{ base: 16, md: 8 }}>
+      <Box maxW="1400px" mx="auto" mt={4} px={{ base: 0, md: 4 }} pb={{ base: 16, md: 8 }}>
         {selectedScreen === 'Dashboard' ? (
           <Dashboard onClose={() => setSelectedScreen('Accounts')} user={user} onMenuOpen={onMenuOpen} />
         ) : selectedCustomer ? (
@@ -557,13 +818,13 @@ const Accounts = () => {
               onChange={(index) => setActiveTab(index === 0 ? 'pending' : 'done')}
               mb={6}
             >
-              <TabList mb={4} bg={cardBg} p={1} borderRadius="xl">
+              <TabList mb={4} bg={cardBg} p={1} borderRadius="xl" mx={{ base: 2, md: 0 }}>
                 <Tab _selected={{ bg: 'purple.500', color: 'white' }}>Pending</Tab>
                 <Tab _selected={{ bg: 'purple.500', color: 'white' }}>Done</Tab>
               </TabList>
             </Tabs>
             
-            <HStack mb={6} spacing={4}>
+            <HStack mb={6} spacing={4} px={{ base: 2, md: 0 }}>
               <InputGroup>
                 <InputLeftElement pointerEvents="none">
                   <SearchIcon color="gray.400" />
@@ -578,9 +839,9 @@ const Accounts = () => {
                 />
               </InputGroup>
               <Select 
-                placeholder="Payment Type" 
+                placeholder="all" 
                 size="md" 
-                w="150px"
+                w={{ base: "120px", md: "150px" }}
                 bg={cardBg}
                 border="none"
                 value={paymentFilter}
@@ -594,7 +855,7 @@ const Accounts = () => {
             </HStack>
 
             <VStack 
-              spacing={4} 
+              spacing={0} 
               align="stretch" 
               maxH={{ base: 'calc(100vh - 200px)', md: '70vh' }} 
               overflowY="auto"
@@ -617,15 +878,16 @@ const Accounts = () => {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <Flex justify="center" align="center" mt={6} gap={2}>
+              <Flex justify="center" align="center" mt={6} gap={2} px={{ base: 2, md: 0 }}>
                 <IconButton
                   icon={<ChevronLeftIcon />}
                   onClick={() => handlePageChange(currentPage - 1)}
                   isDisabled={currentPage === 1}
                   variant="ghost"
                   colorScheme="purple"
+                  size="sm"
                 />
-                <HStack spacing={2}>
+                <HStack spacing={1}>
                   {[...Array(totalPages)].map((_, index) => (
                     <Button
                       key={index + 1}
@@ -633,6 +895,9 @@ const Accounts = () => {
                       variant={currentPage === index + 1 ? 'solid' : 'ghost'}
                       colorScheme="purple"
                       onClick={() => handlePageChange(index + 1)}
+                      minW="32px"
+                      h="32px"
+                      p={0}
                     >
                       {index + 1}
                     </Button>
@@ -644,6 +909,7 @@ const Accounts = () => {
                   isDisabled={currentPage === totalPages}
                   variant="ghost"
                   colorScheme="purple"
+                  size="sm"
                 />
               </Flex>
             )}
@@ -674,11 +940,29 @@ const Accounts = () => {
         <DrawerOverlay />
         <DrawerContent w={{ base: 'full', md: '200px' }}>
           <DrawerCloseButton />
-          <DrawerHeader>Menu</DrawerHeader>
+          <DrawerHeader bg={accentColor} color="white">Menu</DrawerHeader>
           <DrawerBody>
-            <VStack align="stretch" spacing={4}>
-              <Button variant="ghost" colorScheme="blue" isActive={selectedScreen === 'Accounts'} onClick={() => handleScreenSelect('Accounts')}>Accounts</Button>
-              <Button variant="ghost" colorScheme="blue" isActive={selectedScreen === 'Dashboard'} onClick={() => handleScreenSelect('Dashboard')}>Dashboard</Button>
+            <VStack align="stretch" spacing={4} mt={4}>
+              <Button 
+                variant="ghost" 
+                colorScheme="purple" 
+                isActive={selectedScreen === 'Accounts'} 
+                onClick={() => handleScreenSelect('Accounts')}
+                justifyContent="flex-start"
+                leftIcon={<ViewIcon />}
+              >
+                Accounts
+              </Button>
+              <Button 
+                variant="ghost" 
+                colorScheme="purple" 
+                isActive={selectedScreen === 'Dashboard'} 
+                onClick={() => handleScreenSelect('Dashboard')}
+                justifyContent="flex-start"
+                leftIcon={<ChartIcon />}
+              >
+                Dashboard
+              </Button>
             </VStack>
           </DrawerBody>
         </DrawerContent>

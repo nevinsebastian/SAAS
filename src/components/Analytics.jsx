@@ -134,8 +134,8 @@ const Analytics = ({ onClose, user, onMenuOpen }) => {
         label: 'Total Customers',
         data: trends.map(t => t.total_customers),
         borderColor: accentGradient.split(' ')[2],
-        backgroundColor: 'rgba(139, 92, 246, 0.2)',
-        tension: 0.4,
+      backgroundColor: 'rgba(139, 92, 246, 0.2)',
+      tension: 0.4,
       },
       {
         label: 'Verified Customers',
@@ -246,8 +246,8 @@ const Analytics = ({ onClose, user, onMenuOpen }) => {
                 {stat.value}
               </Text>
             </Box>
-          ))}
-        </SimpleGrid>
+            ))}
+          </SimpleGrid>
 
         {/* Charts and Tables */}
         <SimpleGrid 
@@ -310,7 +310,7 @@ const Analytics = ({ onClose, user, onMenuOpen }) => {
                 }} 
               />
             </Box>
-          </Box>
+        </Box>
 
           {/* Top Sales Executives */}
           <Box 
@@ -349,9 +349,9 @@ const Analytics = ({ onClose, user, onMenuOpen }) => {
                   _hover={{ transform: 'scale(1.02)' }}
                   animation={`${fadeIn} ${0.8 + index * 0.1}s ease-out`}
                 >
-                  <Flex 
+              <Flex
                     justify="space-between" 
-                    align="center"
+                align="center"
                     flexDir={{ base: "row", sm: "row" }}
                     gap={4}
                   >
@@ -375,7 +375,7 @@ const Analytics = ({ onClose, user, onMenuOpen }) => {
                       >
                         Revenue: ₹{exec.total_revenue.toLocaleString()}
                       </Text>
-                    </VStack>
+          </VStack>
                     <CircularProgress 
                       value={(exec.verified_customers / exec.total_customers) * 100} 
                       size={{ base: "50px", md: "60px" }}
@@ -389,12 +389,12 @@ const Analytics = ({ onClose, user, onMenuOpen }) => {
                       >
                         {Math.round((exec.verified_customers / exec.total_customers) * 100)}%
                       </CircularProgressLabel>
-                    </CircularProgress>
+              </CircularProgress>
                   </Flex>
-                </Box>
-              ))}
-            </VStack>
-          </Box>
+              </Box>
+            ))}
+          </VStack>
+        </Box>
         </SimpleGrid>
       </Box>
     </Box>
