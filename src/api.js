@@ -52,14 +52,28 @@ api.interceptors.response.use(
 
 // RTO API endpoints
 export const rtoApi = {
-  // Get all customers
-  getCustomers: async () => {
+  // Get pending customers (verified by sales and accounts but not by RTO)
+  getPendingCustomers: async () => {
     try {
-      const response = await api.get('/rto/customers');
-      console.log('RTO Customers Response:', response.data); // Debug log
-      return response;
+      console.log('Fetching pending customers...');
+      const response = await api.get('/rto/customers/pending');
+      console.log('Pending customers response:', response.data);
+      return response.data;
     } catch (error) {
-      console.error('RTO Customers Error:', error.response?.data || error.message); // Debug log
+      console.error('Error fetching pending customers:', error);
+      throw error;
+    }
+  },
+
+  // Get verified customers (verified by sales, accounts, and RTO)
+  getVerifiedCustomers: async () => {
+    try {
+      console.log('Fetching verified customers...');
+      const response = await api.get('/rto/customers/verified');
+      console.log('Verified customers response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching verified customers:', error);
       throw error;
     }
   },
@@ -68,10 +82,10 @@ export const rtoApi = {
   getCustomerByChassis: async (chassisNumber) => {
     try {
       const response = await api.get(`/rto/customers/chassis/${chassisNumber}`);
-      console.log('RTO Chassis Response:', response.data); // Debug log
-      return response;
+      console.log('RTO Chassis Response:', response.data);
+      return response.data;
     } catch (error) {
-      console.error('RTO Chassis Error:', error.response?.data || error.message); // Debug log
+      console.error('RTO Chassis Error:', error.response?.data || error.message);
       throw error;
     }
   },
@@ -80,10 +94,10 @@ export const rtoApi = {
   updateCustomerStatus: async (customerId, status) => {
     try {
       const response = await api.put(`/rto/customers/${customerId}/status`, { status });
-      console.log('RTO Status Update Response:', response.data); // Debug log
-      return response;
+      console.log('RTO Status Update Response:', response.data);
+      return response.data;
     } catch (error) {
-      console.error('RTO Status Update Error:', error.response?.data || error.message); // Debug log
+      console.error('RTO Status Update Error:', error.response?.data || error.message);
       throw error;
     }
   },
@@ -92,10 +106,10 @@ export const rtoApi = {
   getChassisImage: async (customerId) => {
     try {
       const response = await api.get(`/rto/customers/${customerId}/chassis-image`);
-      console.log('RTO Chassis Image Response:', response.data); // Debug log
-      return response;
+      console.log('RTO Chassis Image Response:', response.data);
+      return response.data;
     } catch (error) {
-      console.error('RTO Chassis Image Error:', error.response?.data || error.message); // Debug log
+      console.error('RTO Chassis Image Error:', error.response?.data || error.message);
       throw error;
     }
   },

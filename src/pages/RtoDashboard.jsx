@@ -39,18 +39,31 @@ import {
   Image,
   Divider,
   Spinner,
+  Container,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  useToast,
+  TabPanels,
+  TabPanel,
+  GridItem,
 } from '@chakra-ui/react';
-import { HamburgerIcon, BellIcon, ArrowBackIcon, DownloadIcon } from '@chakra-ui/icons';
+import { HamburgerIcon, BellIcon, ArrowBackIcon, DownloadIcon, SearchIcon, FilterIcon, CheckIcon, TimeIcon } from '@chakra-ui/icons';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import jsPDF from 'jspdf'; // Add jsPDF for PDF generation
 import { rtoApi } from '../api';
+import { motion } from 'framer-motion';
 
 const RtoDashboard = () => {
   const { isOpen: isMenuOpen, onOpen: onMenuOpen, onClose: onMenuClose } = useDisclosure();
   const { isOpen: isRtoVerifiedOpen, onOpen: onRtoVerifiedOpen, onClose: onRtoVerifiedClose } = useDisclosure();
   const { isOpen: isImageModalOpen, onOpen: onImageModalOpen, onClose: onImageModalClose } = useDisclosure();
   const { colorMode, toggleColorMode } = useColorMode();
+  const toast = useToast();
 
   // Top-level useColorModeValue calls
   const bgGradient = useColorModeValue('linear(to-br, gray.50, gray.100)', 'linear(to-br, gray.900, gray.800)');
@@ -70,7 +83,8 @@ const RtoDashboard = () => {
   const [registrationNumber, setRegistrationNumber] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   const [customers, setCustomers] = useState([]);
-  const [filteredCustomers, setFilteredCustomers] = useState([]);
+  const [pendingCustomers, setPendingCustomers] = useState([]);
+  const [verifiedCustomers, setVerifiedCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [customerData, setCustomerData] = useState({
     fullName: '', address: '', fathersName: '', panNumber: '', aadharNumber: '', photo: '',
@@ -90,105 +104,62 @@ const RtoDashboard = () => {
     }
   }, []);
 
-  // Fetch customers from backend
-  useEffect(() => {
-    const fetchCustomers = async () => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem('token');
-        if (!token) {
-          window.location.href = '/login';
-          return;
-        }
-
-        const response = await rtoApi.getCustomers();
-        console.log('API Response:', response.data); // Debug log
-        
-        const fetchedCustomers = response.data.customers.map(customer => ({
-          id: customer.id,
-          name: customer.customer_name,
-          status: customer.status || 'pending',
-          registrationNumber: customer.registration_number || '',
-          fullName: customer.full_name || '',
-          address: customer.address || '',
-          fathersName: customer.fathers_name || '',
-          panNumber: customer.pan_number || '',
-          aadharNumber: customer.aadhar_number || '',
-          photo: customer.passport_photo_base64 || '',
-          aadharFront: customer.aadhar_front_base64 || '',
-          aadharBack: customer.aadhar_back_base64 || '',
-          signature: customer.signature || '',
-          nomineeName: customer.nominee || '',
-          nomineeAge: customer.nominee_age || '',
-          nomineeRelation: customer.nominee_relation || '',
-          ward: customer.ward || '',
-          rtoOffice: customer.rto_office || '',
-          invoicePdf: customer.invoice_pdf || '',
-          vehicle: customer.vehicle || '',
-          variant: customer.variant || '',
-          color: customer.color || '',
-          exShowroom: customer.ex_showroom || '',
-          tax: customer.tax || '',
-          onRoad: customer.on_road || '',
-          insurance: customer.insurance || '',
-          bookingCharge: customer.booking_charge || '',
-          deliveryCharge: customer.delivery_charge || '',
-        }));
-
-        console.log('Mapped Customers:', fetchedCustomers); // Debug log
-        setCustomers(fetchedCustomers);
-        setFilteredCustomers(fetchedCustomers);
-      } catch (error) {
-        console.error('Failed to fetch customers:', error);
-        if (error.message) {
-          toast.error(error.message, { position: 'top-center' });
-        } else {
-          toast.error('Failed to load customers. Please try again.', { position: 'top-center' });
-        }
-        if (error.response?.status === 401 || error.response?.status === 403) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          window.location.href = '/login';
-        }
-      } finally {
-        setLoading(false);
+  // Update the fetchCustomers function to handle rto_verified status
+  const fetchCustomers = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '/login';
+        return;
       }
-    };
 
+      // Fetch all customers
+      const response = await rtoApi.getPendingCustomers();
+      console.log('All customers:', response.customers);
+
+      // Filter customers based on rto_verified status
+      const verifiedCustomers = response.customers.filter(customer => customer.rto_verified === true);
+      const pendingCustomers = response.customers.filter(customer => customer.rto_verified === false);
+
+      console.log('Pending customers:', pendingCustomers);
+      console.log('Verified customers:', verifiedCustomers);
+
+      setPendingCustomers(pendingCustomers);
+      setVerifiedCustomers(verifiedCustomers);
+    } catch (error) {
+      console.error('Failed to fetch customers:', error);
+      if (error.message) {
+        toast({
+          title: 'Error',
+          description: error.message,
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to load customers. Please try again.',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update useEffect to use the fetchCustomers function
+  useEffect(() => {
     fetchCustomers();
   }, []);
-
-  // Filter customers based on search query and tab
-  useEffect(() => {
-    let filtered = customers;
-    
-    // Apply search filter
-    if (searchQuery) {
-      filtered = filtered.filter(customer => 
-        customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        customer.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        customer.registrationNumber.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    // Apply status filter based on tab
-    switch (tabIndex) {
-      case 0: // Done/Verified
-        filtered = filtered.filter(customer => customer.status === 'Verified' || customer.status === 'done');
-        break;
-      case 1: // Pending
-        filtered = filtered.filter(customer => customer.status === 'pending');
-        break;
-      case 2: // Uploaded
-        filtered = filtered.filter(customer => customer.status === 'uploaded');
-        break;
-      default:
-        break;
-    }
-
-    console.log('Filtered Customers:', filtered); // Debug log
-    setFilteredCustomers(filtered);
-  }, [searchQuery, tabIndex, customers]);
 
   const notifications = [
     { id: 1, message: 'New booking added: John Doe', time: '2025-03-01 10:00 AM', seen: false },
@@ -203,96 +174,132 @@ const RtoDashboard = () => {
     onMenuOpen();
   };
 
-  const handleMarkUploaded = async () => {
-    if (!selectedCustomer) return;
-
+  const handleMarkUploaded = async (customerId) => {
     try {
-      await rtoApi.updateCustomerStatus(selectedCustomer.id, 'uploaded');
-      
-      // Update local state
-      setCustomers(prevCustomers => 
-        prevCustomers.map(c => 
-          c.id === selectedCustomer.id 
-            ? { ...c, status: 'uploaded' }
-            : c
-        )
-      );
-      
-      toast.success('Customer marked as uploaded', { position: 'top-center' });
-      onMenuOpen();
+      await rtoApi.updateCustomerStatus(customerId, 'uploaded');
+      toast({
+        title: 'Success',
+        description: 'Customer marked as uploaded successfully',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+      fetchCustomers(); // Refresh the list
     } catch (error) {
-      console.error('Failed to update customer status:', error);
-      toast.error('Failed to update customer status', { position: 'top-center' });
+      console.error('Failed to update status:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update customer status',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
 
-  const handleRtoVerified = async () => {
-    if (!selectedCustomer) return;
-
+  const handleRtoVerified = async (customerId) => {
     try {
-      await rtoApi.updateCustomerStatus(selectedCustomer.id, 'done');
-      
-      // Update local state
-      setCustomers(prevCustomers => 
-        prevCustomers.map(c => 
-          c.id === selectedCustomer.id 
-            ? { ...c, status: 'done' }
-            : c
-        )
-      );
-      
-      toast.success('Customer marked as RTO verified', { position: 'top-center' });
-      onRtoVerifiedClose();
-      onMenuOpen();
+      await rtoApi.updateCustomerStatus(customerId, 'done');
+      toast({
+        title: 'Success',
+        description: 'Customer marked as RTO verified successfully',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+      fetchCustomers(); // Refresh the list
     } catch (error) {
-      console.error('Failed to update customer status:', error);
-      toast.error('Failed to update customer status', { position: 'top-center' });
+      console.error('Failed to update status:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update customer status',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
 
   const handleChassisSearch = async () => {
     if (!chassisNumber) {
-      toast.error('Please enter a chassis number', { position: 'top-center' });
+      toast({
+        title: 'Error',
+        description: 'Please enter a chassis number',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
       return;
     }
 
     try {
       const response = await rtoApi.getCustomerByChassis(chassisNumber);
-      if (response.data.customer) {
-        setSelectedCustomer(response.data.customer);
-        setCustomerData(response.data.customer);
-        toast.success('Customer found', { position: 'top-center' });
+      if (response.customer) {
+        setSelectedCustomer(response.customer);
+        setCustomerData(response.customer);
+        toast({
+          title: 'Success',
+          description: 'Customer found',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
       } else {
-        toast.error('No customer found with this chassis number', { position: 'top-center' });
+        toast({
+          title: 'Error',
+          description: 'No customer found with this chassis number',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
       }
     } catch (error) {
       console.error('Failed to search chassis:', error);
-      toast.error('Failed to search chassis number', { position: 'top-center' });
+      toast({
+        title: 'Error',
+        description: 'Failed to search chassis number',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
 
-  const handleDownloadChassis = async () => {
-    if (!selectedCustomer) {
-      toast.error('Please select a customer first', { position: 'top-center' });
-      return;
-    }
-
+  const handleDownloadChassis = async (customerId) => {
     try {
-      const response = await rtoApi.getChassisImage(selectedCustomer.id);
-      if (response.data.image) {
+      const response = await rtoApi.getChassisImage(customerId);
+      if (response.image) {
         const link = document.createElement('a');
-        link.href = `data:image/jpeg;base64,${response.data.image}`;
-        link.download = `chassis_${selectedCustomer.id}.jpg`;
+        link.href = `data:image/jpeg;base64,${response.image}`;
+        link.download = `chassis_${customerId}.jpg`;
         document.body.appendChild(link);
         link.click();
-        link.remove();
-        toast.success('Chassis image downloaded successfully', { position: 'top-center' });
+        document.body.removeChild(link);
+        toast({
+          title: 'Success',
+          description: 'Chassis image downloaded successfully',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
       } else {
-        toast.error('No chassis image found', { position: 'top-center' });
+        toast({
+          title: 'Error',
+          description: 'No chassis image found',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
       }
     } catch (error) {
       console.error('Failed to download chassis image:', error);
-      toast.error('Failed to download chassis image', { position: 'top-center' });
+      toast({
+        title: 'Error',
+        description: 'Failed to download chassis image',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
 
@@ -384,51 +391,101 @@ const RtoDashboard = () => {
 
     // Save PDF
     doc.save(`${folderName}_full_data.pdf`);
-    toast.success(`Downloaded user data as "${folderName}" folder!`, { position: 'top-center' });
+    toast({
+      title: 'Success',
+      description: `Downloaded user data as "${folderName}" folder!`,
+      status: 'success',
+      duration: 3000,
+      isClosable: true,
+    });
   };
 
-  const renderCustomerCard = (customer) => (
-    <Box
-      key={customer.id}
-      bg={cardBg}
-      p={4}
-      borderRadius="lg"
-      boxShadow="sm"
-      border="1px"
-      borderColor={borderColor}
-      cursor="pointer"
-      onClick={() => handleCustomerSelect(customer)}
-      _hover={{ transform: 'translateY(-2px)', boxShadow: 'md' }}
-      transition="all 0.2s"
-    >
-      <Flex justify="space-between" align="center" mb={3}>
-        <VStack align="start" spacing={1}>
-          <Text fontWeight="bold" fontSize="lg">{customer.name}</Text>
-          <Text fontSize="sm" color="gray.500">{customer.vehicle || 'No Vehicle'} - {customer.variant || 'No Variant'}</Text>
-        </VStack>
-        <Badge
-          colorScheme={
-            customer.status === 'Verified' || customer.status === 'done' ? 'green' :
-            customer.status === 'pending' ? 'yellow' :
-            customer.status === 'uploaded' ? 'blue' : 'gray'
-          }
+  const CustomerCard = ({ customer, onAction, isVerified }) => {
+    const cardBg = useColorModeValue('white', 'gray.800');
+    const borderColor = useColorModeValue('gray.200', 'gray.600');
+    const hoverBg = useColorModeValue('blue.50', 'blue.900');
+    const textColor = useColorModeValue('gray.800', 'white');
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        whileHover={{ scale: 1.02 }}
+      >
+        <Box
+          bg={cardBg}
+          p={6}
+          borderRadius="xl"
+          boxShadow="lg"
+          border="1px"
+          borderColor={borderColor}
+          _hover={{ boxShadow: 'xl', borderColor: 'blue.500' }}
+          transition="all 0.2s"
         >
-          {customer.status.charAt(0).toUpperCase() + customer.status.slice(1)}
-        </Badge>
-      </Flex>
-      <Divider my={2} />
-      <SimpleGrid columns={2} spacing={3}>
-        <Box>
-          <Text fontSize="sm" color="gray.500">Registration No.</Text>
-          <Text>{customer.registrationNumber || 'Not Assigned'}</Text>
+          <Flex justify="space-between" align="start" mb={4}>
+            <VStack align="start" spacing={1}>
+              <Text fontWeight="bold" fontSize="xl" color={textColor}>
+                {customer.customer_name}
+              </Text>
+              <Text fontSize="sm" color="gray.500">
+                {customer.vehicle} - {customer.variant}
+              </Text>
+            </VStack>
+            <Badge
+              colorScheme={isVerified ? 'green' : 'yellow'}
+              px={3}
+              py={1}
+              borderRadius="full"
+              fontSize="sm"
+            >
+              {isVerified ? 'Verified' : 'Pending'}
+            </Badge>
+          </Flex>
+
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={4}>
+            <Box>
+              <Text fontSize="sm" color="gray.500">Phone</Text>
+              <Text fontSize="md">{customer.phone_number}</Text>
+            </Box>
+            <Box>
+              <Text fontSize="sm" color="gray.500">Registration No.</Text>
+              <Text fontSize="md">{customer.registration_number || 'Not Assigned'}</Text>
+            </Box>
+          </SimpleGrid>
+
+          <Divider my={4} />
+
+          <Flex justify="space-between" align="center">
+            <HStack spacing={2}>
+              {customer.chassis_image && (
+                <Button
+                  colorScheme="purple"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleDownloadChassis(customer.id)}
+                >
+                  Chassis
+                </Button>
+              )}
+              {!isVerified && (
+                <Button
+                  colorScheme="blue"
+                  size="sm"
+                  onClick={() => onAction(customer.id)}
+                >
+                  Mark Verified
+                </Button>
+              )}
+            </HStack>
+            <Text fontSize="sm" color="gray.500">
+              {new Date(customer.created_at).toLocaleDateString()}
+            </Text>
+          </Flex>
         </Box>
-        <Box>
-          <Text fontSize="sm" color="gray.500">RTO Office</Text>
-          <Text>{customer.rtoOffice || 'Not Assigned'}</Text>
-        </Box>
-      </SimpleGrid>
-    </Box>
-  );
+      </motion.div>
+    );
+  };
 
   return (
     <Box minH="100vh" bg={bgGradient} position="relative">
@@ -665,8 +722,7 @@ const RtoDashboard = () => {
                 </Box>
 
                 {/* Invoice */}
-             {/* Invoice */}
-             <Box bg={cardBg} borderRadius="2xl" p={6} boxShadow="lg" _hover={{ boxShadow: 'xl' }} transition="all 0.2s">
+                <Box bg={cardBg} borderRadius="2xl" p={6} boxShadow="lg" _hover={{ boxShadow: 'xl' }} transition="all 0.2s">
                   <Text fontWeight="bold" fontSize="lg" mb={4} color={textColor}>Invoice</Text>
                   <iframe
                     src={customerData.invoicePdf}
@@ -762,7 +818,7 @@ const RtoDashboard = () => {
                         colorScheme="blue"
                         variant="outline"
                         size="sm"
-                        onClick={handleDownloadChassis}
+                        onClick={() => handleDownloadChassis(selectedCustomer.id)}
                         _hover={{ bg: hoverBg }}
                       >
                         Download
@@ -780,7 +836,7 @@ const RtoDashboard = () => {
                     size="lg"
                     w="full"
                     maxW="200px"
-                    onClick={handleMarkUploaded}
+                    onClick={() => handleMarkUploaded(selectedCustomer.id)}
                     _hover={{ bg: 'purple.600' }}
                   >
                     Mark Uploaded to RTO
@@ -792,7 +848,7 @@ const RtoDashboard = () => {
                     size="lg"
                     w="full"
                     maxW="200px"
-                    onClick={onRtoVerifiedOpen}
+                    onClick={() => handleRtoVerified(selectedCustomer.id)}
                     _hover={{ bg: 'blue.600' }}
                   >
                     RTO Verified
@@ -807,52 +863,119 @@ const RtoDashboard = () => {
         ) : (
           // Customer List (Default View)
           <Box>
-            <Tabs variant="solid-rounded" colorScheme="blue" index={tabIndex} onChange={setTabIndex}>
+            <Tabs variant="solid-rounded" colorScheme="blue" index={tabIndex} onChange={setTabIndex} defaultIndex={1}>
               <TabList mb={6} bg={cardBg} p={2} borderRadius="xl" boxShadow="md">
                 <Tab _selected={{ bg: accentColor, color: 'white' }}>Verified</Tab>
                 <Tab _selected={{ bg: accentColor, color: 'white' }}>Pending</Tab>
-                <Tab _selected={{ bg: accentColor, color: 'white' }}>Uploaded</Tab>
               </TabList>
-            </Tabs>
-            <HStack mb={6} spacing={4}>
-              <Select
-                placeholder="Sort by"
-                size="sm"
-                w="150px"
-                bg={inputBg}
-                borderColor={borderColor}
-                _hover={{ borderColor: accentColor }}
-                _focus={{ borderColor: accentColor }}
-              >
-                <option value="date">Date</option>
-                <option value="name">Name</option>
-              </Select>
-              <Input
-                placeholder="Search by name or reg. number"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                size="sm"
-                bg={inputBg}
-                borderColor={borderColor}
-                _hover={{ borderColor: accentColor }}
-                _focus={{ borderColor: accentColor, boxShadow: `0 0 0 1px ${accentColor}` }}
-              />
-            </HStack>
-            <VStack spacing={4} align="stretch" maxH={{ base: 'calc(100vh - 200px)', md: '70vh' }} overflowY="auto">
-              {loading ? (
-                <Flex justify="center" align="center" h="400px">
-                  <Spinner size="xl" color={accentColor} />
+
+              <Box mb={6}>
+                <Flex
+                  direction={{ base: 'column', md: 'row' }}
+                  gap={4}
+                  align="center"
+                  justify="space-between"
+                >
+                  <Input
+                    placeholder="Search customers..."
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    size="lg"
+                    bg={inputBg}
+                    borderColor={borderColor}
+                    _hover={{ borderColor: accentColor }}
+                    _focus={{ borderColor: accentColor }}
+                    maxW={{ base: '100%', md: '400px' }}
+                  />
+                  <Select
+                    placeholder="Sort by"
+                    size="lg"
+                    w={{ base: '100%', md: '200px' }}
+                    bg={inputBg}
+                    borderColor={borderColor}
+                    _hover={{ borderColor: accentColor }}
+                    _focus={{ borderColor: accentColor }}
+                  >
+                    <option value="date">Date</option>
+                    <option value="name">Name</option>
+                    <option value="vehicle">Vehicle</option>
+                  </Select>
                 </Flex>
-              ) : filteredCustomers.length === 0 ? (
-                <Box textAlign="center" py={10}>
-                  <Text fontSize="lg" color="gray.500">No customers found</Text>
-                </Box>
-              ) : (
-                <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
-                  {filteredCustomers.map(renderCustomerCard)}
-                </SimpleGrid>
-              )}
-            </VStack>
+              </Box>
+
+              <TabPanels>
+                <TabPanel>
+                  {loading ? (
+                    <Flex justify="center" align="center" h="400px">
+                      <Spinner size="xl" color={accentColor} />
+                    </Flex>
+                  ) : (
+                    <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
+                      {verifiedCustomers.length === 0 ? (
+                        <GridItem colSpan={{ base: 1, md: 2, lg: 3 }}>
+                          <Box
+                            textAlign="center"
+                            py={10}
+                            bg={cardBg}
+                            borderRadius="xl"
+                            boxShadow="md"
+                          >
+                            <Text fontSize="lg" color="gray.500">
+                              No verified customers found
+                            </Text>
+                          </Box>
+                        </GridItem>
+                      ) : (
+                        verifiedCustomers.map((customer) => (
+                          <GridItem key={customer.id}>
+                            <CustomerCard
+                              customer={customer}
+                              isVerified={true}
+                              onAction={handleRtoVerified}
+                            />
+                          </GridItem>
+                        ))
+                      )}
+                    </SimpleGrid>
+                  )}
+                </TabPanel>
+                <TabPanel>
+                  {loading ? (
+                    <Flex justify="center" align="center" h="400px">
+                      <Spinner size="xl" color={accentColor} />
+                    </Flex>
+                  ) : (
+                    <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
+                      {pendingCustomers.length === 0 ? (
+                        <GridItem colSpan={{ base: 1, md: 2, lg: 3 }}>
+                          <Box
+                            textAlign="center"
+                            py={10}
+                            bg={cardBg}
+                            borderRadius="xl"
+                            boxShadow="md"
+                          >
+                            <Text fontSize="lg" color="gray.500">
+                              No pending customers found
+                            </Text>
+                          </Box>
+                        </GridItem>
+                      ) : (
+                        pendingCustomers.map((customer) => (
+                          <GridItem key={customer.id}>
+                            <CustomerCard
+                              customer={customer}
+                              isVerified={false}
+                              onAction={handleMarkUploaded}
+                            />
+                          </GridItem>
+                        ))
+                      )}
+                    </SimpleGrid>
+                  )}
+                </TabPanel>
+              </TabPanels>
+            </Tabs>
           </Box>
         )}
       </Box>
@@ -902,7 +1025,7 @@ const RtoDashboard = () => {
           <ModalFooter>
             <Button
               colorScheme="blue"
-              onClick={handleRtoVerified}
+              onClick={() => handleRtoVerified(selectedCustomer.id)}
               _hover={{ bg: 'blue.600' }}
             >
               Mark Verified
