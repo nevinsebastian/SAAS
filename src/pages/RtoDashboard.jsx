@@ -51,12 +51,12 @@ import {
   TabPanel,
   GridItem,
 } from '@chakra-ui/react';
-import { HamburgerIcon, BellIcon, ArrowBackIcon, DownloadIcon, SearchIcon, FilterIcon, CheckIcon, TimeIcon } from '@chakra-ui/icons';
+import { HamburgerIcon, BellIcon, ArrowBackIcon, DownloadIcon, SearchIcon, FilterIcon, CheckIcon, TimeIcon, ChevronRightIcon, ChevronLeftIcon, StarIcon, InfoIcon, WarningIcon, CheckCircleIcon, CloseIcon } from '@chakra-ui/icons';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import jsPDF from 'jspdf'; // Add jsPDF for PDF generation
 import { rtoApi } from '../api';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const RtoDashboard = () => {
   const { isOpen: isMenuOpen, onOpen: onMenuOpen, onClose: onMenuClose } = useDisclosure();
@@ -71,9 +71,27 @@ const RtoDashboard = () => {
   const textColor = useColorModeValue('gray.800', 'white');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const inputBg = useColorModeValue('gray.100', 'gray.700');
-  const headerGradient = useColorModeValue('linear(to-r, blue.500, blue.700)', 'linear(to-r, blue.700, blue.900)'); // Reverted to blue
+  const headerGradient = useColorModeValue('linear(to-r, blue.500, purple.500)', 'linear(to-r, blue.700, purple.700)');
   const accentColor = 'blue.500';
   const hoverBg = useColorModeValue('blue.50', 'blue.900');
+  const emptyStateGradient = useColorModeValue(
+    'linear(to-br, blue.50, purple.50)',
+    'linear(to-br, blue.900, purple.900)'
+  );
+  const cardGradient = useColorModeValue(
+    'linear(to-br, blue.50, purple.50)',
+    'linear(to-br, blue.900, purple.900)'
+  );
+
+  // Add new color mode values at the top level
+  const glassBg = useColorModeValue('rgba(255, 255, 255, 0.8)', 'rgba(26, 32, 44, 0.8)');
+  const glassBorder = useColorModeValue('rgba(226, 232, 240, 0.8)', 'rgba(45, 55, 72, 0.8)');
+  const glassHoverBg = useColorModeValue('rgba(66, 153, 225, 0.1)', 'rgba(66, 153, 225, 0.2)');
+  const glassInputBg = useColorModeValue('rgba(255, 255, 255, 0.9)', 'rgba(26, 32, 44, 0.9)');
+  const gradientBg = useColorModeValue(
+    'linear(to-br, rgba(66, 153, 225, 0.1), rgba(159, 122, 234, 0.1))',
+    'linear(to-br, rgba(66, 153, 225, 0.2), rgba(159, 122, 234, 0.2))'
+  );
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -282,7 +300,7 @@ const RtoDashboard = () => {
           duration: 3000,
           isClosable: true,
         });
-      } else {
+    } else {
         toast({
           title: 'Error',
           description: 'No chassis image found',
@@ -400,32 +418,87 @@ const RtoDashboard = () => {
     });
   };
 
+  // Update the filteredCustomers function with null checks
+  const filteredCustomers = (customers, query) => {
+    if (!query) return customers;
+    if (!customers || !Array.isArray(customers)) return [];
+    
+    const searchTerm = query.toLowerCase();
+    return customers.filter(customer => {
+      if (!customer) return false;
+      
+      const customerName = customer.customer_name || '';
+      const vehicle = customer.vehicle || '';
+      const variant = customer.variant || '';
+      
+      return (
+        customerName.toLowerCase().includes(searchTerm) ||
+        vehicle.toLowerCase().includes(searchTerm) ||
+        variant.toLowerCase().includes(searchTerm)
+      );
+    });
+  };
+
+  // Update the CustomerCard component with more modern styling
   const CustomerCard = ({ customer, onAction, isVerified }) => {
-    const cardBg = useColorModeValue('white', 'gray.800');
-    const borderColor = useColorModeValue('gray.200', 'gray.600');
-    const hoverBg = useColorModeValue('blue.50', 'blue.900');
+    const cardBg = glassBg;
+    const borderColor = glassBorder;
+    const hoverBg = glassHoverBg;
     const textColor = useColorModeValue('gray.800', 'white');
 
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        whileHover={{ scale: 1.02 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        whileHover={{ scale: 1.02, y: -5 }}
+        style={{ height: '100%' }}
       >
         <Box
           bg={cardBg}
-          p={6}
+          p={5}
           borderRadius="xl"
-          boxShadow="lg"
+          boxShadow="0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"
           border="1px"
           borderColor={borderColor}
-          _hover={{ boxShadow: 'xl', borderColor: 'blue.500' }}
-          transition="all 0.2s"
+          backdropFilter="blur(10px)"
+          _hover={{ 
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            borderColor: 'blue.400',
+            bg: glassInputBg,
+            transform: 'translateY(-5px)'
+          }}
+          transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+          cursor="pointer"
+          onClick={() => handleCustomerSelect(customer)}
+          position="relative"
+          overflow="hidden"
         >
-          <Flex justify="space-between" align="start" mb={4}>
+          {/* Animated gradient background */}
+          <Box
+            position="absolute"
+            top={0}
+            left={0}
+            right={0}
+            bottom={0}
+            bgGradient={gradientBg}
+            opacity={0}
+            _groupHover={{ opacity: 1 }}
+            transition="opacity 0.3s ease"
+          />
+
+          <Flex justify="space-between" align="start" mb={3} position="relative">
             <VStack align="start" spacing={1}>
-              <Text fontWeight="bold" fontSize="xl" color={textColor}>
+              <Text 
+                fontWeight="bold" 
+                fontSize="lg" 
+                color={textColor}
+                bgGradient={useColorModeValue(
+                  'linear(to-r, blue.500, purple.500)',
+                  'linear(to-r, blue.300, purple.300)'
+                )}
+                bgClip="text"
+              >
                 {customer.customer_name}
               </Text>
               <Text fontSize="sm" color="gray.500">
@@ -434,27 +507,20 @@ const RtoDashboard = () => {
             </VStack>
             <Badge
               colorScheme={isVerified ? 'green' : 'yellow'}
-              px={3}
-              py={1}
+              px={2}
+              py={0.5}
               borderRadius="full"
-              fontSize="sm"
+              fontSize="xs"
+              boxShadow="sm"
+              backdropFilter="blur(4px)"
+              _hover={{ transform: 'scale(1.05)' }}
+              transition="all 0.2s"
             >
               {isVerified ? 'Verified' : 'Pending'}
             </Badge>
           </Flex>
 
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={4}>
-            <Box>
-              <Text fontSize="sm" color="gray.500">Phone</Text>
-              <Text fontSize="md">{customer.phone_number}</Text>
-            </Box>
-            <Box>
-              <Text fontSize="sm" color="gray.500">Registration No.</Text>
-              <Text fontSize="md">{customer.registration_number || 'Not Assigned'}</Text>
-            </Box>
-          </SimpleGrid>
-
-          <Divider my={4} />
+          <Divider my={3} borderColor={borderColor} />
 
           <Flex justify="space-between" align="center">
             <HStack spacing={2}>
@@ -463,7 +529,17 @@ const RtoDashboard = () => {
                   colorScheme="purple"
                   size="sm"
                   variant="outline"
-                  onClick={() => handleDownloadChassis(customer.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDownloadChassis(customer.id);
+                  }}
+                  leftIcon={<DownloadIcon />}
+                  backdropFilter="blur(4px)"
+                  _hover={{ 
+                    transform: 'translateY(-2px)',
+                    boxShadow: 'md'
+                  }}
+                  transition="all 0.2s"
                 >
                   Chassis
                 </Button>
@@ -472,15 +548,27 @@ const RtoDashboard = () => {
                 <Button
                   colorScheme="blue"
                   size="sm"
-                  onClick={() => onAction(customer.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAction(customer.id);
+                  }}
+                  leftIcon={<CheckIcon />}
+                  backdropFilter="blur(4px)"
+                  _hover={{ 
+                    transform: 'translateY(-2px)',
+                    boxShadow: 'md'
+                  }}
+                  transition="all 0.2s"
                 >
                   Mark Verified
                 </Button>
               )}
             </HStack>
-            <Text fontSize="sm" color="gray.500">
-              {new Date(customer.created_at).toLocaleDateString()}
-            </Text>
+            <ChevronRightIcon 
+              color={useColorModeValue('gray.400', 'gray.500')}
+              _groupHover={{ color: 'blue.500' }}
+              transition="all 0.2s"
+            />
           </Flex>
         </Box>
       </motion.div>
@@ -489,30 +577,43 @@ const RtoDashboard = () => {
 
   return (
     <Box minH="100vh" bg={bgGradient} position="relative">
-      {/* Header */}
+      {/* Header with glassmorphism */}
       <Flex
         justify="space-between"
         align="center"
-        bgGradient={headerGradient}
+        bg={glassBg}
         color="white"
         p={4}
-        boxShadow="lg"
+        boxShadow="0 4px 6px -1px rgba(0, 0, 0, 0.1)"
         position="sticky"
         top={0}
         zIndex={10}
         borderBottom="1px solid"
-        borderColor={borderColor}
+        borderColor={glassBorder}
+        backdropFilter="blur(10px)"
+        bgBlendMode="overlay"
       >
-        <HStack spacing={4}>
+        <HStack spacing={6}>
           <IconButton
             icon={<HamburgerIcon />}
             variant="ghost"
             color="white"
             onClick={onMenuOpen}
             aria-label="Open menu"
-            _hover={{ bg: hoverBg }}
+            _hover={{ 
+              bg: 'whiteAlpha.200',
+              transform: 'scale(1.1)'
+            }}
+            transition="all 0.2s"
           />
-          <Heading size="md" fontWeight="bold">RTO Dashboard</Heading>
+          <Heading 
+            size="lg" 
+            fontWeight="bold"
+            bgGradient="linear(to-r, white, blue.100)"
+            bgClip="text"
+          >
+            RTO Dashboard
+          </Heading>
         </HStack>
         <HStack spacing={4}>
           <Menu>
@@ -523,16 +624,44 @@ const RtoDashboard = () => {
               color="white"
               aria-label="Notifications"
               position="relative"
-              _hover={{ bg: hoverBg }}
+              _hover={{ 
+                bg: 'whiteAlpha.200',
+                transform: 'scale(1.1)'
+              }}
+              transition="all 0.2s"
             >
               {unseenNotifications.length > 0 && (
-                <Badge colorScheme="red" borderRadius="full" position="absolute" top="-1" right="-1">{unseenNotifications.length}</Badge>
+                <Badge 
+                  colorScheme="red" 
+                  borderRadius="full" 
+                  position="absolute" 
+                  top="-1" 
+                  right="-1"
+                  boxShadow="lg"
+                >
+                  {unseenNotifications.length}
+                </Badge>
               )}
             </MenuButton>
-            <MenuList maxH="300px" overflowY="auto" bg={cardBg} borderColor={borderColor}>
+            <MenuList 
+              maxH="300px" 
+              overflowY="auto" 
+              bg={cardBg} 
+              borderColor={borderColor}
+              boxShadow="xl"
+              borderRadius="xl"
+            >
               {unseenNotifications.length > 0 ? (
                 unseenNotifications.map(n => (
-                  <MenuItem key={n.id} bg={cardBg} _hover={{ bg: hoverBg }}>
+                  <MenuItem 
+                    key={n.id} 
+                    bg={cardBg} 
+                    _hover={{ 
+                      bg: hoverBg,
+                      transform: 'translateX(5px)'
+                    }}
+                    transition="all 0.2s"
+                  >
                     <VStack align="start" spacing={1}>
                       <Text fontSize="sm" color={textColor}>{n.message}</Text>
                       <Text fontSize="xs" color="gray.500">{n.time}</Text>
@@ -546,16 +675,47 @@ const RtoDashboard = () => {
           </Menu>
           <Menu>
             <MenuButton>
-              <Avatar name={user.username} size="sm" />
+              <Avatar 
+                name={user.username} 
+                size="sm"
+                border="2px"
+                borderColor="whiteAlpha.400"
+                _hover={{ 
+                  transform: 'scale(1.1)',
+                  borderColor: 'white'
+                }}
+                transition="all 0.2s"
+              />
             </MenuButton>
-            <MenuList bg={cardBg} borderColor={borderColor}>
-              <MenuItem onClick={toggleColorMode} bg={cardBg} _hover={{ bg: hoverBg }}>
+            <MenuList 
+              bg={cardBg} 
+              borderColor={borderColor}
+              boxShadow="xl"
+              borderRadius="xl"
+            >
+              <MenuItem 
+                onClick={toggleColorMode} 
+                bg={cardBg} 
+                _hover={{ 
+                  bg: hoverBg,
+                  transform: 'translateX(5px)'
+                }}
+                transition="all 0.2s"
+              >
                 {colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
               </MenuItem>
-              <MenuItem onClick={() => {
-                localStorage.removeItem('token');
-                window.location.href = '/login';
-              }} bg={cardBg} _hover={{ bg: hoverBg }}>
+              <MenuItem 
+                onClick={() => {
+                  localStorage.removeItem('token');
+                  window.location.href = '/login';
+                }} 
+                bg={cardBg} 
+                _hover={{ 
+                  bg: hoverBg,
+                  transform: 'translateX(5px)'
+                }}
+                transition="all 0.2s"
+              >
                 Logout
               </MenuItem>
             </MenuList>
@@ -564,7 +724,7 @@ const RtoDashboard = () => {
       </Flex>
 
       {/* Main Layout */}
-      <Box maxW="1400px" mx="auto" mt={6} px={{ base: 4, md: 6 }} pb={{ base: 16, md: 8 }}>
+      <Box maxW="1400px" mx="auto" mt={4} px={{ base: 3, md: 4 }} pb={{ base: 16, md: 8 }}>
         {selectedCustomer ? (
           // Full-Screen Customer Details
           <Flex direction="column" h={{ base: 'calc(100vh - 70px)', md: 'auto' }} position={{ base: 'fixed', md: 'static' }} top={{ base: '70px', md: 'auto' }} left={0} right={0} bottom={0} bg={cardBg} zIndex={9}>
@@ -721,8 +881,8 @@ const RtoDashboard = () => {
                   </SimpleGrid>
                 </Box>
 
-                {/* Invoice */}
-                <Box bg={cardBg} borderRadius="2xl" p={6} boxShadow="lg" _hover={{ boxShadow: 'xl' }} transition="all 0.2s">
+             {/* Invoice */}
+             <Box bg={cardBg} borderRadius="2xl" p={6} boxShadow="lg" _hover={{ boxShadow: 'xl' }} transition="all 0.2s">
                   <Text fontWeight="bold" fontSize="lg" mb={4} color={textColor}>Invoice</Text>
                   <iframe
                     src={customerData.invoicePdf}
@@ -864,7 +1024,7 @@ const RtoDashboard = () => {
           // Customer List (Default View)
           <Box>
             <Tabs variant="solid-rounded" colorScheme="blue" index={tabIndex} onChange={setTabIndex} defaultIndex={1}>
-              <TabList mb={6} bg={cardBg} p={2} borderRadius="xl" boxShadow="md">
+              <TabList mb={4} bg={glassBg} p={1} borderRadius="xl" boxShadow="sm" backdropFilter="blur(10px)">
                 <Tab _selected={{ bg: accentColor, color: 'white' }}>Verified</Tab>
                 <Tab _selected={{ bg: accentColor, color: 'white' }}>Pending</Tab>
               </TabList>
@@ -872,29 +1032,36 @@ const RtoDashboard = () => {
               <Box mb={6}>
                 <Flex
                   direction={{ base: 'column', md: 'row' }}
-                  gap={4}
+                  gap={3}
                   align="center"
                   justify="space-between"
+                  bg={glassBg}
+                  p={3}
+                  borderRadius="xl"
+                  boxShadow="sm"
+                  backdropFilter="blur(10px)"
                 >
                   <Input
                     placeholder="Search customers..."
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    size="lg"
-                    bg={inputBg}
+                    size="md"
+                    bg={glassInputBg}
                     borderColor={borderColor}
                     _hover={{ borderColor: accentColor }}
                     _focus={{ borderColor: accentColor }}
-                    maxW={{ base: '100%', md: '400px' }}
+                    maxW={{ base: '100%', md: '300px' }}
+                    borderRadius="lg"
                   />
                   <Select
                     placeholder="Sort by"
-                    size="lg"
-                    w={{ base: '100%', md: '200px' }}
-                    bg={inputBg}
+                    size="md"
+                    w={{ base: '100%', md: '150px' }}
+                    bg={glassInputBg}
                     borderColor={borderColor}
                     _hover={{ borderColor: accentColor }}
                     _focus={{ borderColor: accentColor }}
+                    borderRadius="lg"
                   >
                     <option value="date">Date</option>
                     <option value="name">Name</option>
@@ -911,22 +1078,37 @@ const RtoDashboard = () => {
                     </Flex>
                   ) : (
                     <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
-                      {verifiedCustomers.length === 0 ? (
-                        <GridItem colSpan={{ base: 1, md: 2, lg: 3 }}>
+                      {filteredCustomers(verifiedCustomers, searchQuery).length === 0 ? (
+                        <Box
+                          textAlign="center"
+                          py={16}
+                  bg={cardBg}
+                          borderRadius="2xl"
+                          boxShadow="xl"
+                          position="relative"
+                          overflow="hidden"
+                        >
                           <Box
-                            textAlign="center"
-                            py={10}
-                            bg={cardBg}
-                            borderRadius="xl"
-                            boxShadow="md"
-                          >
-                            <Text fontSize="lg" color="gray.500">
+                            position="absolute"
+                            top={0}
+                            left={0}
+                            right={0}
+                            bottom={0}
+                            bgGradient={emptyStateGradient}
+                            opacity={0.1}
+                          />
+                          <VStack spacing={4}>
+                            <InfoIcon w={12} h={12} color={accentColor} />
+                            <Text fontSize="xl" fontWeight="bold" color={textColor}>
                               No verified customers found
                             </Text>
-                          </Box>
-                        </GridItem>
+                            <Text fontSize="md" color="gray.500">
+                              Try adjusting your search or filters
+                            </Text>
+                    </VStack>
+                        </Box>
                       ) : (
-                        verifiedCustomers.map((customer) => (
+                        filteredCustomers(verifiedCustomers, searchQuery).map((customer) => (
                           <GridItem key={customer.id}>
                             <CustomerCard
                               customer={customer}
@@ -946,22 +1128,37 @@ const RtoDashboard = () => {
                     </Flex>
                   ) : (
                     <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
-                      {pendingCustomers.length === 0 ? (
-                        <GridItem colSpan={{ base: 1, md: 2, lg: 3 }}>
+                      {filteredCustomers(pendingCustomers, searchQuery).length === 0 ? (
+                        <Box
+                          textAlign="center"
+                          py={16}
+                          bg={cardBg}
+                          borderRadius="2xl"
+                          boxShadow="xl"
+                          position="relative"
+                          overflow="hidden"
+                        >
                           <Box
-                            textAlign="center"
-                            py={10}
-                            bg={cardBg}
-                            borderRadius="xl"
-                            boxShadow="md"
-                          >
-                            <Text fontSize="lg" color="gray.500">
+                            position="absolute"
+                            top={0}
+                            left={0}
+                            right={0}
+                            bottom={0}
+                            bgGradient={emptyStateGradient}
+                            opacity={0.1}
+                          />
+                          <VStack spacing={4}>
+                            <InfoIcon w={12} h={12} color={accentColor} />
+                            <Text fontSize="xl" fontWeight="bold" color={textColor}>
                               No pending customers found
                             </Text>
-                          </Box>
-                        </GridItem>
+                            <Text fontSize="md" color="gray.500">
+                              Try adjusting your search or filters
+                            </Text>
+                    </VStack>
+                </Box>
                       ) : (
-                        pendingCustomers.map((customer) => (
+                        filteredCustomers(pendingCustomers, searchQuery).map((customer) => (
                           <GridItem key={customer.id}>
                             <CustomerCard
                               customer={customer}
