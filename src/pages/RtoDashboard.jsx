@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Flex,
@@ -38,11 +38,13 @@ import {
   useColorMode,
   Image,
   Divider,
+  Spinner,
 } from '@chakra-ui/react';
 import { HamburgerIcon, BellIcon, ArrowBackIcon, DownloadIcon } from '@chakra-ui/icons';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import jsPDF from 'jspdf'; // Add jsPDF for PDF generation
+import { rtoApi } from '../api';
 
 const RtoDashboard = () => {
   const { isOpen: isMenuOpen, onOpen: onMenuOpen, onClose: onMenuClose } = useDisclosure();
@@ -67,6 +69,9 @@ const RtoDashboard = () => {
   const [chassisImage, setChassisImage] = useState(null);
   const [registrationNumber, setRegistrationNumber] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
+  const [customers, setCustomers] = useState([]);
+  const [filteredCustomers, setFilteredCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [customerData, setCustomerData] = useState({
     fullName: '', address: '', fathersName: '', panNumber: '', aadharNumber: '', photo: '',
     aadharFront: '', aadharBack: '', signature: '', nomineeName: '', nomineeAge: '', nomineeRelation: '',
@@ -76,51 +81,114 @@ const RtoDashboard = () => {
 
   const user = JSON.parse(localStorage.getItem('user')) || { username: 'rto_user' };
 
-  // Dummy customer data
-  const customers = [
-    {
-      id: 'RTO001', name: 'John Doe', status: 'Pending', registrationNumber: '',
-      fullName: 'John Michael Doe', address: '123 Main St, Springfield', fathersName: 'Robert Doe',
-      panNumber: 'ABCDE1234F', aadharNumber: '1234-5678-9012', photo: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgLXG6-abcFOb8OfkXL12NRC0r_poydMnr9-Vte6KrDY1FzDPfx0I_Nf5zhVOBNZ9MqsGz-v_4SiiMpKLCBsWxaI5yZL0KbrXfNMvqarDHGZQQoVlz40RQ52DpjHPOQwHo2RVRQdTZuPfI/s1600/Sachin.jpg',
-      aadharFront: 'https://akm-img-a-in.tosshub.com/businesstoday/images/story/202205/screenshot_2022-05-29_at_10-sixteen_nine.png?size=1200:675',
-      aadharBack: 'https://akm-img-a-in.tosshub.com/businesstoday/images/story/202205/screenshot_2022-05-29_at_10-sixteen_nine.png?size=1200:675',
-      signature: 'https://www.morebusiness.com/wp-content/uploads/2020/09/handwritten-email-signature.jpg',
-      nomineeName: 'Mary Doe', nomineeAge: '35', nomineeRelation: 'Wife',
-      ward: 'Ward 5', rtoOffice: 'Springfield RTO', invoicePdf: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-      vehicle: 'Toyota Corolla', variant: 'LE', color: 'Black',
-      exShowroom: '50000', tax: '5000', onRoad: '55000', insurance: '2000', bookingCharge: '1000', deliveryCharge: '1500',
-    },
-    {
-      id: 'RTO002', name: 'Jane Smith', status: 'Uploaded', registrationNumber: 'MH12AB1234',
-      fullName: 'Jane Elizabeth Smith', address: '456 Oak Ave, Rivertown', fathersName: 'James Smith',
-      panNumber: 'FGHIJ5678K', aadharNumber: '9876-5432-1098', photo: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgLXG6-abcFOb8OfkXL12NRC0r_poydMnr9-Vte6KrDY1FzDPfx0I_Nf5zhVOBNZ9MqsGz-v_4SiiMpKLCBsWxaI5yZL0KbrXfNMvqarDHGZQQoVlz40RQ52DpjHPOQwHo2RVRQdTZuPfI/s1600/Sachin.jpg',
-      aadharFront: 'https://akm-img-a-in.tosshub.com/businesstoday/images/story/202205/screenshot_2022-05-29_at_10-sixteen_nine.png?size=1200:675',
-      aadharBack: 'https://akm-img-a-in.tosshub.com/businesstoday/images/story/202205/screenshot_2022-05-29_at_10-sixteen_nine.png?size=1200:675',
-      signature: 'https://www.morebusiness.com/wp-content/uploads/2020/09/handwritten-email-signature.jpg',
-      nomineeName: 'Tom Smith', nomineeAge: '40', nomineeRelation: 'Brother',
-      ward: 'Ward 3', rtoOffice: 'Rivertown RTO', invoicePdf: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-      vehicle: 'Honda City', variant: 'VX', color: 'Silver',
-      exShowroom: '60000', tax: '6000', onRoad: '66000', insurance: '2500', bookingCharge: '1200', deliveryCharge: '1800',
-    },
-    {
-      id: 'RTO003', name: 'Mike Johnson', status: 'Done', registrationNumber: 'DL01XY5678',
-      fullName: 'Michael David Johnson', address: '789 Pine Rd, Hillcity', fathersName: 'David Johnson',
-      panNumber: 'KLMNO9012P', aadharNumber: '4567-8901-2345', photo: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgLXG6-abcFOb8OfkXL12NRC0r_poydMnr9-Vte6KrDY1FzDPfx0I_Nf5zhVOBNZ9MqsGz-v_4SiiMpKLCBsWxaI5yZL0KbrXfNMvqarDHGZQQoVlz40RQ52DpjHPOQwHo2RVRQdTZuPfI/s1600/Sachin.jpg',
-      aadharFront: 'https://akm-img-a-in.tosshub.com/businesstoday/images/story/202205/screenshot_2022-05-29_at_10-sixteen_nine.png?size=1200:675',
-      aadharBack: 'https://akm-img-a-in.tosshub.com/businesstoday/images/story/202205/screenshot_2022-05-29_at_10-sixteen_nine.png?size=1200:675',
-      signature: 'https://www.morebusiness.com/wp-content/uploads/2020/09/handwritten-email-signature.jpg',
-      nomineeName: 'Lisa Johnson', nomineeAge: '28', nomineeRelation: 'Daughter',
-      ward: 'Ward 7', rtoOffice: 'Hillcity RTO', invoicePdf: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-      vehicle: 'Hyundai Creta', variant: 'SX', color: 'White',
-      exShowroom: '70000', tax: '7000', onRoad: '77000', insurance: '3000', bookingCharge: '1500', deliveryCharge: '2000',
-    },
-  ];
+  // Check authentication on mount
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = '/login';
+      return;
+    }
+  }, []);
 
-  const filteredCustomers = customers.filter(c =>
-    (c.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-     (c.registrationNumber && c.registrationNumber.toLowerCase().includes(searchQuery.toLowerCase()))) &&
-    (tabIndex === 0 ? c.status === 'Done' : tabIndex === 1 ? c.status === 'Pending' : c.status === 'Uploaded')
-  );
+  // Fetch customers from backend
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('token');
+        if (!token) {
+          window.location.href = '/login';
+          return;
+        }
+
+        const response = await rtoApi.getCustomers();
+        console.log('API Response:', response.data); // Debug log
+        
+        const fetchedCustomers = response.data.customers.map(customer => ({
+          id: customer.id,
+          name: customer.customer_name,
+          status: customer.status || 'pending',
+          registrationNumber: customer.registration_number || '',
+          fullName: customer.full_name || '',
+          address: customer.address || '',
+          fathersName: customer.fathers_name || '',
+          panNumber: customer.pan_number || '',
+          aadharNumber: customer.aadhar_number || '',
+          photo: customer.passport_photo_base64 || '',
+          aadharFront: customer.aadhar_front_base64 || '',
+          aadharBack: customer.aadhar_back_base64 || '',
+          signature: customer.signature || '',
+          nomineeName: customer.nominee || '',
+          nomineeAge: customer.nominee_age || '',
+          nomineeRelation: customer.nominee_relation || '',
+          ward: customer.ward || '',
+          rtoOffice: customer.rto_office || '',
+          invoicePdf: customer.invoice_pdf || '',
+          vehicle: customer.vehicle || '',
+          variant: customer.variant || '',
+          color: customer.color || '',
+          exShowroom: customer.ex_showroom || '',
+          tax: customer.tax || '',
+          onRoad: customer.on_road || '',
+          insurance: customer.insurance || '',
+          bookingCharge: customer.booking_charge || '',
+          deliveryCharge: customer.delivery_charge || '',
+        }));
+
+        console.log('Mapped Customers:', fetchedCustomers); // Debug log
+        setCustomers(fetchedCustomers);
+        setFilteredCustomers(fetchedCustomers);
+      } catch (error) {
+        console.error('Failed to fetch customers:', error);
+        if (error.message) {
+          toast.error(error.message, { position: 'top-center' });
+        } else {
+          toast.error('Failed to load customers. Please try again.', { position: 'top-center' });
+        }
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          window.location.href = '/login';
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCustomers();
+  }, []);
+
+  // Filter customers based on search query and tab
+  useEffect(() => {
+    let filtered = customers;
+    
+    // Apply search filter
+    if (searchQuery) {
+      filtered = filtered.filter(customer => 
+        customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        customer.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        customer.registrationNumber.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Apply status filter based on tab
+    switch (tabIndex) {
+      case 0: // Done/Verified
+        filtered = filtered.filter(customer => customer.status === 'Verified' || customer.status === 'done');
+        break;
+      case 1: // Pending
+        filtered = filtered.filter(customer => customer.status === 'pending');
+        break;
+      case 2: // Uploaded
+        filtered = filtered.filter(customer => customer.status === 'uploaded');
+        break;
+      default:
+        break;
+    }
+
+    console.log('Filtered Customers:', filtered); // Debug log
+    setFilteredCustomers(filtered);
+  }, [searchQuery, tabIndex, customers]);
 
   const notifications = [
     { id: 1, message: 'New booking added: John Doe', time: '2025-03-01 10:00 AM', seen: false },
@@ -129,73 +197,102 @@ const RtoDashboard = () => {
 
   const unseenNotifications = notifications.filter(n => !n.seen);
 
-  const handleCustomerSelect = (customer) => {
+  const handleCustomerSelect = async (customer) => {
     setSelectedCustomer(customer);
-    setCustomerData({
-      fullName: customer.fullName,
-      address: customer.address,
-      fathersName: customer.fathersName,
-      panNumber: customer.panNumber,
-      aadharNumber: customer.aadharNumber,
-      photo: customer.photo,
-      aadharFront: customer.aadharFront,
-      aadharBack: customer.aadharBack,
-      signature: customer.signature,
-      nomineeName: customer.nomineeName,
-      nomineeAge: customer.nomineeAge,
-      nomineeRelation: customer.nomineeRelation,
-      ward: customer.ward,
-      rtoOffice: customer.rtoOffice,
-      invoicePdf: customer.invoicePdf,
-      name: customer.name,
-      vehicle: customer.vehicle,
-      variant: customer.variant,
-      color: customer.color,
-      exShowroom: customer.exShowroom,
-      tax: customer.tax,
-      onRoad: customer.onRoad,
-      insurance: customer.insurance,
-      bookingCharge: customer.bookingCharge,
-      deliveryCharge: customer.deliveryCharge,
-    });
-    setChassisNumber('');
-    setChassisImage(null);
-    setRegistrationNumber(customer.registrationNumber || '');
+    setCustomerData(customer);
+    onMenuOpen();
   };
 
-  const handleChassisSearch = () => {
-    if (chassisNumber) {
-      setChassisImage(`https://johnhenrymccarthy.wordpress.com/wp-content/uploads/2015/05/wall-rubbing-resized.jpg`);
-      toast.success('Chassis image loaded!', { position: 'top-center' });
-    } else {
-      toast.error('Please enter a chassis number!', { position: 'top-center' });
+  const handleMarkUploaded = async () => {
+    if (!selectedCustomer) return;
+
+    try {
+      await rtoApi.updateCustomerStatus(selectedCustomer.id, 'uploaded');
+      
+      // Update local state
+      setCustomers(prevCustomers => 
+        prevCustomers.map(c => 
+          c.id === selectedCustomer.id 
+            ? { ...c, status: 'uploaded' }
+            : c
+        )
+      );
+      
+      toast.success('Customer marked as uploaded', { position: 'top-center' });
+      onMenuOpen();
+    } catch (error) {
+      console.error('Failed to update customer status:', error);
+      toast.error('Failed to update customer status', { position: 'top-center' });
     }
   };
 
-  const handleDownloadChassis = () => {
-    if (chassisImage) {
-      const link = document.createElement('a');
-      link.href = chassisImage;
-      link.download = `chassis_${chassisNumber}.png`;
-      link.click();
-      toast.success('Chassis image downloaded!', { position: 'top-center' });
-    }
-  };
+  const handleRtoVerified = async () => {
+    if (!selectedCustomer) return;
 
-  const handleMarkUploaded = () => {
-    setCustomerData(prev => ({ ...prev, status: 'Uploaded' }));
-    setSelectedCustomer(prev => ({ ...prev, status: 'Uploaded' }));
-    toast.success('Marked as uploaded to RTO!', { position: 'top-center' });
-  };
-
-  const handleRtoVerified = () => {
-    if (registrationNumber) {
-      setCustomerData(prev => ({ ...prev, status: 'Done', registrationNumber }));
-      setSelectedCustomer(prev => ({ ...prev, status: 'Done', registrationNumber }));
+    try {
+      await rtoApi.updateCustomerStatus(selectedCustomer.id, 'done');
+      
+      // Update local state
+      setCustomers(prevCustomers => 
+        prevCustomers.map(c => 
+          c.id === selectedCustomer.id 
+            ? { ...c, status: 'done' }
+            : c
+        )
+      );
+      
+      toast.success('Customer marked as RTO verified', { position: 'top-center' });
       onRtoVerifiedClose();
-      toast.success(`RTO Verified with Reg. No: ${registrationNumber}`, { position: 'top-center' });
-    } else {
-      toast.error('Please enter a registration number!', { position: 'top-center' });
+      onMenuOpen();
+    } catch (error) {
+      console.error('Failed to update customer status:', error);
+      toast.error('Failed to update customer status', { position: 'top-center' });
+    }
+  };
+
+  const handleChassisSearch = async () => {
+    if (!chassisNumber) {
+      toast.error('Please enter a chassis number', { position: 'top-center' });
+      return;
+    }
+
+    try {
+      const response = await rtoApi.getCustomerByChassis(chassisNumber);
+      if (response.data.customer) {
+        setSelectedCustomer(response.data.customer);
+        setCustomerData(response.data.customer);
+        toast.success('Customer found', { position: 'top-center' });
+      } else {
+        toast.error('No customer found with this chassis number', { position: 'top-center' });
+      }
+    } catch (error) {
+      console.error('Failed to search chassis:', error);
+      toast.error('Failed to search chassis number', { position: 'top-center' });
+    }
+  };
+
+  const handleDownloadChassis = async () => {
+    if (!selectedCustomer) {
+      toast.error('Please select a customer first', { position: 'top-center' });
+      return;
+    }
+
+    try {
+      const response = await rtoApi.getChassisImage(selectedCustomer.id);
+      if (response.data.image) {
+        const link = document.createElement('a');
+        link.href = `data:image/jpeg;base64,${response.data.image}`;
+        link.download = `chassis_${selectedCustomer.id}.jpg`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        toast.success('Chassis image downloaded successfully', { position: 'top-center' });
+      } else {
+        toast.error('No chassis image found', { position: 'top-center' });
+      }
+    } catch (error) {
+      console.error('Failed to download chassis image:', error);
+      toast.error('Failed to download chassis image', { position: 'top-center' });
     }
   };
 
@@ -290,6 +387,49 @@ const RtoDashboard = () => {
     toast.success(`Downloaded user data as "${folderName}" folder!`, { position: 'top-center' });
   };
 
+  const renderCustomerCard = (customer) => (
+    <Box
+      key={customer.id}
+      bg={cardBg}
+      p={4}
+      borderRadius="lg"
+      boxShadow="sm"
+      border="1px"
+      borderColor={borderColor}
+      cursor="pointer"
+      onClick={() => handleCustomerSelect(customer)}
+      _hover={{ transform: 'translateY(-2px)', boxShadow: 'md' }}
+      transition="all 0.2s"
+    >
+      <Flex justify="space-between" align="center" mb={3}>
+        <VStack align="start" spacing={1}>
+          <Text fontWeight="bold" fontSize="lg">{customer.name}</Text>
+          <Text fontSize="sm" color="gray.500">{customer.vehicle || 'No Vehicle'} - {customer.variant || 'No Variant'}</Text>
+        </VStack>
+        <Badge
+          colorScheme={
+            customer.status === 'Verified' || customer.status === 'done' ? 'green' :
+            customer.status === 'pending' ? 'yellow' :
+            customer.status === 'uploaded' ? 'blue' : 'gray'
+          }
+        >
+          {customer.status.charAt(0).toUpperCase() + customer.status.slice(1)}
+        </Badge>
+      </Flex>
+      <Divider my={2} />
+      <SimpleGrid columns={2} spacing={3}>
+        <Box>
+          <Text fontSize="sm" color="gray.500">Registration No.</Text>
+          <Text>{customer.registrationNumber || 'Not Assigned'}</Text>
+        </Box>
+        <Box>
+          <Text fontSize="sm" color="gray.500">RTO Office</Text>
+          <Text>{customer.rtoOffice || 'Not Assigned'}</Text>
+        </Box>
+      </SimpleGrid>
+    </Box>
+  );
+
   return (
     <Box minH="100vh" bg={bgGradient} position="relative">
       {/* Header */}
@@ -355,8 +495,11 @@ const RtoDashboard = () => {
               <MenuItem onClick={toggleColorMode} bg={cardBg} _hover={{ bg: hoverBg }}>
                 {colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
               </MenuItem>
-              <MenuItem onClick={() => toast.info('Sign out not implemented')} bg={cardBg} _hover={{ bg: hoverBg }}>
-                Sign Out
+              <MenuItem onClick={() => {
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+              }} bg={cardBg} _hover={{ bg: hoverBg }}>
+                Logout
               </MenuItem>
             </MenuList>
           </Menu>
@@ -666,7 +809,7 @@ const RtoDashboard = () => {
           <Box>
             <Tabs variant="solid-rounded" colorScheme="blue" index={tabIndex} onChange={setTabIndex}>
               <TabList mb={6} bg={cardBg} p={2} borderRadius="xl" boxShadow="md">
-                <Tab _selected={{ bg: accentColor, color: 'white' }}>Done</Tab>
+                <Tab _selected={{ bg: accentColor, color: 'white' }}>Verified</Tab>
                 <Tab _selected={{ bg: accentColor, color: 'white' }}>Pending</Tab>
                 <Tab _selected={{ bg: accentColor, color: 'white' }}>Uploaded</Tab>
               </TabList>
@@ -696,42 +839,19 @@ const RtoDashboard = () => {
               />
             </HStack>
             <VStack spacing={4} align="stretch" maxH={{ base: 'calc(100vh - 200px)', md: '70vh' }} overflowY="auto">
-              {filteredCustomers.map(customer => (
-                <Box
-                  key={customer.id}
-                  bg={cardBg}
-                  borderRadius="xl"
-                  p={4}
-                  boxShadow="md"
-                  _hover={{ boxShadow: 'lg', transform: 'translateY(-2px)' }}
-                  transition="all 0.2s"
-                  cursor="pointer"
-                  onClick={() => handleCustomerSelect(customer)}
-                >
-                  <Flex justify="space-between" align="center">
-                    <VStack align="start" spacing={1} flex="1">
-                      <Text fontWeight="bold" fontSize="lg" color={textColor}>{customer.name}</Text>
-                      <Text fontSize="sm" color="gray.500">{customer.id}</Text>
-                      <Text fontSize="sm" color="gray.500">{customer.vehicle}</Text>
-                      {customer.registrationNumber && (
-                        <Text fontSize="sm" color="gray.500">Reg. No: {customer.registrationNumber}</Text>
-                      )}
-                    </VStack>
-                    <VStack align="end" spacing={1}>
-                      <Badge
-                        colorScheme={customer.status === 'Pending' ? 'orange' : customer.status === 'Uploaded' ? 'blue' : 'green'}
-                        fontSize="sm"
-                        px={2}
-                        py={1}
-                        borderRadius="md"
-                      >
-                        {customer.status}
-                      </Badge>
-                      <Text fontSize="xs" color="gray.500">{customer.date}</Text>
-                    </VStack>
-                  </Flex>
+              {loading ? (
+                <Flex justify="center" align="center" h="400px">
+                  <Spinner size="xl" color={accentColor} />
+                </Flex>
+              ) : filteredCustomers.length === 0 ? (
+                <Box textAlign="center" py={10}>
+                  <Text fontSize="lg" color="gray.500">No customers found</Text>
                 </Box>
-              ))}
+              ) : (
+                <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
+                  {filteredCustomers.map(renderCustomerCard)}
+                </SimpleGrid>
+              )}
             </VStack>
           </Box>
         )}
