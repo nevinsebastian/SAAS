@@ -51,12 +51,135 @@ import {
   TabPanel,
   GridItem,
 } from '@chakra-ui/react';
-import { HamburgerIcon, BellIcon, ArrowBackIcon, DownloadIcon, SearchIcon, FilterIcon, CheckIcon, TimeIcon, ChevronRightIcon, ChevronLeftIcon, StarIcon, InfoIcon, WarningIcon, CheckCircleIcon, CloseIcon } from '@chakra-ui/icons';
+import { HamburgerIcon, BellIcon, ArrowBackIcon, DownloadIcon, SearchIcon, FilterIcon, CheckIcon, TimeIcon, ChevronRightIcon, ChevronLeftIcon, StarIcon, InfoIcon, WarningIcon, CheckCircleIcon, CloseIcon, ChevronUpIcon, ChevronDownIcon, ExternalLinkIcon, ViewIcon, AttachmentIcon, SettingsIcon, RepeatIcon } from '@chakra-ui/icons';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import jsPDF from 'jspdf'; // Add jsPDF for PDF generation
 import { rtoApi } from '../api';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from 'framer-motion';
+
+// Define CustomerCard component first
+const CustomerCard = ({ customer, onAction, isVerified, onSelect, onDownloadChassis }) => {
+  const cardBg = useColorModeValue('rgba(255, 255, 255, 0.8)', 'rgba(26, 32, 44, 0.8)');
+  const borderColor = useColorModeValue('rgba(226, 232, 240, 0.8)', 'rgba(45, 55, 72, 0.8)');
+  const hoverBg = useColorModeValue('rgba(66, 153, 225, 0.1)', 'rgba(66, 153, 225, 0.2)');
+  const textColor = useColorModeValue('gray.800', 'white');
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      whileHover={{ scale: 1.02, y: -5 }}
+      style={{ height: '100%' }}
+    >
+      <Box
+        bg={cardBg}
+        p={5}
+        borderRadius="xl"
+        boxShadow="0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"
+        border="1px"
+        borderColor={borderColor}
+        backdropFilter="blur(10px)"
+        _hover={{ 
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+          borderColor: 'blue.400',
+          bg: 'rgba(255, 255, 255, 0.9)',
+          transform: 'translateY(-5px)'
+        }}
+        transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+        cursor="pointer"
+        onClick={() => onSelect(customer)}
+        position="relative"
+        overflow="hidden"
+      >
+        <Flex justify="space-between" align="start" mb={3} position="relative">
+          <VStack align="start" spacing={1}>
+            <Text 
+              fontWeight="bold" 
+              fontSize="lg" 
+              color={textColor}
+              bgGradient={useColorModeValue(
+                'linear(to-r, blue.500, purple.500)',
+                'linear(to-r, blue.300, purple.300)'
+              )}
+              bgClip="text"
+            >
+              {customer.customer_name}
+            </Text>
+            <Text fontSize="sm" color="gray.500">
+              {customer.vehicle} - {customer.variant}
+            </Text>
+          </VStack>
+          <Badge
+            colorScheme={isVerified ? 'green' : 'yellow'}
+            px={2}
+            py={0.5}
+            borderRadius="full"
+            fontSize="xs"
+            boxShadow="sm"
+            backdropFilter="blur(4px)"
+            _hover={{ transform: 'scale(1.05)' }}
+            transition="all 0.2s"
+          >
+            {isVerified ? 'Verified' : 'Pending'}
+          </Badge>
+        </Flex>
+
+        <Divider my={3} borderColor={borderColor} />
+
+        <Flex justify="space-between" align="center">
+          <HStack spacing={2}>
+            {customer.chassis_image && (
+              <Button
+                colorScheme="purple"
+                size="sm"
+                variant="outline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDownloadChassis(customer.id);
+                }}
+                leftIcon={<DownloadIcon />}
+                backdropFilter="blur(4px)"
+                _hover={{ 
+                  transform: 'translateY(-2px)',
+                  boxShadow: 'md'
+                }}
+                transition="all 0.2s"
+              >
+                Chassis
+              </Button>
+            )}
+            {!isVerified && (
+              <Button
+                colorScheme="blue"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAction(customer.id);
+                }}
+                leftIcon={<CheckIcon />}
+                backdropFilter="blur(4px)"
+                _hover={{ 
+                  transform: 'translateY(-2px)',
+                  boxShadow: 'md'
+                }}
+                transition="all 0.2s"
+              >
+                Mark Verified
+              </Button>
+            )}
+          </HStack>
+          <ChevronRightIcon 
+            color={useColorModeValue('gray.400', 'gray.500')}
+            _groupHover={{ color: 'blue.500' }}
+            transition="all 0.2s"
+          />
+        </Flex>
+      </Box>
+    </motion.div>
+  );
+};
 
 const RtoDashboard = () => {
   const { isOpen: isMenuOpen, onOpen: onMenuOpen, onClose: onMenuClose } = useDisclosure();
@@ -439,137 +562,131 @@ const RtoDashboard = () => {
     });
   };
 
-  // Update the CustomerCard component with more modern styling
-  const CustomerCard = ({ customer, onAction, isVerified }) => {
-    const cardBg = glassBg;
-    const borderColor = glassBorder;
-    const hoverBg = glassHoverBg;
-    const textColor = useColorModeValue('gray.800', 'white');
+  // Add new components for the customer details view
+  const ImageViewer = ({ src, alt, onClose }) => {
+    const scale = useMotionValue(1);
+    const rotate = useMotionValue(0);
+    const rotateY = useTransform(rotate, [-100, 100], [-30, 30]);
+    const rotateX = useTransform(rotate, [-100, 100], [30, -30]);
+
+    return (
+      <Modal isOpen={true} onClose={onClose} size="full" motionPreset="scale">
+        <ModalOverlay bg="rgba(0, 0, 0, 0.8)" backdropFilter="blur(10px)" />
+        <ModalContent
+          bg="transparent"
+          boxShadow="none"
+          overflow="hidden"
+          h="100vh"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <motion.div
+            style={{
+              scale,
+              rotateY,
+              rotateX,
+              cursor: 'grab',
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            whileTap={{ cursor: 'grabbing' }}
+            drag
+            dragConstraints={{
+              top: -100,
+              left: -100,
+              right: 100,
+              bottom: 100,
+            }}
+            dragElastic={0.1}
+            onDragEnd={(_, info) => {
+              rotate.set(info.offset.x);
+            }}
+            onWheel={(e) => {
+              e.preventDefault();
+              const delta = e.deltaY * -0.01;
+              const newScale = Math.min(Math.max(scale.get() + delta, 0.5), 3);
+              scale.set(newScale);
+            }}
+          >
+            <Image
+              src={src}
+              alt={alt}
+              objectFit="contain"
+              maxH="90vh"
+              maxW="90vw"
+              borderRadius="lg"
+              boxShadow="0 0 50px rgba(0,0,0,0.5)"
+              fallbackSrc="https://via.placeholder.com/300?text=Image+Not+Available"
+            />
+          </motion.div>
+          <IconButton
+            icon={<CloseIcon />}
+            position="absolute"
+            top={4}
+            right={4}
+            color="white"
+            bg="rgba(0,0,0,0.5)"
+            _hover={{ bg: 'rgba(0,0,0,0.8)' }}
+            onClick={onClose}
+            size="lg"
+            borderRadius="full"
+          />
+        </ModalContent>
+      </Modal>
+    );
+  };
+
+  const DetailCard = ({ title, children, icon }) => {
+    const [isExpanded, setIsExpanded] = useState(true);
+    const cardBg = useColorModeValue('rgba(255, 255, 255, 0.8)', 'rgba(26, 32, 44, 0.8)');
+    const borderColor = useColorModeValue('rgba(226, 232, 240, 0.8)', 'rgba(45, 55, 72, 0.8)');
 
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, ease: "easeOut" }}
-        whileHover={{ scale: 1.02, y: -5 }}
-        style={{ height: '100%' }}
+        transition={{ duration: 0.3 }}
       >
         <Box
           bg={cardBg}
-          p={5}
           borderRadius="xl"
-          boxShadow="0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"
+          p={4}
+          boxShadow="0 4px 6px -1px rgba(0, 0, 0, 0.1)"
           border="1px"
           borderColor={borderColor}
           backdropFilter="blur(10px)"
-          _hover={{ 
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-            borderColor: 'blue.400',
-            bg: glassInputBg,
-            transform: 'translateY(-5px)'
-          }}
-          transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
-          cursor="pointer"
-          onClick={() => handleCustomerSelect(customer)}
-          position="relative"
-          overflow="hidden"
         >
-          {/* Animated gradient background */}
-          <Box
-            position="absolute"
-            top={0}
-            left={0}
-            right={0}
-            bottom={0}
-            bgGradient={gradientBg}
-            opacity={0}
-            _groupHover={{ opacity: 1 }}
-            transition="opacity 0.3s ease"
-          />
-
-          <Flex justify="space-between" align="start" mb={3} position="relative">
-            <VStack align="start" spacing={1}>
-              <Text 
-                fontWeight="bold" 
-                fontSize="lg" 
-                color={textColor}
-                bgGradient={useColorModeValue(
-                  'linear(to-r, blue.500, purple.500)',
-                  'linear(to-r, blue.300, purple.300)'
-                )}
-                bgClip="text"
-              >
-                {customer.customer_name}
+          <Flex
+            justify="space-between"
+            align="center"
+            cursor="pointer"
+            onClick={() => setIsExpanded(!isExpanded)}
+            mb={isExpanded ? 4 : 0}
+          >
+            <HStack spacing={3}>
+              {icon}
+              <Text fontSize="lg" fontWeight="bold" color={textColor}>
+                {title}
               </Text>
-              <Text fontSize="sm" color="gray.500">
-                {customer.vehicle} - {customer.variant}
-              </Text>
-            </VStack>
-            <Badge
-              colorScheme={isVerified ? 'green' : 'yellow'}
-              px={2}
-              py={0.5}
-              borderRadius="full"
-              fontSize="xs"
-              boxShadow="sm"
-              backdropFilter="blur(4px)"
-              _hover={{ transform: 'scale(1.05)' }}
-              transition="all 0.2s"
-            >
-              {isVerified ? 'Verified' : 'Pending'}
-            </Badge>
-          </Flex>
-
-          <Divider my={3} borderColor={borderColor} />
-
-          <Flex justify="space-between" align="center">
-            <HStack spacing={2}>
-              {customer.chassis_image && (
-                <Button
-                  colorScheme="purple"
-                  size="sm"
-                  variant="outline"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDownloadChassis(customer.id);
-                  }}
-                  leftIcon={<DownloadIcon />}
-                  backdropFilter="blur(4px)"
-                  _hover={{ 
-                    transform: 'translateY(-2px)',
-                    boxShadow: 'md'
-                  }}
-                  transition="all 0.2s"
-                >
-                  Chassis
-                </Button>
-              )}
-              {!isVerified && (
-                <Button
-                  colorScheme="blue"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onAction(customer.id);
-                  }}
-                  leftIcon={<CheckIcon />}
-                  backdropFilter="blur(4px)"
-                  _hover={{ 
-                    transform: 'translateY(-2px)',
-                    boxShadow: 'md'
-                  }}
-                  transition="all 0.2s"
-                >
-                  Mark Verified
-                </Button>
-              )}
             </HStack>
-            <ChevronRightIcon 
-              color={useColorModeValue('gray.400', 'gray.500')}
-              _groupHover={{ color: 'blue.500' }}
-              transition="all 0.2s"
-            />
+            {isExpanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
           </Flex>
+          <AnimatePresence>
+            {isExpanded && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                {children}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </Box>
       </motion.div>
     );
@@ -726,21 +843,21 @@ const RtoDashboard = () => {
       {/* Main Layout */}
       <Box maxW="1400px" mx="auto" mt={4} px={{ base: 3, md: 4 }} pb={{ base: 16, md: 8 }}>
         {selectedCustomer ? (
-          // Full-Screen Customer Details
-          <Flex direction="column" h={{ base: 'calc(100vh - 70px)', md: 'auto' }} position={{ base: 'fixed', md: 'static' }} top={{ base: '70px', md: 'auto' }} left={0} right={0} bottom={0} bg={cardBg} zIndex={9}>
+          <Flex direction="column" h={{ base: 'calc(100vh - 70px)', md: 'auto' }} position={{ base: 'fixed', md: 'static' }} top={{ base: '70px', md: 'auto' }} left={0} right={0} bottom={0} bg={bgGradient} zIndex={9}>
             {/* Fixed Header */}
             <Flex
               justify="space-between"
               align="center"
-              bg={cardBg}
+              bg={glassBg}
               p={4}
               borderRadius={{ base: 0, md: 'lg' }}
-              boxShadow="md"
+              boxShadow="0 4px 6px -1px rgba(0, 0, 0, 0.1)"
               position="sticky"
               top={0}
               zIndex={10}
               borderBottom="1px"
-              borderColor={borderColor}
+              borderColor={glassBorder}
+              backdropFilter="blur(10px)"
             >
               <HStack spacing={4}>
                 <IconButton
@@ -751,86 +868,122 @@ const RtoDashboard = () => {
                   aria-label="Back to list"
                   _hover={{ bg: hoverBg }}
                 />
-                <Heading size="md" color={textColor}>{customerData.name} - {customerData.id}</Heading>
+                <VStack align="start" spacing={0}>
+                  <Heading size="md" color={textColor}>{customerData.customer_name}</Heading>
+                  <Text fontSize="sm" color="gray.500">{customerData.vehicle} - {customerData.variant}</Text>
+                </VStack>
               </HStack>
-              <Button
-                leftIcon={<DownloadIcon />}
-                colorScheme="blue"
-                variant="solid"
-                size="sm"
-                onClick={handleDownloadUserData}
-                _hover={{ bg: 'blue.600' }}
-              >
-                Download User Data
-              </Button>
+              <HStack spacing={2}>
+                <Button
+                  leftIcon={<DownloadIcon />}
+                  colorScheme="blue"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownloadUserData}
+                  _hover={{ bg: hoverBg }}
+                >
+                  Download Data
+                </Button>
+                <Button
+                  leftIcon={<ExternalLinkIcon />}
+                  colorScheme="purple"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(customerData.invoicePdf, '_blank')}
+                  _hover={{ bg: hoverBg }}
+                >
+                  View Invoice
+                </Button>
+              </HStack>
             </Flex>
 
             {/* Scrollable Details */}
-            <Flex direction="column" flex="1" overflowY="auto" p={6} pb={200}>
-              <VStack spacing={8} align="stretch">
+            <Box flex="1" overflowY="auto" p={6} pb={200}>
+              <VStack spacing={6} align="stretch">
+                {/* Status Badge */}
+                <Flex justify="center">
+                  <Badge
+                    colorScheme={customerData.rto_verified ? 'green' : 'yellow'}
+                    px={4}
+                    py={2}
+                    borderRadius="full"
+                    fontSize="md"
+                    boxShadow="md"
+                    backdropFilter="blur(4px)"
+                  >
+                    {customerData.rto_verified ? 'Verified' : 'Pending Verification'}
+                  </Badge>
+                </Flex>
+
                 {/* Personal Information */}
-                <Box bg={cardBg} borderRadius="2xl" p={6} boxShadow="lg" _hover={{ boxShadow: 'xl' }} transition="all 0.2s">
-                  <Text fontWeight="bold" fontSize="lg" mb={4} color={textColor}>Personal Information</Text>
-                  <HStack spacing={6} align="start" wrap="wrap">
-                    <Box flex="1" minW={{ base: '100%', md: '300px' }}>
-                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                        <Box>
-                          <Text fontSize="sm" color="gray.500">Full Name</Text>
-                          <Text fontSize="md" color={textColor}>{customerData.fullName}</Text>
-                        </Box>
-                        <Box>
-                          <Text fontSize="sm" color="gray.500">Address</Text>
-                          <Text fontSize="md" color={textColor}>{customerData.address}</Text>
-                        </Box>
-                        <Box>
-                          <Text fontSize="sm" color="gray.500">Father's Name</Text>
-                          <Text fontSize="md" color={textColor}>{customerData.fathersName}</Text>
-                        </Box>
-                        <Box>
-                          <Text fontSize="sm" color="gray.500">PAN Number</Text>
-                          <Text fontSize="md" color={textColor}>{customerData.panNumber}</Text>
-                        </Box>
-                        <Box>
-                          <Text fontSize="sm" color="gray.500">Aadhar Number</Text>
-                          <Text fontSize="md" color={textColor}>{customerData.aadharNumber}</Text>
-                        </Box>
-                        <Box>
-                          <Text fontSize="sm" color="gray.500">Ward</Text>
-                          <Text fontSize="md" color={textColor}>{customerData.ward}</Text>
-                        </Box>
-                        <Box>
-                          <Text fontSize="sm" color="gray.500">RTO Office</Text>
-                          <Text fontSize="md" color={textColor}>{customerData.rtoOffice}</Text>
-                        </Box>
-                      </SimpleGrid>
+                <DetailCard
+                  title="Personal Information"
+                  icon={<AttachmentIcon />}
+                >
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Full Name</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.fullName}</Text>
                     </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Address</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.address}</Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Father's Name</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.fathersName}</Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">PAN Number</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.panNumber}</Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Aadhar Number</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.aadharNumber}</Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Ward</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.ward}</Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">RTO Office</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.rtoOffice}</Text>
+                    </Box>
+                  </SimpleGrid>
+                </DetailCard>
+
+                {/* Documents */}
+                <DetailCard
+                  title="Documents"
+                  icon={<AttachmentIcon />}
+                >
+                  <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
                     <Box>
                       <Text fontSize="sm" color="gray.500" mb={2}>Passport Photo</Text>
                       <Image
                         src={customerData.photo}
                         alt="Customer Photo"
                         objectFit="cover"
-                        borderRadius="md"
+                        borderRadius="lg"
                         cursor="pointer"
                         onClick={() => handleImageClick(customerData.photo)}
                         fallbackSrc="https://via.placeholder.com/150?text=No+Photo"
                         _hover={{ opacity: 0.8 }}
+                        transition="all 0.2s"
                       />
                     </Box>
-                  </HStack>
-                  <Divider my={4} borderColor={borderColor} />
-                  <HStack spacing={6} wrap="wrap" justify="space-between">
                     <Box>
                       <Text fontSize="sm" color="gray.500" mb={2}>Aadhar Front</Text>
                       <Image
                         src={customerData.aadharFront}
                         alt="Aadhar Front"
                         objectFit="cover"
-                        borderRadius="md"
+                        borderRadius="lg"
                         cursor="pointer"
                         onClick={() => handleImageClick(customerData.aadharFront)}
                         fallbackSrc="https://via.placeholder.com/200x150?text=No+Aadhar+Front"
                         _hover={{ opacity: 0.8 }}
+                        transition="all 0.2s"
                       />
                     </Box>
                     <Box>
@@ -839,11 +992,12 @@ const RtoDashboard = () => {
                         src={customerData.aadharBack}
                         alt="Aadhar Back"
                         objectFit="cover"
-                        borderRadius="md"
+                        borderRadius="lg"
                         cursor="pointer"
                         onClick={() => handleImageClick(customerData.aadharBack)}
                         fallbackSrc="https://via.placeholder.com/200x150?text=No+Aadhar+Back"
                         _hover={{ opacity: 0.8 }}
+                        transition="all 0.2s"
                       />
                     </Box>
                     <Box>
@@ -852,48 +1006,22 @@ const RtoDashboard = () => {
                         src={customerData.signature}
                         alt="Signature"
                         objectFit="cover"
-                        borderRadius="md"
+                        borderRadius="lg"
                         cursor="pointer"
                         onClick={() => handleImageClick(customerData.signature)}
                         fallbackSrc="https://via.placeholder.com/150x50?text=No+Signature"
                         _hover={{ opacity: 0.8 }}
+                        transition="all 0.2s"
                       />
                     </Box>
-                  </HStack>
-                </Box>
-
-                {/* Nominee Details */}
-                <Box bg={cardBg} borderRadius="2xl" p={6} boxShadow="lg" _hover={{ boxShadow: 'xl' }} transition="all 0.2s">
-                  <Text fontWeight="bold" fontSize="lg" mb={4} color={textColor}>Nominee Details</Text>
-                  <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500">Nominee Name</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.nomineeName}</Text>
-                    </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500">Nominee Age</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.nomineeAge}</Text>
-                    </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500">Relation with Nominee</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.nomineeRelation}</Text>
-                    </Box>
                   </SimpleGrid>
-                </Box>
-
-             {/* Invoice */}
-             <Box bg={cardBg} borderRadius="2xl" p={6} boxShadow="lg" _hover={{ boxShadow: 'xl' }} transition="all 0.2s">
-                  <Text fontWeight="bold" fontSize="lg" mb={4} color={textColor}>Invoice</Text>
-                  <iframe
-                    src={customerData.invoicePdf}
-                    title="Invoice PDF"
-                    style={{ width: '100%', height: '400px', border: 'none', borderRadius: '8px' }}
-                  />
-                </Box>
+                </DetailCard>
 
                 {/* Vehicle Details */}
-                <Box bg={cardBg} borderRadius="2xl" p={6} boxShadow="lg" _hover={{ boxShadow: 'xl' }} transition="all 0.2s">
-                  <Text fontWeight="bold" fontSize="lg" mb={4} color={textColor}>Vehicle Details</Text>
+                <DetailCard
+                  title="Vehicle Details"
+                  icon={<SettingsIcon />}
+                >
                   <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
                     <Box>
                       <Text fontSize="sm" color="gray.500">Vehicle</Text>
@@ -907,20 +1035,13 @@ const RtoDashboard = () => {
                       <Text fontSize="sm" color="gray.500">Color</Text>
                       <Text fontSize="md" color={textColor}>{customerData.color}</Text>
                     </Box>
-                  </SimpleGrid>
-                </Box>
-
-                {/* Pricing */}
-                <Box bg={cardBg} borderRadius="2xl" p={6} boxShadow="lg" _hover={{ boxShadow: 'xl' }} transition="all 0.2s">
-                  <Text fontWeight="bold" fontSize="lg" mb={4} color={textColor}>Pricing</Text>
-                  <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Ex-Showroom</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.exShowroom}</Text>
+                      <Text fontSize="sm" color="gray.500">Chassis Number</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.chassisNumber}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Tax</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.tax}</Text>
+                      <Text fontSize="sm" color="gray.500">Engine Number</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.engineNumber}</Text>
                     </Box>
                     <Box>
                       <Text fontSize="sm" color="gray.500">On-Road</Text>
@@ -939,86 +1060,79 @@ const RtoDashboard = () => {
                       <Text fontSize="md" color={textColor}>{customerData.deliveryCharge}</Text>
                     </Box>
                   </SimpleGrid>
-                </Box>
+                </DetailCard>
 
-                {/* Chassis Search */}
-                <Box bg={cardBg} borderRadius="2xl" p={6} boxShadow="lg" _hover={{ boxShadow: 'xl' }} transition="all 0.2s">
-                  <Text fontWeight="bold" fontSize="lg" mb={4} color={textColor}>Chassis Search</Text>
+                {/* Pricing Details */}
+                <DetailCard
+                  title="Pricing Details"
+                  icon={<RepeatIcon />}
+                >
+                  <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Ex-Showroom</Text>
+                      <Text fontSize="md" color={textColor}>₹{customerData.exShowroom}</Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Tax</Text>
+                      <Text fontSize="md" color={textColor}>₹{customerData.tax}</Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">On-Road</Text>
+                      <Text fontSize="md" color={textColor}>₹{customerData.onRoad}</Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Insurance</Text>
+                      <Text fontSize="md" color={textColor}>₹{customerData.insurance}</Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Booking Charge</Text>
+                      <Text fontSize="md" color={textColor}>₹{customerData.bookingCharge}</Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Delivery Charge</Text>
+                      <Text fontSize="md" color={textColor}>₹{customerData.deliveryCharge}</Text>
+                    </Box>
+                  </SimpleGrid>
+                </DetailCard>
+
+                {/* Action Buttons */}
+                <Flex justify="center" mt={8}>
                   <HStack spacing={4}>
-                    <Input
-                      placeholder="Enter chassis number"
-                      value={chassisNumber}
-                      onChange={e => setChassisNumber(e.target.value)}
-                      bg={inputBg}
-                      borderColor={borderColor}
-                      _hover={{ borderColor: accentColor }}
-                      _focus={{ borderColor: accentColor, boxShadow: `0 0 0 1px ${accentColor}` }}
-                    />
+                    {!customerData.rto_verified && (
+                      <Button
+                        colorScheme="blue"
+                        size="lg"
+                        leftIcon={<CheckIcon />}
+                        onClick={() => handleRtoVerified(selectedCustomer.id)}
+                        _hover={{ transform: 'translateY(-2px)', boxShadow: 'lg' }}
+                        transition="all 0.2s"
+                      >
+                        Mark as Verified
+                      </Button>
+                    )}
                     <Button
-                      colorScheme="blue"
-                      onClick={handleChassisSearch}
-                      _hover={{ bg: 'blue.600' }}
+                      colorScheme="purple"
+                      size="lg"
+                      leftIcon={<DownloadIcon />}
+                      onClick={handleDownloadUserData}
+                      _hover={{ transform: 'translateY(-2px)', boxShadow: 'lg' }}
+                      transition="all 0.2s"
                     >
-                      Search
+                      Download All Documents
                     </Button>
                   </HStack>
-                  {chassisImage && (
-                    <VStack mt={4} spacing={2} align="start">
-                      <Image
-                        src={chassisImage}
-                        alt="Chassis Image"
-                        objectFit="contain"
-                        borderRadius="md"
-                        cursor="pointer"
-                        onClick={() => handleImageClick(chassisImage)}
-                        _hover={{ opacity: 0.8 }}
-                      />
-                      <Button
-                        leftIcon={<DownloadIcon />}
-                        colorScheme="blue"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDownloadChassis(selectedCustomer.id)}
-                        _hover={{ bg: hoverBg }}
-                      >
-                        Download
-                      </Button>
-                    </VStack>
-                  )}
-                </Box>
+                </Flex>
               </VStack>
+            </Box>
 
-              {/* Action Buttons */}
-              <HStack mt={8} spacing={6} justify="center">
-                {selectedCustomer.status === 'Pending' && (
-                  <Button
-                    colorScheme="purple"
-                    size="lg"
-                    w="full"
-                    maxW="200px"
-                    onClick={() => handleMarkUploaded(selectedCustomer.id)}
-                    _hover={{ bg: 'purple.600' }}
-                  >
-                    Mark Uploaded to RTO
-                  </Button>
-                )}
-                {(selectedCustomer.status === 'Uploaded' || selectedCustomer.status === 'Pending') && (
-                  <Button
-                    colorScheme="blue"
-                    size="lg"
-                    w="full"
-                    maxW="200px"
-                    onClick={() => handleRtoVerified(selectedCustomer.id)}
-                    _hover={{ bg: 'blue.600' }}
-                  >
-                    RTO Verified
-                  </Button>
-                )}
-                {selectedCustomer.status === 'Done' && (
-                  <Badge colorScheme="blue" p={3} borderRadius="md" fontSize="md">Uploaded to RTO</Badge>
-                )}
-              </HStack>
-            </Flex>
+            {/* Image Viewer Modal */}
+            {selectedImage && (
+              <ImageViewer
+                src={selectedImage}
+                alt="Selected Document"
+                onClose={() => setSelectedImage(null)}
+              />
+            )}
           </Flex>
         ) : (
           // Customer List (Default View)
@@ -1053,20 +1167,20 @@ const RtoDashboard = () => {
                     maxW={{ base: '100%', md: '300px' }}
                     borderRadius="lg"
                   />
-                  <Select
-                    placeholder="Sort by"
+              <Select
+                placeholder="Sort by"
                     size="md"
                     w={{ base: '100%', md: '150px' }}
                     bg={glassInputBg}
-                    borderColor={borderColor}
-                    _hover={{ borderColor: accentColor }}
-                    _focus={{ borderColor: accentColor }}
+                borderColor={borderColor}
+                _hover={{ borderColor: accentColor }}
+                _focus={{ borderColor: accentColor }}
                     borderRadius="lg"
-                  >
-                    <option value="date">Date</option>
-                    <option value="name">Name</option>
+              >
+                <option value="date">Date</option>
+                <option value="name">Name</option>
                     <option value="vehicle">Vehicle</option>
-                  </Select>
+              </Select>
                 </Flex>
               </Box>
 
@@ -1114,6 +1228,8 @@ const RtoDashboard = () => {
                               customer={customer}
                               isVerified={true}
                               onAction={handleRtoVerified}
+                              onSelect={handleCustomerSelect}
+                              onDownloadChassis={handleDownloadChassis}
                             />
                           </GridItem>
                         ))
@@ -1164,6 +1280,8 @@ const RtoDashboard = () => {
                               customer={customer}
                               isVerified={false}
                               onAction={handleMarkUploaded}
+                              onSelect={handleCustomerSelect}
+                              onDownloadChassis={handleDownloadChassis}
                             />
                           </GridItem>
                         ))
