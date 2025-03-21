@@ -50,6 +50,8 @@ import {
   TabPanels,
   TabPanel,
   GridItem,
+  InputGroup,
+  InputLeftElement,
 } from '@chakra-ui/react';
 import { HamburgerIcon, BellIcon, ArrowBackIcon, DownloadIcon, SearchIcon, FilterIcon, CheckIcon, TimeIcon, ChevronRightIcon, ChevronLeftIcon, StarIcon, InfoIcon, WarningIcon, CheckCircleIcon, CloseIcon, ChevronUpIcon, ChevronDownIcon, ExternalLinkIcon, ViewIcon, AttachmentIcon, SettingsIcon, RepeatIcon } from '@chakra-ui/icons';
 import { toast, ToastContainer } from 'react-toastify';
@@ -57,6 +59,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import jsPDF from 'jspdf'; // Add jsPDF for PDF generation
 import { rtoApi } from '../api';
 import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from 'framer-motion';
+import { FaSearch } from 'react-icons/fa';
 
 // Define CustomerCard component first
 const CustomerCard = ({ customer, onAction, isVerified, onSelect, onDownloadChassis }) => {
@@ -84,12 +87,15 @@ const CustomerCard = ({ customer, onAction, isVerified, onSelect, onDownloadChas
         _hover={{ 
           boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
           borderColor: 'blue.400',
-          bg: 'rgba(255, 255, 255, 0.9)',
+          bg: useColorModeValue('rgba(255, 255, 255, 0.95)', 'rgba(26, 32, 44, 0.95)'),
           transform: 'translateY(-5px)'
         }}
         transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
         cursor="pointer"
-        onClick={() => onSelect(customer)}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect(customer);
+        }}
         position="relative"
         overflow="hidden"
       >
@@ -148,25 +154,6 @@ const CustomerCard = ({ customer, onAction, isVerified, onSelect, onDownloadChas
                 transition="all 0.2s"
               >
                 Chassis
-              </Button>
-            )}
-            {!isVerified && (
-              <Button
-                colorScheme="blue"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAction(customer.id);
-                }}
-                leftIcon={<CheckIcon />}
-                backdropFilter="blur(4px)"
-                _hover={{ 
-                  transform: 'translateY(-2px)',
-                  boxShadow: 'md'
-                }}
-                transition="all 0.2s"
-              >
-                Mark Verified
               </Button>
             )}
           </HStack>
@@ -233,6 +220,7 @@ const RtoDashboard = () => {
     ward: '', rtoOffice: '', invoicePdf: '', name: '', vehicle: '', variant: '', color: '',
     exShowroom: '', tax: '', onRoad: '', insurance: '', bookingCharge: '', deliveryCharge: '',
   });
+  const [sortBy, setSortBy] = useState('date');
 
   const user = JSON.parse(localStorage.getItem('user')) || { username: 'rto_user' };
 
@@ -309,10 +297,33 @@ const RtoDashboard = () => {
 
   const unseenNotifications = notifications.filter(n => !n.seen);
 
+  // Add history handling
+  useEffect(() => {
+    const handlePopState = (event) => {
+      if (selectedCustomer) {
+        setSelectedCustomer(null);
+        // Push a new state to prevent going back to logout
+        window.history.pushState(null, '', window.location.href);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [selectedCustomer]);
+
+  // Update handleCustomerSelect to push a new state
   const handleCustomerSelect = async (customer) => {
     setSelectedCustomer(customer);
     setCustomerData(customer);
-    onMenuOpen();
+    // Push a new state when viewing customer details
+    window.history.pushState({ customerId: customer.id }, '', window.location.href);
+  };
+
+  // Update the back button click handler
+  const handleBackClick = () => {
+    setSelectedCustomer(null);
+    // Push a new state to prevent going back to logout
+    window.history.pushState(null, '', window.location.href);
   };
 
   const handleMarkUploaded = async (customerId) => {
@@ -541,25 +552,60 @@ const RtoDashboard = () => {
     });
   };
 
-  // Update the filteredCustomers function with null checks
-  const filteredCustomers = (customers, query) => {
-    if (!query) return customers;
+  // Update the sorting function
+  const sortCustomers = (customers) => {
     if (!customers || !Array.isArray(customers)) return [];
     
-    const searchTerm = query.toLowerCase();
-    return customers.filter(customer => {
-      if (!customer) return false;
-      
-      const customerName = customer.customer_name || '';
-      const vehicle = customer.vehicle || '';
-      const variant = customer.variant || '';
-      
-      return (
-        customerName.toLowerCase().includes(searchTerm) ||
-        vehicle.toLowerCase().includes(searchTerm) ||
-        variant.toLowerCase().includes(searchTerm)
-      );
+    return [...customers].sort((a, b) => {
+      switch (sortBy) {
+        case 'date':
+          return new Date(a.created_at) - new Date(b.created_at); // Show oldest first
+        case 'finance':
+          // Show customers with finance first
+          if (a.payment_mode?.toLowerCase() === 'finance' && b.payment_mode?.toLowerCase() !== 'finance') return -1;
+          if (a.payment_mode?.toLowerCase() !== 'finance' && b.payment_mode?.toLowerCase() === 'finance') return 1;
+          return 0;
+        case 'cash':
+          // Show customers with cash first
+          if (a.payment_mode?.toLowerCase() !== 'finance' && b.payment_mode?.toLowerCase() === 'finance') return -1;
+          if (a.payment_mode?.toLowerCase() === 'finance' && b.payment_mode?.toLowerCase() !== 'finance') return 1;
+          return 0;
+        default:
+          return 0;
+      }
     });
+  };
+
+  // Update the filteredCustomers function to include sorting
+  const filteredCustomers = (customers, query) => {
+    if (!customers || !Array.isArray(customers)) return [];
+    
+    let filtered = customers;
+    if (query) {
+      const searchTerm = query.toLowerCase();
+      filtered = customers.filter(customer => {
+        if (!customer) return false;
+        
+        const customerName = customer.customer_name || '';
+        const vehicle = customer.vehicle || '';
+        const variant = customer.variant || '';
+        
+        return (
+          customerName.toLowerCase().includes(searchTerm) ||
+          vehicle.toLowerCase().includes(searchTerm) ||
+          variant.toLowerCase().includes(searchTerm)
+        );
+      });
+    }
+
+    // Apply finance/cash filter
+    if (sortBy === 'finance') {
+      filtered = filtered.filter(customer => customer.payment_mode?.toLowerCase() === 'finance');
+    } else if (sortBy === 'cash') {
+      filtered = filtered.filter(customer => customer.payment_mode?.toLowerCase() !== 'finance');
+    }
+    
+    return sortCustomers(filtered);
   };
 
   // Add new components for the customer details view
@@ -742,7 +788,7 @@ const RtoDashboard = () => {
               aria-label="Notifications"
               position="relative"
               _hover={{ 
-                bg: 'whiteAlpha.200',
+                bg: '#47679',
                 transform: 'scale(1.1)'
               }}
               transition="all 0.2s"
@@ -864,7 +910,7 @@ const RtoDashboard = () => {
                   icon={<ArrowBackIcon />}
                   variant="ghost"
                   color={textColor}
-                  onClick={() => setSelectedCustomer(null)}
+                  onClick={handleBackClick}
                   aria-label="Back to list"
                   _hover={{ bg: hoverBg }}
                 />
@@ -1155,32 +1201,38 @@ const RtoDashboard = () => {
                   boxShadow="sm"
                   backdropFilter="blur(10px)"
                 >
-                  <Input
-                    placeholder="Search customers..."
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
+                  <InputGroup maxW={{ base: '100%', md: '300px' }}>
+                    <InputLeftElement pointerEvents="none">
+                      <FaSearch color="gray.400" />
+                    </InputLeftElement>
+                    <Input
+                      placeholder="Search customers..."
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      size="md"
+                      bg={glassInputBg}
+                      borderColor={borderColor}
+                      _hover={{ borderColor: accentColor }}
+                      _focus={{ borderColor: accentColor }}
+                      borderRadius="lg"
+                    />
+                  </InputGroup>
+                  <Select
+                    placeholder="All"
                     size="md"
+                    w={{ base: '100%', md: '150px' }}
                     bg={glassInputBg}
                     borderColor={borderColor}
                     _hover={{ borderColor: accentColor }}
                     _focus={{ borderColor: accentColor }}
-                    maxW={{ base: '100%', md: '300px' }}
                     borderRadius="lg"
-                  />
-              <Select
-                placeholder="Sort by"
-                    size="md"
-                    w={{ base: '100%', md: '150px' }}
-                    bg={glassInputBg}
-                borderColor={borderColor}
-                _hover={{ borderColor: accentColor }}
-                _focus={{ borderColor: accentColor }}
-                    borderRadius="lg"
-              >
-                <option value="date">Date</option>
-                <option value="name">Name</option>
-                    <option value="vehicle">Vehicle</option>
-              </Select>
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                  >
+                    <option value="date">Date (Oldest First)</option>
+                    <option value="finance">Finance</option>
+                    <option value="cash">Cash</option>
+                  </Select>
                 </Flex>
               </Box>
 
