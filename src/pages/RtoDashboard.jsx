@@ -1518,7 +1518,7 @@ const RtoDashboard = () => {
             </VStack>
           </DrawerBody>
         </DrawerContent>  
-      </Drawer>
+      </Drawer> 
 
       {/* RTO Verified Modal */}
       <Modal isOpen={isRtoVerifiedOpen} onClose={onRtoVerifiedClose}>
