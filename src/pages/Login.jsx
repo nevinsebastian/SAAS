@@ -126,6 +126,7 @@ export default function Login({ setUserRole }) {
       // Navigate based on role
       navigateToRole(role);
     } catch (err) {
+      console.error('Login error:', err);
       setError(err.response?.data?.error || err.message || 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
