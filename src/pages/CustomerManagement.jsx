@@ -39,7 +39,7 @@ import {
   CheckIcon,
   ArrowForwardIcon,
 } from '@chakra-ui/icons';
-import axios from 'axios';
+import api from '../api';
 
 // Define animations
 const fadeIn = keyframes`
@@ -114,10 +114,7 @@ const CustomerManagement = () => {
   useEffect(() => {
     const fetchCustomer = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/customers/${customerId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await api.get(`/customers/${customerId}`);
         console.log('Customer data:', response.data.customer);
         setCustomer(response.data.customer);
         setPriceData({
@@ -136,8 +133,7 @@ const CustomerManagement = () => {
         const imagePromises = imageTypes.map(async (type) => {
           try {
             console.log(`Fetching ${type} for customer ${customerId}`);
-            const imgResponse = await axios.get(`${process.env.REACT_APP_API_URL}/customers/${customerId}/${type}`, {
-              headers: { Authorization: `Bearer ${token}` },
+            const imgResponse = await api.get(`/customers/${customerId}/${type}`, {
               responseType: 'blob',
             });
             const imageUrl = URL.createObjectURL(imgResponse.data);
@@ -181,12 +177,7 @@ const CustomerManagement = () => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.put(
-        `${process.env.REACT_APP_API_URL}/customers/${customerId}`,
-        priceData,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.put(`/customers/${customerId}`, priceData);
       setCustomer(response.data.customer);
       toast({
         title: 'Success',
@@ -214,12 +205,9 @@ const CustomerManagement = () => {
     if (!priceData.amount_paid) return;
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.put(
-        `${process.env.REACT_APP_API_URL}/customers/${customerId}/payments`,
-        { amount: priceData.amount_paid },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.put(`/customers/${customerId}/payments`, {
+        amount: priceData.amount_paid,
+      });
       setCustomer(response.data.customer);
       setPriceData(prev => ({ ...prev, amount_paid: '' }));
       toast({
@@ -243,12 +231,7 @@ const CustomerManagement = () => {
 
   const handleVerify = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.put(
-        `${process.env.REACT_APP_API_URL}/customers/${customerId}/verify`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.post(`/customers/${customerId}/verify`);
       setCustomer(response.data.customer);
       toast({
         title: 'Success',
@@ -270,30 +253,27 @@ const CustomerManagement = () => {
   };
 
   const handleDelete = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${process.env.REACT_APP_API_URL}/customers/${customerId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      toast({
-        title: 'Success',
-        description: 'Customer deleted successfully!',
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
-      });
-      navigate('/sales-executive');
-    } catch (err) {
-      console.error('Failed to delete customer:', err);
-      toast({
-        title: 'Error',
-        description: err.response?.data?.error || 'Failed to delete customer',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
-    } finally {
-      setIsDeleteModalOpen(false);
+    if (window.confirm('Are you sure you want to delete this customer?')) {
+      try {
+        await api.delete(`/customers/${customerId}`);
+        toast({
+          title: 'Success',
+          description: 'Customer deleted successfully!',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+        navigate('/sales-executive');
+      } catch (err) {
+        console.error('Failed to delete customer:', err);
+        toast({
+          title: 'Error',
+          description: err.response?.data?.error || 'Failed to delete customer',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+      }
     }
   };
 
@@ -311,12 +291,9 @@ const CustomerManagement = () => {
     if (deliveryPhotos.delivery_photo) formData.append('delivery_photo', deliveryPhotos.delivery_photo);
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.put(
-        `${process.env.REACT_APP_API_URL}/customers/${customerId}/delivered`,
-        formData,
-        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } }
-      );
+      const response = await api.put(`/customers/${customerId}/delivered`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       setCustomer(response.data.customer);
       setImages(prev => ({
         ...prev,

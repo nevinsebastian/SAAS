@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api';
 import {
   Box,
   Button,
@@ -106,14 +106,9 @@ export default function Login({ setUserRole }) {
     setError('');
 
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/auth/login`, {
+      const response = await api.post('/auth/login', {
         email,
         password
-      }, {
-        withCredentials: true,
-        headers: {
-          'Content-Type': 'application/json',
-        }
       });
 
       const { token } = response.data;

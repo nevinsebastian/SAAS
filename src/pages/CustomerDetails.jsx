@@ -16,7 +16,7 @@ import {
   Grid,
   GridItem,
 } from '@chakra-ui/react';
-import axios from 'axios';
+import api from '../api';
 
 const CustomerDetails = () => {
   const { customerId } = useParams();
@@ -50,7 +50,7 @@ const CustomerDetails = () => {
   useEffect(() => {
     const fetchCustomer = async () => {
       try {
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/customers/${customerId}`);
+        const response = await api.get(`/customers/${customerId}`);
         setCustomer(response.data.customer);
         setFormData(prev => ({
           ...prev,
@@ -100,7 +100,7 @@ const CustomerDetails = () => {
     if (files.passport_photo) formDataToSend.append('passport_photo', files.passport_photo);
 
     try {
-      const response = await axios.put(`${process.env.REACT_APP_API_URL}/customers/${customerId}`, formDataToSend, {
+      const response = await api.put(`/customers/${customerId}`, formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
