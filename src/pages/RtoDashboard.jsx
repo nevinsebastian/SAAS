@@ -60,6 +60,7 @@ import jsPDF from 'jspdf'; // Add jsPDF for PDF generation
 import { rtoApi } from '../api';
 import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import { FaSearch } from 'react-icons/fa';
+import JSZip from 'jszip';
 
 // Define CustomerCard component first
 const CustomerCard = ({ customer, onAction, isVerified, onSelect, onDownloadChassis }) => {
@@ -243,19 +244,17 @@ const RtoDashboard = () => {
         return;
       }
 
-      // Fetch all customers
-      const response = await rtoApi.getPendingCustomers();
-      console.log('All customers:', response.customers);
+      // Fetch both pending and verified customers
+      const [pendingResponse, verifiedResponse] = await Promise.all([
+        rtoApi.getPendingCustomers(),
+        rtoApi.getVerifiedCustomers()
+      ]);
 
-      // Filter customers based on rto_verified status
-      const verifiedCustomers = response.customers.filter(customer => customer.rto_verified === true);
-      const pendingCustomers = response.customers.filter(customer => customer.rto_verified === false);
+      console.log('Pending customers:', pendingResponse.customers);
+      console.log('Verified customers:', verifiedResponse.customers);
 
-      console.log('Pending customers:', pendingCustomers);
-      console.log('Verified customers:', verifiedCustomers);
-
-      setPendingCustomers(pendingCustomers);
-      setVerifiedCustomers(verifiedCustomers);
+      setPendingCustomers(pendingResponse.customers);
+      setVerifiedCustomers(verifiedResponse.customers);
     } catch (error) {
       console.error('Failed to fetch customers:', error);
       if (error.message) {
@@ -460,96 +459,183 @@ const RtoDashboard = () => {
     onImageModalOpen();
   };
 
-  const handleDownloadUserData = () => {
-    const folderName = `${customerData.name.split(' ')[0]}_${customerData.vehicle.replace(' ', '_')}`;
-    const files = [
-      { url: customerData.photo, name: 'passport_photo.jpg' },
-      { url: customerData.aadharFront, name: 'aadhar_front.jpg' },
-      { url: customerData.aadharBack, name: 'aadhar_back.jpg' },
-      { url: customerData.signature, name: 'signature.jpg' },
-      { url: customerData.invoicePdf, name: 'invoice.pdf' },
-    ];
+  const handleDownloadUserData = async () => {
+    try {
+      // Create new PDF document
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
 
-    // Download individual files
-    files.forEach(file => {
-      const link = document.createElement('a');
-      link.href = file.url;
-      link.download = `${folderName}_${file.name}`;
-      link.click();
-    });
+      // Set initial position
+      let yOffset = 20;
+      const pageWidth = doc.internal.pageSize.width;
+      const margin = 20;
+      const contentWidth = pageWidth - (2 * margin);
 
-    // Generate and download full data PDF
-    const doc = new jsPDF();
-    let yOffset = 10;
+      // Helper function to add text with proper wrapping
+      const addText = (text, y) => {
+        const splitText = doc.splitTextToSize(text, contentWidth);
+        doc.text(splitText, margin, y);
+        return y + (splitText.length * 7) + 5;
+      };
 
-    // Title
-    doc.setFontSize(16);
-    doc.text('Customer Data Report', 10, yOffset);
-    yOffset += 10;
+      // Helper function to add section header
+      const addSectionHeader = (title, y) => {
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(41, 128, 185); // Blue color
+        y = addText(title, y);
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(0, 0, 0);
+        return y + 5;
+      };
 
-    // Personal Information
-    doc.setFontSize(12);
-    doc.text('Personal Information', 10, yOffset);
-    yOffset += 7;
-    doc.setFontSize(10);
-    doc.text(`Full Name: ${customerData.fullName}`, 10, yOffset); yOffset += 5;
-    doc.text(`Address: ${customerData.address}`, 10, yOffset); yOffset += 5;
-    doc.text(`Father's Name: ${customerData.fathersName}`, 10, yOffset); yOffset += 5;
-    doc.text(`PAN Number: ${customerData.panNumber}`, 10, yOffset); yOffset += 5;
-    doc.text(`Aadhar Number: ${customerData.aadharNumber}`, 10, yOffset); yOffset += 5;
-    doc.text(`Ward: ${customerData.ward}`, 10, yOffset); yOffset += 5;
-    doc.text(`RTO Office: ${customerData.rtoOffice}`, 10, yOffset); yOffset += 10;
+      // Helper function to add field
+      const addField = (label, value, y) => {
+        doc.setFont(undefined, 'bold');
+        y = addText(label + ':', y);
+        doc.setFont(undefined, 'normal');
+        return addText(value || 'N/A', y);
+      };
 
-    // Nominee Details
-    doc.setFontSize(12);
-    doc.text('Nominee Details', 10, yOffset);
-    yOffset += 7;
-    doc.setFontSize(10);
-    doc.text(`Nominee Name: ${customerData.nomineeName}`, 10, yOffset); yOffset += 5;
-    doc.text(`Nominee Age: ${customerData.nomineeAge}`, 10, yOffset); yOffset += 5;
-    doc.text(`Relation: ${customerData.nomineeRelation}`, 10, yOffset); yOffset += 10;
+      // Add title
+      doc.setFontSize(20);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(41, 128, 185);
+      yOffset = addText('Customer Details Report', yOffset);
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'normal');
+      doc.setTextColor(0, 0, 0);
+      yOffset += 10;
 
-    // Vehicle Details
-    doc.setFontSize(12);
-    doc.text('Vehicle Details', 10, yOffset);
-    yOffset += 7;
-    doc.setFontSize(10);
-    doc.text(`Vehicle: ${customerData.vehicle}`, 10, yOffset); yOffset += 5;
-    doc.text(`Variant: ${customerData.variant}`, 10, yOffset); yOffset += 5;
-    doc.text(`Color: ${customerData.color}`, 10, yOffset); yOffset += 10;
+      // Add date
+      const today = new Date().toLocaleDateString();
+      yOffset = addText(`Generated on: ${today}`, yOffset);
+      yOffset += 10;
 
-    // Pricing
-    doc.setFontSize(12);
-    doc.text('Pricing', 10, yOffset);
-    yOffset += 7;
-    doc.setFontSize(10);
-    doc.text(`Ex-Showroom: ${customerData.exShowroom}`, 10, yOffset); yOffset += 5;
-    doc.text(`Tax: ${customerData.tax}`, 10, yOffset); yOffset += 5;
-    doc.text(`On-Road: ${customerData.onRoad}`, 10, yOffset); yOffset += 5;
-    doc.text(`Insurance: ${customerData.insurance}`, 10, yOffset); yOffset += 5;
-    doc.text(`Booking Charge: ${customerData.bookingCharge}`, 10, yOffset); yOffset += 5;
-    doc.text(`Delivery Charge: ${customerData.deliveryCharge}`, 10, yOffset); yOffset += 10;
+      // Personal Information Section
+      yOffset = addSectionHeader('Personal Information', yOffset);
+      yOffset = addField('Customer Name', customerData.customer_name, yOffset);
+      yOffset = addField('Phone Number', customerData.phone_number, yOffset);
+      yOffset = addField('Mobile 1', customerData.mobile_1, yOffset);
+      yOffset = addField('Mobile 2', customerData.mobile_2, yOffset);
+      yOffset = addField('Email', customerData.email, yOffset);
+      yOffset = addField('Address', customerData.address, yOffset);
+      yOffset += 10;
 
-    // Placeholder for images (actual image embedding requires fetching and converting to base64)
-    doc.setFontSize(12);
-    doc.text('Images (See Downloaded Files)', 10, yOffset);
-    yOffset += 7;
-    doc.setFontSize(10);
-    doc.text('Passport Photo: Included as separate file', 10, yOffset); yOffset += 5;
-    doc.text('Aadhar Front: Included as separate file', 10, yOffset); yOffset += 5;
-    doc.text('Aadhar Back: Included as separate file', 10, yOffset); yOffset += 5;
-    doc.text('Signature: Included as separate file', 10, yOffset); yOffset += 5;
-    doc.text('Invoice: Included as separate file', 10, yOffset);
+      // Nominee Information Section
+      yOffset = addSectionHeader('Nominee Information', yOffset);
+      yOffset = addField('Nominee Name', customerData.nominee, yOffset);
+      yOffset = addField('Nominee Relation', customerData.nominee_relation, yOffset);
+      yOffset += 10;
 
-    // Save PDF
-    doc.save(`${folderName}_full_data.pdf`);
-    toast({
-      title: 'Success',
-      description: `Downloaded user data as "${folderName}" folder!`,
-      status: 'success',
-      duration: 3000,
-      isClosable: true,
-    });
+      // Vehicle Information Section
+      yOffset = addSectionHeader('Vehicle Information', yOffset);
+      yOffset = addField('Vehicle', customerData.vehicle, yOffset);
+      yOffset = addField('Variant', customerData.variant, yOffset);
+      yOffset = addField('Color', customerData.color, yOffset);
+      yOffset = addField('Created At', new Date(customerData.created_at).toLocaleDateString(), yOffset);
+      yOffset = addField('Created By', customerData.created_by_name, yOffset);
+      yOffset += 10;
+
+      // Payment Information Section
+      yOffset = addSectionHeader('Payment Information', yOffset);
+      yOffset = addField('Payment Mode', customerData.payment_mode, yOffset);
+      if (customerData.payment_mode?.toLowerCase() === 'finance') {
+        yOffset = addField('Finance Company', customerData.finance_company, yOffset);
+        yOffset = addField('Finance Amount', `₹${customerData.finance_amount}`, yOffset);
+        yOffset = addField('EMI', `₹${customerData.emi}`, yOffset);
+        yOffset = addField('Tenure (months)', customerData.tenure, yOffset);
+      }
+      yOffset = addField('Amount Paid', `₹${customerData.amount_paid}`, yOffset);
+      yOffset += 10;
+
+      // Pricing Details Section
+      yOffset = addSectionHeader('Pricing Details', yOffset);
+      yOffset = addField('Ex-Showroom', `₹${customerData.ex_showroom}`, yOffset);
+      yOffset = addField('Tax', `₹${customerData.tax}`, yOffset);
+      yOffset = addField('Insurance', `₹${customerData.insurance}`, yOffset);
+      yOffset = addField('Booking Fee', `₹${customerData.booking_fee}`, yOffset);
+      yOffset = addField('Accessories', `₹${customerData.accessories}`, yOffset);
+      yOffset = addField('Total Price', `₹${customerData.total_price}`, yOffset);
+      yOffset += 10;
+
+      // Add a new page for images
+      doc.addPage();
+
+      // Images Section
+      yOffset = addSectionHeader('Documents', yOffset);
+
+      // Function to add image to PDF
+      const addImage = async (base64Image, label, y) => {
+        try {
+          if (!base64Image) return y;
+          
+          // Add label
+          doc.setFont(undefined, 'bold');
+          y = addText(label + ':', y);
+          
+          // Add image
+          const imgWidth = contentWidth;
+          const imgHeight = 50; // Fixed height for images
+          
+          // Add the image directly from base64
+          doc.addImage(base64Image, 'JPEG', margin, y, imgWidth, imgHeight);
+          
+          return y + imgHeight + 10;
+        } catch (error) {
+          console.error('Error adding image:', error);
+          return y + 20;
+        }
+      };
+
+      // Add images
+      if (customerData.passport_photo_base64) {
+        yOffset = await addImage(
+          `data:image/jpeg;base64,${customerData.passport_photo_base64}`,
+          'Passport Photo',
+          yOffset
+        );
+      }
+      if (customerData.aadhar_front_base64) {
+        yOffset = await addImage(
+          `data:image/jpeg;base64,${customerData.aadhar_front_base64}`,
+          'Aadhar Front',
+          yOffset
+        );
+      }
+      if (customerData.aadhar_back_base64) {
+        yOffset = await addImage(
+          `data:image/jpeg;base64,${customerData.aadhar_back_base64}`,
+          'Aadhar Back',
+          yOffset
+        );
+      }
+
+      // Save the PDF
+      const fileName = `${customerData.customer_name.replace(/\s+/g, '_')}_${customerData.vehicle.replace(/\s+/g, '_')}_details.pdf`;
+      doc.save(fileName);
+
+      toast({
+        title: 'Success',
+        description: 'Customer details PDF downloaded successfully',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to generate PDF. Please try again.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
   };
 
   // Update the sorting function
@@ -928,17 +1014,7 @@ const RtoDashboard = () => {
                   onClick={handleDownloadUserData}
                   _hover={{ bg: hoverBg }}
                 >
-                  Download Data
-                </Button>
-                <Button
-                  leftIcon={<ExternalLinkIcon />}
-                  colorScheme="purple"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => window.open(customerData.invoicePdf, '_blank')}
-                  _hover={{ bg: hoverBg }}
-                >
-                  View Invoice
+                  Export Data
                 </Button>
               </HStack>
             </Flex>
@@ -968,107 +1044,55 @@ const RtoDashboard = () => {
                 >
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Full Name</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.fullName}</Text>
+                      <Text fontSize="sm" color="gray.500">Customer Name</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.customer_name}</Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Phone Number</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.phone_number}</Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Mobile 1</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.mobile_1}</Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Mobile 2</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.mobile_2}</Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Email</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.email}</Text>
                     </Box>
                     <Box>
                       <Text fontSize="sm" color="gray.500">Address</Text>
                       <Text fontSize="md" color={textColor}>{customerData.address}</Text>
                     </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500">Father's Name</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.fathersName}</Text>
-                    </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500">PAN Number</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.panNumber}</Text>
-                    </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500">Aadhar Number</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.aadharNumber}</Text>
-                    </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500">Ward</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.ward}</Text>
-                    </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500">RTO Office</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.rtoOffice}</Text>
-                    </Box>
                   </SimpleGrid>
                 </DetailCard>
 
-                {/* Documents */}
+                {/* Nominee Information */}
                 <DetailCard
-                  title="Documents"
+                  title="Nominee Information"
                   icon={<AttachmentIcon />}
                 >
-                  <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     <Box>
-                      <Text fontSize="sm" color="gray.500" mb={2}>Passport Photo</Text>
-                      <Image
-                        src={customerData.photo}
-                        alt="Customer Photo"
-                        objectFit="cover"
-                        borderRadius="lg"
-                        cursor="pointer"
-                        onClick={() => handleImageClick(customerData.photo)}
-                        fallbackSrc="https://via.placeholder.com/150?text=No+Photo"
-                        _hover={{ opacity: 0.8 }}
-                        transition="all 0.2s"
-                      />
+                      <Text fontSize="sm" color="gray.500">Nominee Name</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.nominee}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500" mb={2}>Aadhar Front</Text>
-                      <Image
-                        src={customerData.aadharFront}
-                        alt="Aadhar Front"
-                        objectFit="cover"
-                        borderRadius="lg"
-                        cursor="pointer"
-                        onClick={() => handleImageClick(customerData.aadharFront)}
-                        fallbackSrc="https://via.placeholder.com/200x150?text=No+Aadhar+Front"
-                        _hover={{ opacity: 0.8 }}
-                        transition="all 0.2s"
-                      />
-                    </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500" mb={2}>Aadhar Back</Text>
-                      <Image
-                        src={customerData.aadharBack}
-                        alt="Aadhar Back"
-                        objectFit="cover"
-                        borderRadius="lg"
-                        cursor="pointer"
-                        onClick={() => handleImageClick(customerData.aadharBack)}
-                        fallbackSrc="https://via.placeholder.com/200x150?text=No+Aadhar+Back"
-                        _hover={{ opacity: 0.8 }}
-                        transition="all 0.2s"
-                      />
-                    </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500" mb={2}>Signature</Text>
-                      <Image
-                        src={customerData.signature}
-                        alt="Signature"
-                        objectFit="cover"
-                        borderRadius="lg"
-                        cursor="pointer"
-                        onClick={() => handleImageClick(customerData.signature)}
-                        fallbackSrc="https://via.placeholder.com/150x50?text=No+Signature"
-                        _hover={{ opacity: 0.8 }}
-                        transition="all 0.2s"
-                      />
+                      <Text fontSize="sm" color="gray.500">Nominee Relation</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.nominee_relation}</Text>
                     </Box>
                   </SimpleGrid>
                 </DetailCard>
 
-                {/* Vehicle Details */}
+                {/* Vehicle Information */}
                 <DetailCard
-                  title="Vehicle Details"
+                  title="Vehicle Information"
                   icon={<SettingsIcon />}
                 >
-                  <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     <Box>
                       <Text fontSize="sm" color="gray.500">Vehicle</Text>
                       <Text fontSize="md" color={textColor}>{customerData.vehicle}</Text>
@@ -1082,28 +1106,49 @@ const RtoDashboard = () => {
                       <Text fontSize="md" color={textColor}>{customerData.color}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Chassis Number</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.chassisNumber}</Text>
+                      <Text fontSize="sm" color="gray.500">Created At</Text>
+                      <Text fontSize="md" color={textColor}>{new Date(customerData.created_at).toLocaleDateString()}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Engine Number</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.engineNumber}</Text>
+                      <Text fontSize="sm" color="gray.500">Created By</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.created_by_name}</Text>
                     </Box>
+                  </SimpleGrid>
+                </DetailCard>
+
+                {/* Payment Information */}
+                <DetailCard
+                  title="Payment Information"
+                  icon={<RepeatIcon />}
+                >
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">On-Road</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.onRoad}</Text>
+                      <Text fontSize="sm" color="gray.500">Payment Mode</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.payment_mode}</Text>
                     </Box>
+                    {customerData.payment_mode?.toLowerCase() === 'finance' && (
+                      <>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500">Finance Company</Text>
+                          <Text fontSize="md" color={textColor}>{customerData.finance_company}</Text>
+                        </Box>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500">Finance Amount</Text>
+                          <Text fontSize="md" color={textColor}>₹{customerData.finance_amount}</Text>
+                        </Box>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500">EMI</Text>
+                          <Text fontSize="md" color={textColor}>₹{customerData.emi}</Text>
+                        </Box>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500">Tenure (months)</Text>
+                          <Text fontSize="md" color={textColor}>{customerData.tenure}</Text>
+                        </Box>
+                      </>
+                    )}
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Insurance</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.insurance}</Text>
-                    </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500">Booking Charge</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.bookingCharge}</Text>
-                    </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500">Delivery Charge</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.deliveryCharge}</Text>
+                      <Text fontSize="sm" color="gray.500">Amount Paid</Text>
+                      <Text fontSize="md" color={textColor}>₹{customerData.amount_paid}</Text>
                     </Box>
                   </SimpleGrid>
                 </DetailCard>
@@ -1113,30 +1158,87 @@ const RtoDashboard = () => {
                   title="Pricing Details"
                   icon={<RepeatIcon />}
                 >
-                  <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     <Box>
                       <Text fontSize="sm" color="gray.500">Ex-Showroom</Text>
-                      <Text fontSize="md" color={textColor}>₹{customerData.exShowroom}</Text>
+                      <Text fontSize="md" color={textColor}>₹{customerData.ex_showroom}</Text>
                     </Box>
                     <Box>
                       <Text fontSize="sm" color="gray.500">Tax</Text>
                       <Text fontSize="md" color={textColor}>₹{customerData.tax}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">On-Road</Text>
-                      <Text fontSize="md" color={textColor}>₹{customerData.onRoad}</Text>
-                    </Box>
-                    <Box>
                       <Text fontSize="sm" color="gray.500">Insurance</Text>
                       <Text fontSize="md" color={textColor}>₹{customerData.insurance}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Booking Charge</Text>
-                      <Text fontSize="md" color={textColor}>₹{customerData.bookingCharge}</Text>
+                      <Text fontSize="sm" color="gray.500">Booking Fee</Text>
+                      <Text fontSize="md" color={textColor}>₹{customerData.booking_fee}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Delivery Charge</Text>
-                      <Text fontSize="md" color={textColor}>₹{customerData.deliveryCharge}</Text>
+                      <Text fontSize="sm" color="gray.500">Accessories</Text>
+                      <Text fontSize="md" color={textColor}>₹{customerData.accessories}</Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Total Price</Text>
+                      <Text fontSize="md" color={textColor} fontWeight="bold">₹{customerData.total_price}</Text>
+                    </Box>
+                  </SimpleGrid>
+                </DetailCard>
+
+                {/* Documents */}
+                <DetailCard
+                  title="Documents"
+                  icon={<AttachmentIcon />}
+                >
+                  <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500" mb={2}>Passport Photo</Text>
+                      <Image
+                        src={`data:image/jpeg;base64,${customerData.passport_photo_base64}`}
+                        alt="Customer Photo"
+                        objectFit="cover"
+                        borderRadius="lg"
+                        cursor="pointer"
+                        onClick={() => handleImageClick(`data:image/jpeg;base64,${customerData.passport_photo_base64}`)}
+                        fallbackSrc="https://via.placeholder.com/150?text=No+Photo"
+                        _hover={{ opacity: 0.8 }}
+                        transition="all 0.2s"
+                        h="200px"
+                        w="100%"
+                      />
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500" mb={2}>Aadhar Front</Text>
+                      <Image
+                        src={`data:image/jpeg;base64,${customerData.aadhar_front_base64}`}
+                        alt="Aadhar Front"
+                        objectFit="cover"
+                        borderRadius="lg"
+                        cursor="pointer"
+                        onClick={() => handleImageClick(`data:image/jpeg;base64,${customerData.aadhar_front_base64}`)}
+                        fallbackSrc="https://via.placeholder.com/200x150?text=No+Aadhar+Front"
+                        _hover={{ opacity: 0.8 }}
+                        transition="all 0.2s"
+                        h="200px"
+                        w="100%"
+                      />
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500" mb={2}>Aadhar Back</Text>
+                      <Image
+                        src={`data:image/jpeg;base64,${customerData.aadhar_back_base64}`}
+                        alt="Aadhar Back"
+                        objectFit="cover"
+                        borderRadius="lg"
+                        cursor="pointer"
+                        onClick={() => handleImageClick(`data:image/jpeg;base64,${customerData.aadhar_back_base64}`)}
+                        fallbackSrc="https://via.placeholder.com/200x150?text=No+Aadhar+Back"
+                        _hover={{ opacity: 0.8 }}
+                        transition="all 0.2s"
+                        h="200px"
+                        w="100%"
+                      />
                     </Box>
                   </SimpleGrid>
                 </DetailCard>
@@ -1149,7 +1251,10 @@ const RtoDashboard = () => {
                         colorScheme="blue"
                         size="lg"
                         leftIcon={<CheckIcon />}
-                        onClick={() => handleRtoVerified(selectedCustomer.id)}
+                        onClick={() => {
+                          onRtoVerifiedOpen();
+                          setSelectedCustomer(customerData);
+                        }}
                         _hover={{ transform: 'translateY(-2px)', boxShadow: 'lg' }}
                         transition="all 0.2s"
                       >
@@ -1160,11 +1265,57 @@ const RtoDashboard = () => {
                       colorScheme="purple"
                       size="lg"
                       leftIcon={<DownloadIcon />}
-                      onClick={handleDownloadUserData}
+                      onClick={async () => {
+                        try {
+                          // Create a zip file containing all images
+                          const zip = new JSZip();
+                          
+                          // Add passport photo
+                          if (customerData.passport_photo_base64) {
+                            zip.file(`${customerData.customer_name}_passport_photo.jpg`, customerData.passport_photo_base64, {base64: true});
+                          }
+                          
+                          // Add Aadhar front
+                          if (customerData.aadhar_front_base64) {
+                            zip.file(`${customerData.customer_name}_aadhar_front.jpg`, customerData.aadhar_front_base64, {base64: true});
+                          }
+                          
+                          // Add Aadhar back
+                          if (customerData.aadhar_back_base64) {
+                            zip.file(`${customerData.customer_name}_aadhar_back.jpg`, customerData.aadhar_back_base64, {base64: true});
+                          }
+                          
+                          // Generate and download the zip file
+                          const content = await zip.generateAsync({type: "blob"});
+                          const link = document.createElement('a');
+                          link.href = URL.createObjectURL(content);
+                          link.download = `${customerData.customer_name}_documents.zip`;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                          
+                          toast({
+                            title: 'Success',
+                            description: 'All documents downloaded successfully',
+                            status: 'success',
+                            duration: 3000,
+                            isClosable: true,
+                          });
+                        } catch (error) {
+                          console.error('Error downloading documents:', error);
+                          toast({
+                            title: 'Error',
+                            description: 'Failed to download documents',
+                            status: 'error',
+                            duration: 5000,
+                            isClosable: true,
+                          });
+                        }
+                      }}
                       _hover={{ transform: 'translateY(-2px)', boxShadow: 'lg' }}
                       transition="all 0.2s"
                     >
-                      Download All Documents
+                      Download All Images
                     </Button>
                   </HStack>
                 </Flex>

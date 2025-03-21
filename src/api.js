@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://172.20.10.8:3000',
+  baseURL: process.env.REACT_APP_API_URL || 'http://172.20.10.8:3000',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -91,9 +91,9 @@ export const rtoApi = {
   },
   
   // Update customer status
-  updateCustomerStatus: async (customerId, status) => {
+  updateCustomerStatus: async (customerId) => {
     try {
-      const response = await api.put(`/rto/customers/${customerId}/status`, { status });
+      const response = await api.put(`/rto/customers/${customerId}/status`, {});
       console.log('RTO Status Update Response:', response.data);
       return response.data;
     } catch (error) {
