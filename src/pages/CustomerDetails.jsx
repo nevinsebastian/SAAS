@@ -50,7 +50,7 @@ const CustomerDetails = () => {
   useEffect(() => {
     const fetchCustomer = async () => {
       try {
-        const response = await axios.get(`http://172.20.10.8:3000/customers/${customerId}`);
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/customers/${customerId}`);
         setCustomer(response.data.customer);
         setFormData(prev => ({
           ...prev,
@@ -100,7 +100,7 @@ const CustomerDetails = () => {
     if (files.passport_photo) formDataToSend.append('passport_photo', files.passport_photo);
 
     try {
-      const response = await axios.put(`http://172.20.10.8:3000/customers/${customerId}`, formDataToSend, {
+      const response = await axios.put(`${process.env.REACT_APP_API_URL}/customers/${customerId}`, formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

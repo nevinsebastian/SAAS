@@ -115,7 +115,7 @@ const CustomerManagement = () => {
     const fetchCustomer = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get(`http://172.20.10.8:3000/customers/${customerId}`, {
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/customers/${customerId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         console.log('Customer data:', response.data.customer);
@@ -136,7 +136,7 @@ const CustomerManagement = () => {
         const imagePromises = imageTypes.map(async (type) => {
           try {
             console.log(`Fetching ${type} for customer ${customerId}`);
-            const imgResponse = await axios.get(`http://172.20.10.8:3000/customers/${customerId}/${type}`, {
+            const imgResponse = await axios.get(`${process.env.REACT_APP_API_URL}/customers/${customerId}/${type}`, {
               headers: { Authorization: `Bearer ${token}` },
               responseType: 'blob',
             });
@@ -183,7 +183,7 @@ const CustomerManagement = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.put(
-        `http://172.20.10.8:3000/customers/${customerId}`,
+        `${process.env.REACT_APP_API_URL}/customers/${customerId}`,
         priceData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -216,7 +216,7 @@ const CustomerManagement = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.put(
-        `http://172.20.10.8:3000/customers/${customerId}/payments`,
+        `${process.env.REACT_APP_API_URL}/customers/${customerId}/payments`,
         { amount: priceData.amount_paid },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -245,7 +245,7 @@ const CustomerManagement = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.put(
-        `http://172.20.10.8:3000/customers/${customerId}/verify`,
+        `${process.env.REACT_APP_API_URL}/customers/${customerId}/verify`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -272,7 +272,7 @@ const CustomerManagement = () => {
   const handleDelete = async () => {
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://172.20.10.8:3000/customers/${customerId}`, {
+      await axios.delete(`${process.env.REACT_APP_API_URL}/customers/${customerId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast({
@@ -313,7 +313,7 @@ const CustomerManagement = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.put(
-        `http://172.20.10.8:3000/customers/${customerId}/delivered`,
+        `${process.env.REACT_APP_API_URL}/customers/${customerId}/delivered`,
         formData,
         { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } }
       );
