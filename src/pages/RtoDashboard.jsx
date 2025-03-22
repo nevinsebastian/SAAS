@@ -736,6 +736,146 @@ const RtoDashboard = () => {
     );
   };
 
+  const handleExportData = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 20;
+    let yOffset = margin;
+
+    // Title
+    doc.setFontSize(20);
+    doc.setTextColor(66, 153, 225); // Blue color
+    doc.text('Customer Details Report', pageWidth/2, yOffset, { align: 'center' });
+    yOffset += 20;
+
+    // Customer Name and Vehicle
+    doc.setFontSize(16);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`${customerData.customer_name} - ${customerData.vehicle} ${customerData.variant}`, margin, yOffset);
+    yOffset += 15;
+
+    // Status Badge
+    const statusColor = customerData.rto_verified ? [72, 187, 120] : [237, 137, 54];
+    doc.setFillColor(...statusColor);
+    doc.rect(margin, yOffset, 40, 10, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(10);
+    doc.text(customerData.rto_verified ? 'Verified' : 'Pending', margin + 5, yOffset + 7);
+    yOffset += 20;
+
+    // Personal Information
+    doc.setFontSize(14);
+    doc.setTextColor(66, 153, 225);
+    doc.text('Personal Information', margin, yOffset);
+    yOffset += 10;
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Customer Name: ${customerData.customer_name}`, margin, yOffset); yOffset += 7;
+    doc.text(`Address: ${customerData.address}`, margin, yOffset); yOffset += 7;
+    doc.text(`Email: ${customerData.email}`, margin, yOffset); yOffset += 7;
+    doc.text(`Phone: ${customerData.phone_number}`, margin, yOffset); yOffset += 7;
+    doc.text(`Mobile 1: ${customerData.mobile_1}`, margin, yOffset); yOffset += 7;
+    doc.text(`Mobile 2: ${customerData.mobile_2}`, margin, yOffset); yOffset += 15;
+
+    // Nominee Information
+    doc.setFontSize(14);
+    doc.setTextColor(66, 153, 225);
+    doc.text('Nominee Information', margin, yOffset);
+    yOffset += 10;
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Nominee Name: ${customerData.nominee}`, margin, yOffset); yOffset += 7;
+    doc.text(`Relation: ${customerData.nominee_relation}`, margin, yOffset); yOffset += 15;
+
+    // Vehicle Information
+    doc.setFontSize(14);
+    doc.setTextColor(66, 153, 225);
+    doc.text('Vehicle Information', margin, yOffset);
+    yOffset += 10;
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Vehicle: ${customerData.vehicle}`, margin, yOffset); yOffset += 7;
+    doc.text(`Variant: ${customerData.variant}`, margin, yOffset); yOffset += 7;
+    doc.text(`Color: ${customerData.color}`, margin, yOffset); yOffset += 15;
+
+    // Payment Information
+    doc.setFontSize(14);
+    doc.setTextColor(66, 153, 225);
+    doc.text('Payment Information', margin, yOffset);
+    yOffset += 10;
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Payment Mode: ${customerData.payment_mode}`, margin, yOffset); yOffset += 7;
+    doc.text(`Finance Company: ${customerData.finance_company}`, margin, yOffset); yOffset += 7;
+    doc.text(`Finance Amount: ₹${customerData.finance_amount}`, margin, yOffset); yOffset += 7;
+    doc.text(`EMI: ₹${customerData.emi}`, margin, yOffset); yOffset += 7;
+    doc.text(`Tenure: ${customerData.tenure} months`, margin, yOffset); yOffset += 7;
+    doc.text(`Amount Paid: ₹${customerData.amount_paid}`, margin, yOffset); yOffset += 15;
+
+    // Pricing Details
+    doc.setFontSize(14);
+    doc.setTextColor(66, 153, 225);
+    doc.text('Pricing Details', margin, yOffset);
+    yOffset += 10;
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Ex-Showroom: ₹${customerData.ex_showroom}`, margin, yOffset); yOffset += 7;
+    doc.text(`Tax: ₹${customerData.tax}`, margin, yOffset); yOffset += 7;
+    doc.text(`Insurance: ₹${customerData.insurance}`, margin, yOffset); yOffset += 7;
+    doc.text(`Booking Fee: ₹${customerData.booking_fee}`, margin, yOffset); yOffset += 7;
+    doc.text(`Accessories: ₹${customerData.accessories}`, margin, yOffset); yOffset += 7;
+    doc.text(`Total Price: ₹${customerData.total_price}`, margin, yOffset);
+
+    // Save PDF
+    const fileName = `${customerData.customer_name}_${customerData.vehicle}_${customerData.variant}.pdf`;
+    doc.save(fileName);
+    
+    toast({
+      title: 'Success',
+      description: `Exported customer data as "${fileName}"`,
+      status: 'success',
+      duration: 3000,
+      isClosable: true,
+    });
+  };
+
+  const handleDownloadImages = () => {
+    const folderName = `${customerData.customer_name}_${customerData.vehicle}_${customerData.variant}`;
+    
+    // Download passport photo
+    if (customerData.passport_photo_base64) {
+      const link = document.createElement('a');
+      link.href = `data:image/jpeg;base64,${customerData.passport_photo_base64}`;
+      link.download = `${folderName}_passport_photo.jpg`;
+      link.click();
+    }
+
+    // Download Aadhar front
+    if (customerData.aadhar_front_base64) {
+      const link = document.createElement('a');
+      link.href = `data:image/jpeg;base64,${customerData.aadhar_front_base64}`;
+      link.download = `${folderName}_aadhar_front.jpg`;
+      link.click();
+    }
+
+    // Download Aadhar back
+    if (customerData.aadhar_back_base64) {
+      const link = document.createElement('a');
+      link.href = `data:image/jpeg;base64,${customerData.aadhar_back_base64}`;
+      link.download = `${folderName}_aadhar_back.jpg`;
+      link.click();
+    }
+
+    toast({
+      title: 'Success',
+      description: `Downloaded all images for ${customerData.customer_name}`,
+      status: 'success',
+      duration: 3000,
+      isClosable: true,
+    });
+  };
+
   return (
     <Box minH="100vh" bg={bgGradient} position="relative">
       {/* Header with glassmorphism */}
@@ -923,20 +1063,10 @@ const RtoDashboard = () => {
                   colorScheme="blue"
                   variant="outline"
                   size="sm"
-                  onClick={handleDownloadUserData}
+                  onClick={handleExportData}
                   _hover={{ bg: hoverBg }}
                 >
-                  Download Data
-                </Button>
-                <Button
-                  leftIcon={<ExternalLinkIcon />}
-                  colorScheme="purple"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => window.open(customerData.invoicePdf, '_blank')}
-                  _hover={{ bg: hoverBg }}
-                >
-                  View Invoice
+                  Export Data
                 </Button>
               </HStack>
             </Flex>
@@ -1166,11 +1296,11 @@ const RtoDashboard = () => {
                       colorScheme="purple"
                       size="lg"
                       leftIcon={<DownloadIcon />}
-                      onClick={handleDownloadUserData}
+                      onClick={handleDownloadImages}
                       _hover={{ transform: 'translateY(-2px)', boxShadow: 'lg' }}
                       transition="all 0.2s"
                     >
-                      Download All Documents
+                      Download Images
                     </Button>
                   </HStack>
                 </Flex>
