@@ -1025,7 +1025,7 @@ const RtoDashboard = () => {
       </Flex>
 
       {/* Main Layout */}
-      <Box maxW="1400px" mx="auto" mt={4} px={{ base: 3, md: 4 }} pb={{ base: 16, md: 8 }}>
+      <Box maxW="1400px" mx="auto" mt={4} px={{ base: 2, md: 4 }} pb={{ base: 16, md: 8 }}>
         {selectedCustomer ? (
           <Flex direction="column" h={{ base: 'calc(100vh - 70px)', md: 'auto' }} position={{ base: 'fixed', md: 'static' }} top={{ base: '70px', md: 'auto' }} left={0} right={0} bottom={0} bg={bgGradient} zIndex={9}>
             {/* Fixed Header */}
@@ -1033,7 +1033,7 @@ const RtoDashboard = () => {
               justify="space-between"
               align="center"
               bg={glassBg}
-              p={4}
+              p={{ base: 2, md: 4 }}
               borderRadius={{ base: 0, md: 'lg' }}
               boxShadow="0 4px 6px -1px rgba(0, 0, 0, 0.1)"
               position="sticky"
@@ -1043,7 +1043,7 @@ const RtoDashboard = () => {
               borderColor={glassBorder}
               backdropFilter="blur(10px)"
             >
-              <HStack spacing={4}>
+              <HStack spacing={{ base: 2, md: 4 }}>
                 <IconButton
                   icon={<ArrowBackIcon />}
                   variant="ghost"
@@ -1051,10 +1051,11 @@ const RtoDashboard = () => {
                   onClick={handleBackClick}
                   aria-label="Back to list"
                   _hover={{ bg: hoverBg }}
+                  size={{ base: "sm", md: "md" }}
                 />
                 <VStack align="start" spacing={0}>
-                  <Heading size="md" color={textColor}>{customerData.customer_name}</Heading>
-                  <Text fontSize="sm" color="gray.500">{customerData.vehicle} - {customerData.variant}</Text>
+                  <Heading size={{ base: "sm", md: "md" }} color={textColor}>{customerData.customer_name}</Heading>
+                  <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">{customerData.vehicle} - {customerData.variant}</Text>
                 </VStack>
               </HStack>
               <HStack spacing={2}>
@@ -1062,7 +1063,7 @@ const RtoDashboard = () => {
                   leftIcon={<DownloadIcon />}
                   colorScheme="blue"
                   variant="outline"
-                  size="sm"
+                  size={{ base: "sm", md: "md" }}
                   onClick={handleExportData}
                   _hover={{ bg: hoverBg }}
                 >
@@ -1072,16 +1073,16 @@ const RtoDashboard = () => {
             </Flex>
 
             {/* Scrollable Details */}
-            <Box flex="1" overflowY="auto" p={6} pb={200}>
-              <VStack spacing={6} align="stretch">
+            <Box flex="1" overflowY="auto" p={{ base: 2, md: 6 }} pb={{ base: 100, md: 200 }}>
+              <VStack spacing={{ base: 3, md: 6 }} align="stretch">
                 {/* Status Badge */}
                 <Flex justify="center">
                   <Badge
                     colorScheme={customerData.rto_verified ? 'green' : 'yellow'}
-                    px={4}
-                    py={2}
+                    px={{ base: 2, md: 4 }}
+                    py={{ base: 1, md: 2 }}
                     borderRadius="full"
-                    fontSize="md"
+                    fontSize={{ base: "sm", md: "md" }}
                     boxShadow="md"
                     backdropFilter="blur(4px)"
                   >
@@ -1094,30 +1095,30 @@ const RtoDashboard = () => {
                   title="Personal Information"
                   icon={<AttachmentIcon />}
                 >
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 2, md: 4 }}>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Customer Name</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.customer_name}</Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Customer Name</Text>
+                      <Text fontSize={{ base: "sm", md: "md" }} color={textColor}>{customerData.customer_name}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Address</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.address}</Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Address</Text>
+                      <Text fontSize={{ base: "sm", md: "md" }} color={textColor}>{customerData.address}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Email</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.email}</Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Email</Text>
+                      <Text fontSize={{ base: "sm", md: "md" }} color={textColor}>{customerData.email}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Phone Number</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.phone_number}</Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Phone Number</Text>
+                      <Text fontSize={{ base: "sm", md: "md" }} color={textColor}>{customerData.phone_number}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Mobile 1</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.mobile_1}</Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Mobile 1</Text>
+                      <Text fontSize={{ base: "sm", md: "md" }} color={textColor}>{customerData.mobile_1}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Mobile 2</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.mobile_2}</Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Mobile 2</Text>
+                      <Text fontSize={{ base: "sm", md: "md" }} color={textColor}>{customerData.mobile_2}</Text>
                     </Box>
                   </SimpleGrid>
                 </DetailCard>
@@ -1127,14 +1128,14 @@ const RtoDashboard = () => {
                   title="Nominee Information"
                   icon={<AttachmentIcon />}
                 >
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 2, md: 4 }}>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Nominee Name</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.nominee}</Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Nominee Name</Text>
+                      <Text fontSize={{ base: "sm", md: "md" }} color={textColor}>{customerData.nominee}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Nominee Relation</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.nominee_relation}</Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Nominee Relation</Text>
+                      <Text fontSize={{ base: "sm", md: "md" }} color={textColor}>{customerData.nominee_relation}</Text>
                     </Box>
                   </SimpleGrid>
                 </DetailCard>
@@ -1144,18 +1145,18 @@ const RtoDashboard = () => {
                   title="Vehicle Information"
                   icon={<SettingsIcon />}
                 >
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 2, md: 4 }}>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Vehicle</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.vehicle}</Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Vehicle</Text>
+                      <Text fontSize={{ base: "sm", md: "md" }} color={textColor}>{customerData.vehicle}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Variant</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.variant}</Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Variant</Text>
+                      <Text fontSize={{ base: "sm", md: "md" }} color={textColor}>{customerData.variant}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Color</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.color}</Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Color</Text>
+                      <Text fontSize={{ base: "sm", md: "md" }} color={textColor}>{customerData.color}</Text>
                     </Box>
                   </SimpleGrid>
                 </DetailCard>
@@ -1165,30 +1166,30 @@ const RtoDashboard = () => {
                   title="Payment Information"
                   icon={<RepeatIcon />}
                 >
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 2, md: 4 }}>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Payment Mode</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.payment_mode}</Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Payment Mode</Text>
+                      <Text fontSize={{ base: "sm", md: "md" }} color={textColor}>{customerData.payment_mode}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Finance Company</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.finance_company}</Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Finance Company</Text>
+                      <Text fontSize={{ base: "sm", md: "md" }} color={textColor}>{customerData.finance_company}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Finance Amount</Text>
-                      <Text fontSize="md" color={textColor}>₹{customerData.finance_amount}</Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Finance Amount</Text>
+                      <Text fontSize={{ base: "sm", md: "md" }} color={textColor}>₹{customerData.finance_amount}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">EMI</Text>
-                      <Text fontSize="md" color={textColor}>₹{customerData.emi}</Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">EMI</Text>
+                      <Text fontSize={{ base: "sm", md: "md" }} color={textColor}>₹{customerData.emi}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Tenure (months)</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.tenure}</Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Tenure (months)</Text>
+                      <Text fontSize={{ base: "sm", md: "md" }} color={textColor}>{customerData.tenure}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Amount Paid</Text>
-                      <Text fontSize="md" color={textColor}>₹{customerData.amount_paid}</Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Amount Paid</Text>
+                      <Text fontSize={{ base: "sm", md: "md" }} color={textColor}>₹{customerData.amount_paid}</Text>
                     </Box>
                   </SimpleGrid>
                 </DetailCard>
@@ -1198,30 +1199,30 @@ const RtoDashboard = () => {
                   title="Pricing Details"
                   icon={<RepeatIcon />}
                 >
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 2, md: 4 }}>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Ex-Showroom</Text>
-                      <Text fontSize="md" color={textColor}>₹{customerData.ex_showroom}</Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Ex-Showroom</Text>
+                      <Text fontSize={{ base: "sm", md: "md" }} color={textColor}>₹{customerData.ex_showroom}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Tax</Text>
-                      <Text fontSize="md" color={textColor}>₹{customerData.tax}</Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Tax</Text>
+                      <Text fontSize={{ base: "sm", md: "md" }} color={textColor}>₹{customerData.tax}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Insurance</Text>
-                      <Text fontSize="md" color={textColor}>₹{customerData.insurance}</Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Insurance</Text>
+                      <Text fontSize={{ base: "sm", md: "md" }} color={textColor}>₹{customerData.insurance}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Booking Fee</Text>
-                      <Text fontSize="md" color={textColor}>₹{customerData.booking_fee}</Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Booking Fee</Text>
+                      <Text fontSize={{ base: "sm", md: "md" }} color={textColor}>₹{customerData.booking_fee}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Accessories</Text>
-                      <Text fontSize="md" color={textColor}>₹{customerData.accessories}</Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Accessories</Text>
+                      <Text fontSize={{ base: "sm", md: "md" }} color={textColor}>₹{customerData.accessories}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Total Price</Text>
-                      <Text fontSize="md" color={textColor}>₹{customerData.total_price}</Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Total Price</Text>
+                      <Text fontSize={{ base: "sm", md: "md" }} color={textColor}>₹{customerData.total_price}</Text>
                     </Box>
                   </SimpleGrid>
                 </DetailCard>
@@ -1231,9 +1232,9 @@ const RtoDashboard = () => {
                   title="Documents"
                   icon={<AttachmentIcon />}
                 >
-                  <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
+                  <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={{ base: 2, md: 4 }}>
                     <Box>
-                      <Text fontSize="sm" color="gray.500" mb={2}>Passport Photo</Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500" mb={2}>Passport Photo</Text>
                       <Image
                         src={`data:image/jpeg;base64,${customerData.passport_photo_base64}`}
                         alt="Passport Photo"
@@ -1244,10 +1245,11 @@ const RtoDashboard = () => {
                         fallbackSrc="https://via.placeholder.com/150?text=No+Photo"
                         _hover={{ opacity: 0.8 }}
                         transition="all 0.2s"
+                        maxH={{ base: "150px", md: "200px" }}
                       />
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500" mb={2}>Aadhar Front</Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500" mb={2}>Aadhar Front</Text>
                       <Image
                         src={`data:image/jpeg;base64,${customerData.aadhar_front_base64}`}
                         alt="Aadhar Front"
@@ -1258,10 +1260,11 @@ const RtoDashboard = () => {
                         fallbackSrc="https://via.placeholder.com/200x150?text=No+Aadhar+Front"
                         _hover={{ opacity: 0.8 }}
                         transition="all 0.2s"
+                        maxH={{ base: "150px", md: "200px" }}
                       />
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500" mb={2}>Aadhar Back</Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500" mb={2}>Aadhar Back</Text>
                       <Image
                         src={`data:image/jpeg;base64,${customerData.aadhar_back_base64}`}
                         alt="Aadhar Back"
@@ -1272,37 +1275,40 @@ const RtoDashboard = () => {
                         fallbackSrc="https://via.placeholder.com/200x150?text=No+Aadhar+Back"
                         _hover={{ opacity: 0.8 }}
                         transition="all 0.2s"
+                        maxH={{ base: "150px", md: "200px" }}
                       />
                     </Box>
                   </SimpleGrid>
                 </DetailCard>
 
                 {/* Action Buttons */}
-                <Flex justify="center" mt={8}>
-                  <HStack spacing={4}>
+                <Flex justify="center" mt={{ base: 4, md: 8 }}>
+                  <VStack spacing={{ base: 2, md: 4 }} w="full">
                     {!customerData.rto_verified && (
                       <Button
                         colorScheme="blue"
-                        size="lg"
+                        size={{ base: "md", md: "lg" }}
                         leftIcon={<CheckIcon />}
                         onClick={() => handleRtoVerified(selectedCustomer.id)}
                         _hover={{ transform: 'translateY(-2px)', boxShadow: 'lg' }}
                         transition="all 0.2s"
+                        w={{ base: "full", md: "auto" }}
                       >
                         Mark as Verified
                       </Button>
                     )}
                     <Button
                       colorScheme="purple"
-                      size="lg"
+                      size={{ base: "md", md: "lg" }}
                       leftIcon={<DownloadIcon />}
                       onClick={handleDownloadImages}
                       _hover={{ transform: 'translateY(-2px)', boxShadow: 'lg' }}
                       transition="all 0.2s"
+                      w={{ base: "full", md: "auto" }}
                     >
                       Download Images
                     </Button>
-                  </HStack>
+                  </VStack>
                 </Flex>
               </VStack>
             </Box>
