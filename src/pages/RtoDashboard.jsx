@@ -243,19 +243,17 @@ const RtoDashboard = () => {
         return;
       }
 
-      // Fetch all customers
-      const response = await rtoApi.getPendingCustomers();
-      console.log('All customers:', response.customers);
+      // Fetch both pending and verified customers
+      const [pendingResponse, verifiedResponse] = await Promise.all([
+        rtoApi.getPendingCustomers(),
+        rtoApi.getVerifiedCustomers()
+      ]);
 
-      // Filter customers based on rto_verified status
-      const verifiedCustomers = response.customers.filter(customer => customer.rto_verified === true);
-      const pendingCustomers = response.customers.filter(customer => customer.rto_verified === false);
+      console.log('Pending customers:', pendingResponse.customers);
+      console.log('Verified customers:', verifiedResponse.customers);
 
-      console.log('Pending customers:', pendingCustomers);
-      console.log('Verified customers:', verifiedCustomers);
-
-      setPendingCustomers(pendingCustomers);
-      setVerifiedCustomers(verifiedCustomers);
+      setPendingCustomers(pendingResponse.customers);
+      setVerifiedCustomers(verifiedResponse.customers);
     } catch (error) {
       console.error('Failed to fetch customers:', error);
       if (error.message) {
