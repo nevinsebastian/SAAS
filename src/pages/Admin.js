@@ -1,7 +1,74 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../styles/AdminDashboard.css';
-import { FiPlus, FiEdit, FiUsers, FiPieChart, FiBriefcase, FiLogOut, FiDownload, FiBell, FiImage, FiBarChart } from 'react-icons/fi';
+import {
+  Box,
+  Flex,
+  Heading,
+  Text,
+  VStack,
+  HStack,
+  SimpleGrid,
+  Badge,
+  IconButton,
+  Button,
+  useColorModeValue,
+  Drawer,
+  DrawerBody,
+  DrawerHeader,
+  DrawerOverlay,
+  DrawerContent,
+  DrawerCloseButton,
+  useDisclosure,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  Avatar,
+  Input,
+  Select,
+  Tabs,
+  TabList,
+  Tab,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  ModalCloseButton,
+  useColorMode,
+  Image,
+  Divider,
+  Spinner,
+  Container,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  useToast,
+  TabPanels,
+  TabPanel,
+  GridItem,
+  InputGroup,
+  InputLeftElement,
+  FormControl,
+  FormLabel,
+  Stat,
+  StatLabel,
+  StatNumber,
+  StatHelpText,
+  StatArrow,
+  Card,
+  CardBody,
+  CardHeader,
+  CardFooter,
+  Stack,
+  useBreakpointValue,
+} from '@chakra-ui/react';
+import { HamburgerIcon, BellIcon, ArrowBackIcon, DownloadIcon, SearchIcon, FilterIcon, CheckIcon, TimeIcon, ChevronRightIcon, ChevronLeftIcon, StarIcon, InfoIcon, WarningIcon, CheckCircleIcon, CloseIcon, ChevronUpIcon, ChevronDownIcon, ExternalLinkIcon, ViewIcon, AttachmentIcon, SettingsIcon, RepeatIcon, AddIcon } from '@chakra-ui/icons';
+import { FiPlus, FiEdit, FiUsers, FiPieChart, FiBriefcase, FiLogOut, FiDownload, FiBell, FiImage, FiBarChart, FiMenu, FiTrendingUp, FiDollarSign, FiUserCheck, FiClock, FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
 import { Line, Pie } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -15,14 +82,46 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaSearch } from 'react-icons/fa';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend);
 
+const MotionBox = motion(Box);
+
 const Admin = () => {
   const navigate = useNavigate();
+  const { isOpen: isMenuOpen, onOpen: onMenuOpen, onClose: onMenuClose } = useDisclosure();
+  const { isOpen: isAddEmployeeOpen, onOpen: onAddEmployeeOpen, onClose: onAddEmployeeClose } = useDisclosure();
+  const { colorMode, toggleColorMode } = useColorMode();
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [showAddEmployeeModal, setShowAddEmployeeModal] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState('all');
+  const isMobile = useBreakpointValue({ base: true, md: false });
+
+  // Top-level useColorModeValue calls
+  const bgGradient = useColorModeValue('linear(to-br, gray.50, gray.100)', 'linear(to-br, gray.900, gray.800)');
+  const cardBg = useColorModeValue('white', 'gray.800');
+  const textColor = useColorModeValue('gray.800', 'white');
+  const borderColor = useColorModeValue('gray.200', 'gray.600');
+  const inputBg = useColorModeValue('gray.100', 'gray.700');
+  const headerGradient = useColorModeValue('linear(to-r, blue.500, purple.500)', 'linear(to-r, blue.700, purple.700)');
+  const accentColor = 'blue.500';
+  const hoverBg = useColorModeValue('blue.50', 'blue.900');
+  const emptyStateGradient = useColorModeValue(
+    'linear(to-br, blue.50, purple.50)',
+    'linear(to-br, blue.900, purple.900)'
+  );
+  const cardGradient = useColorModeValue(
+    'linear(to-br, blue.50, purple.50)',
+    'linear(to-br, blue.900, purple.900)'
+  );
+
+  // Add new color mode values at the top level
+  const glassBg = useColorModeValue('rgba(255, 255, 255, 0.8)', 'rgba(26, 32, 44, 0.8)');
+  const glassBorder = useColorModeValue('rgba(226, 232, 240, 0.8)', 'rgba(45, 55, 72, 0.8)');
+  const glassHoverBg = useColorModeValue('rgba(66, 153, 225, 0.1)', 'rgba(66, 153, 225, 0.2)');
+  const glassInputBg = useColorModeValue('rgba(255, 255, 255, 0.9)', 'rgba(26, 32, 44, 0.9)');
 
   // Enhanced Dummy Data
   const dummyData = {
@@ -112,371 +211,429 @@ const Admin = () => {
   };
 
   const renderDashboard = () => (
-    <div className="dashboard-grid">
-      <div className="stats-card accent-purple"><h3>Total Bookings</h3><span>{dashboardData.totalBookings}</span></div>
-      <div className="stats-card accent-teal"><h3>Pending Deliveries</h3><span>{dashboardData.pendingDeliveries}</span></div>
-      <div className="stats-card accent-purple"><h3>RTO Pending</h3><span>{dashboardData.rtoPending}</span></div>
-      <div className="stats-card accent-teal"><h3>Total Revenue</h3><span>${dashboardData.totalRevenue.toLocaleString()}</span></div>
-      <div className="stats-card accent-purple"><h3>Customer Satisfaction</h3><span>{dashboardData.customerSatisfaction.toFixed(1)}/5</span></div>
-      <div className="stats-card accent-teal"><h3>On-Time Deliveries</h3><span>{dashboardData.onTimeDeliveries}/{dummyData.deliveries.length}</span></div>
-      <div className="chart-container">
-        <h3>Sales Trend</h3>
-        <Line data={salesChartData} options={{ responsive: true, maintainAspectRatio: false }} />
-      </div>
-      <div className="chart-container">
-        <h3>Top Vehicles</h3>
-        <Pie data={vehiclePieData} options={{ responsive: true, maintainAspectRatio: false }} />
-      </div>
-    </div>
-  );
+    <MotionBox
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={6}>
+        <Card
+          bg={cardBg}
+          borderRadius="xl"
+          boxShadow="lg"
+          _hover={{ transform: 'translateY(-5px)', boxShadow: 'xl' }}
+          transition="all 0.3s"
+        >
+          <CardBody>
+            <Stat>
+              <StatLabel color="gray.500">Total Bookings</StatLabel>
+              <StatNumber fontSize="2xl">{dashboardData.totalBookings}</StatNumber>
+              <StatHelpText>
+                <StatArrow type="increase" />
+                23.36%
+              </StatHelpText>
+            </Stat>
+          </CardBody>
+        </Card>
 
-  const renderSales = () => (
-    <div className="section">
-      <div className="section-header">
-        <h2>Sales Management</h2>
-        <div className="section-controls">
-          <select onChange={(e) => setSelectedFilter(e.target.value)} className="filter-select">
-            <option value="all">All Status</option>
-            <option value="Booking">Booking</option>
-            <option value="Delivery">Delivery</option>
-            <option value="Completed">Completed</option>
-          </select>
-          <button className="primary-btn"><FiDownload /> Export</button>
-        </div>
-      </div>
-      <div className="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Customer</th>
-              <th>Vehicle</th>
-              <th>Date</th>
-              <th>Expected Delivery</th>
-              <th>Executive</th>
-              <th>Amount</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {dummyData.bookings
-              .filter(b => selectedFilter === 'all' || b.status === selectedFilter)
-              .map(booking => (
-                <tr key={booking.id}>
-                  <td>{booking.customer}</td>
-                  <td>{booking.vehicle}</td>
-                  <td>{booking.date}</td>
-                  <td>{booking.expectedDelivery}</td>
-                  <td>{booking.executive}</td>
-                  <td>${booking.amount}</td>
-                  <td>{booking.status}</td>
-                </tr>
+        <Card
+          bg={cardBg}
+          borderRadius="xl"
+          boxShadow="lg"
+          _hover={{ transform: 'translateY(-5px)', boxShadow: 'xl' }}
+          transition="all 0.3s"
+        >
+          <CardBody>
+            <Stat>
+              <StatLabel color="gray.500">Pending Deliveries</StatLabel>
+              <StatNumber fontSize="2xl">{dashboardData.pendingDeliveries}</StatNumber>
+              <StatHelpText>
+                <StatArrow type="decrease" />
+                12.5%
+              </StatHelpText>
+            </Stat>
+          </CardBody>
+        </Card>
+
+        <Card
+          bg={cardBg}
+          borderRadius="xl"
+          boxShadow="lg"
+          _hover={{ transform: 'translateY(-5px)', boxShadow: 'xl' }}
+          transition="all 0.3s"
+        >
+          <CardBody>
+            <Stat>
+              <StatLabel color="gray.500">RTO Pending</StatLabel>
+              <StatNumber fontSize="2xl">{dashboardData.rtoPending}</StatNumber>
+              <StatHelpText>
+                <StatArrow type="increase" />
+                8.2%
+              </StatHelpText>
+            </Stat>
+          </CardBody>
+        </Card>
+
+        <Card
+          bg={cardBg}
+          borderRadius="xl"
+          boxShadow="lg"
+          _hover={{ transform: 'translateY(-5px)', boxShadow: 'xl' }}
+          transition="all 0.3s"
+        >
+          <CardBody>
+            <Stat>
+              <StatLabel color="gray.500">Total Revenue</StatLabel>
+              <StatNumber fontSize="2xl">${dashboardData.totalRevenue.toLocaleString()}</StatNumber>
+              <StatHelpText>
+                <StatArrow type="increase" />
+                15.8%
+              </StatHelpText>
+            </Stat>
+          </CardBody>
+        </Card>
+      </SimpleGrid>
+
+      <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6} mt={6}>
+        <Card
+          bg={cardBg}
+          borderRadius="xl"
+          boxShadow="lg"
+          height="400px"
+        >
+          <CardHeader>
+            <Heading size="md">Sales Trend</Heading>
+          </CardHeader>
+          <CardBody>
+            <Line data={salesChartData} options={{ responsive: true, maintainAspectRatio: false }} />
+          </CardBody>
+        </Card>
+        <Card
+          bg={cardBg}
+          borderRadius="xl"
+          boxShadow="lg"
+          height="400px"
+        >
+          <CardHeader>
+            <Heading size="md">Top Vehicles</Heading>
+          </CardHeader>
+          <CardBody>
+            <Pie data={vehiclePieData} options={{ responsive: true, maintainAspectRatio: false }} />
+          </CardBody>
+        </Card>
+      </SimpleGrid>
+
+      <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6} mt={6}>
+        <Card
+          bg={cardBg}
+          borderRadius="xl"
+          boxShadow="lg"
+        >
+          <CardHeader>
+            <Heading size="md">Recent Bookings</Heading>
+          </CardHeader>
+          <CardBody>
+            <Stack spacing={4}>
+              {dummyData.bookings.slice(0, 5).map((booking) => (
+                <Flex key={booking.id} justify="space-between" align="center">
+                  <Box>
+                    <Text fontWeight="bold">{booking.customer}</Text>
+                    <Text fontSize="sm" color="gray.500">{booking.vehicle}</Text>
+                  </Box>
+                  <Badge colorScheme={booking.status === "Completed" ? "green" : "orange"}>
+                    {booking.status}
+                  </Badge>
+                </Flex>
               ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="top-performers">
-        <h3>Top Performers</h3>
-        {dummyData.salesExecutives.map(exec => (
-          <div key={exec.id} className="performer-card">
-            <span>{exec.name} ({exec.branch})</span>
-            <span>Bookings: {exec.bookings}</span>
-            <span>Conv: {exec.conversions}</span>
-            <span>Rating: {exec.rating}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+            </Stack>
+          </CardBody>
+        </Card>
 
-  const renderAccounts = () => (
-    <div className="section">
-      <div className="section-header">
-        <h2>Financial Overview</h2>
-        <button className="primary-btn"><FiDownload /> Generate Report</button>
-      </div>
-      <div className="financial-grid">
-        <div className="stats-card"><h3>Total Revenue</h3><span>${dummyData.financial.totalRevenue.toLocaleString()}</span></div>
-        <div className="stats-card"><h3>Pending Payments</h3><span>${dummyData.financial.pendingPayments.toLocaleString()}</span></div>
-        <div className="stats-card"><h3>Loans</h3><span>${dummyData.financial.loans.toLocaleString()}</span></div>
-        <div className="stats-card"><h3>Taxes</h3><span>${dummyData.financial.taxes.toLocaleString()}</span></div>
-      </div>
-      <div className="table-container">
-        <h3>Pending Approvals</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Customer</th>
-              <th>Loan Amount</th>
-              <th>Tax</th>
-              <th>Total</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {dummyData.financial.approvalsPending.map(approval => (
-              <tr key={approval.id}>
-                <td>{approval.customer}</td>
-                <td>${approval.loan}</td>
-                <td>${approval.tax}</td>
-                <td>${approval.total}</td>
-                <td><button className="primary-btn small">Approve</button></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
+        <Card
+          bg={cardBg}
+          borderRadius="xl"
+          boxShadow="lg"
+        >
+          <CardHeader>
+            <Heading size="md">Top Executives</Heading>
+          </CardHeader>
+          <CardBody>
+            <Stack spacing={4}>
+              {dummyData.salesExecutives.map((executive) => (
+                <Flex key={executive.id} justify="space-between" align="center">
+                  <Box>
+                    <Text fontWeight="bold">{executive.name}</Text>
+                    <Text fontSize="sm" color="gray.500">{executive.branch}</Text>
+                  </Box>
+                  <HStack>
+                    <Badge colorScheme="green">{executive.rating}/5</Badge>
+                    <Text fontSize="sm" color="gray.500">{executive.bookings} bookings</Text>
+                  </HStack>
+                </Flex>
+              ))}
+            </Stack>
+          </CardBody>
+        </Card>
 
-  const renderRTO = () => (
-    <div className="section">
-      <div className="section-header">
-        <h2>RTO Management</h2>
-        <button className="primary-btn"><FiBarChart /> Performance Report</button>
-      </div>
-      <div className="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Vehicle</th>
-              <th>Customer</th>
-              <th>Status</th>
-              <th>Days Taken</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {dummyData.rtoTasks.map(task => (
-              <tr key={task.id}>
-                <td>{task.vehicle}</td>
-                <td>{task.customer}</td>
-                <td>{task.status}</td>
-                <td>{task.days}</td>
-                <td><button className="secondary-btn small">Update</button></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-
-  const renderFeedback = () => (
-    <div className="section">
-      <div className="section-header">
-        <h2>Customer Feedback</h2>
-        <button className="primary-btn"><FiDownload /> Export Trends</button>
-      </div>
-      <div className="feedback-container">
-        {dummyData.feedback.map(fb => (
-          <div key={fb.id} className="feedback-card">
-            <span>{fb.customer}</span>
-            <span>Rating: {fb.rating}/5</span>
-            <span>Aspect: {fb.aspect}</span>
-            <p>{fb.comment}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-  const renderServices = () => (
-    <div className="section">
-      <div className="section-header">
-        <h2>Service Bookings</h2>
-        <button className="primary-btn"><FiDownload /> Service Report</button>
-      </div>
-      <div className="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Customer</th>
-              <th>Date</th>
-              <th>Type</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {dummyData.serviceBookings.map(service => (
-              <tr key={service.id}>
-                <td>{service.customer}</td>
-                <td>{service.date}</td>
-                <td>{service.type}</td>
-                <td>{service.status}</td>
-                <td><button className="secondary-btn small">View Job Card</button></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-
-  const renderNotifications = () => (
-    <div className="section">
-      <div className="section-header">
-        <h2>Notification Logs</h2>
-        <button className="primary-btn"><FiBell /> Send Manual Notification</button>
-      </div>
-      <div className="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Message</th>
-              <th>Time</th>
-            </tr>
-          </thead>
-          <tbody>
-            {dummyData.notifications.map(notif => (
-              <tr key={notif.id}>
-                <td>{notif.message}</td>
-                <td>{notif.time}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-
-  const renderDeliveries = () => (
-    <div className="section">
-      <div className="section-header">
-        <h2>Delivery Tracking</h2>
-        <button className="primary-btn"><FiDownload /> Delivery Report</button>
-      </div>
-      <div className="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Vehicle</th>
-              <th>Customer</th>
-              <th>Expected</th>
-              <th>Actual</th>
-              <th>Status</th>
-              <th>Image</th>
-            </tr>
-          </thead>
-          <tbody>
-            {dummyData.deliveries.map(delivery => (
-              <tr key={delivery.id}>
-                <td>{delivery.vehicle}</td>
-                <td>{delivery.customer}</td>
-                <td>{delivery.expected}</td>
-                <td>{delivery.actual}</td>
-                <td>{delivery.status}</td>
-                <td><button className="secondary-btn small"><FiImage /> View</button></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+        <Card
+          bg={cardBg}
+          borderRadius="xl"
+          boxShadow="lg"
+        >
+          <CardHeader>
+            <Heading size="md">Pending Approvals</Heading>
+          </CardHeader>
+          <CardBody>
+            <Stack spacing={4}>
+              {dummyData.financial.approvalsPending.map((approval) => (
+                <Flex key={approval.id} justify="space-between" align="center">
+                  <Box>
+                    <Text fontWeight="bold">{approval.customer}</Text>
+                    <Text fontSize="sm" color="gray.500">Total: ${approval.total}</Text>
+                  </Box>
+                  <Button size="sm" colorScheme="blue">Review</Button>
+                </Flex>
+              ))}
+            </Stack>
+          </CardBody>
+        </Card>
+      </SimpleGrid>
+    </MotionBox>
   );
 
   return (
-    <div className="admin-container">
-      <div className="admin-sidebar">
-        <div className="sidebar-header">
-          <h2>Admin Portal</h2>
-          <div className="user-profile">
-            <div className="avatar">A</div>
-            <div className="user-info">
-              <span className="username">Admin</span>
-              <span className="role">Administrator</span>
-            </div>
-          </div>
-        </div>
-        <nav className="sidebar-nav">
-          <ul>
-            <li className={activeTab === 'dashboard' ? 'active' : ''} onClick={() => setActiveTab('dashboard')}><FiPieChart /> Dashboard</li>
-            <li className={activeTab === 'sales' ? 'active' : ''} onClick={() => setActiveTab('sales')}><FiBriefcase /> Sales</li>
-            <li className={activeTab === 'accounts' ? 'active' : ''} onClick={() => setActiveTab('accounts')}><FiUsers /> Accounts</li>
-            <li className={activeTab === 'rto' ? 'active' : ''} onClick={() => setActiveTab('rto')}><FiBriefcase /> RTO</li>
-            <li className={activeTab === 'feedback' ? 'active' : ''} onClick={() => setActiveTab('feedback')}><FiUsers /> Feedback</li>
-            <li className={activeTab === 'services' ? 'active' : ''} onClick={() => setActiveTab('services')}><FiBriefcase /> Services</li>
-            <li className={activeTab === 'notifications' ? 'active' : ''} onClick={() => setActiveTab('notifications')}><FiBell /> Notifications</li>
-            <li className={activeTab === 'deliveries' ? 'active' : ''} onClick={() => setActiveTab('deliveries')}><FiImage /> Deliveries</li>
-            <li className={activeTab === 'employees' ? 'active' : ''} onClick={() => setActiveTab('employees')}><FiUsers /> Employees</li>
-          </ul>
-        </nav>
-        <button className="logout-btn" onClick={handleLogout}><FiLogOut /> Logout</button>
-      </div>
+    <Box minH="100vh" bg={bgGradient} position="relative">
+      {/* Header with glassmorphism */}
+      <Flex
+        justify="space-between"
+        align="center"
+        bg={glassBg}
+        color="white"
+        p={4}
+        boxShadow="0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+        position="sticky"
+        top={0}
+        zIndex={10}
+        borderBottom="1px solid"
+        borderColor={glassBorder}
+        backdropFilter="blur(10px)"
+        bgBlendMode="overlay"
+      >
+        <HStack spacing={6}>
+          <IconButton
+            icon={<HamburgerIcon />}
+            variant="ghost"
+            color="white"
+            onClick={onMenuOpen}
+            aria-label="Open menu"
+            _hover={{ 
+              bg: 'whiteAlpha.200',
+              transform: 'scale(1.1)'
+            }}
+            transition="all 0.2s"
+          />
+          <Heading 
+            size="lg" 
+            fontWeight="bold"
+            bgGradient="linear(to-r, white, blue.100)"
+            bgClip="text"
+          >
+            Admin Dashboard
+          </Heading>
+        </HStack>
 
-      <div className="admin-main">
+        <HStack spacing={4}>
+          <IconButton
+            icon={<BellIcon />}
+            variant="ghost"
+            color="white"
+            aria-label="Notifications"
+            _hover={{ 
+              bg: 'whiteAlpha.200',
+              transform: 'scale(1.1)'
+            }}
+            transition="all 0.2s"
+          />
+          <Menu>
+            <MenuButton>
+              <Avatar 
+                name="Admin" 
+                size="sm"
+                border="2px"
+                borderColor="whiteAlpha.400"
+                _hover={{ 
+                  transform: 'scale(1.1)',
+                  borderColor: 'white'
+                }}
+                transition="all 0.2s"
+              />
+            </MenuButton>
+            <MenuList 
+              bg={cardBg} 
+              borderColor={borderColor}
+              boxShadow="xl"
+              borderRadius="xl"
+            >
+              <MenuItem 
+                onClick={toggleColorMode} 
+                bg={cardBg} 
+                _hover={{ 
+                  bg: hoverBg,
+                  transform: 'translateX(5px)'
+                }}
+                transition="all 0.2s"
+              >
+                {colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
+              </MenuItem>
+              <MenuItem 
+                onClick={handleLogout} 
+                bg={cardBg} 
+                _hover={{ 
+                  bg: hoverBg,
+                  transform: 'translateX(5px)'
+                }}
+                transition="all 0.2s"
+              >
+                Logout
+              </MenuItem>
+            </MenuList>
+          </Menu>
+        </HStack>
+      </Flex>
+
+      {/* Main Content */}
+      <Box maxW="1400px" mx="auto" mt={4} px={{ base: 2, md: 4 }} pb={{ base: 16, md: 8 }}>
         {activeTab === 'dashboard' && renderDashboard()}
-        {activeTab === 'sales' && renderSales()}
-        {activeTab === 'accounts' && renderAccounts()}
-        {activeTab === 'rto' && renderRTO()}
-        {activeTab === 'feedback' && renderFeedback()}
-        {activeTab === 'services' && renderServices()}
-        {activeTab === 'notifications' && renderNotifications()}
-        {activeTab === 'deliveries' && renderDeliveries()}
+        {activeTab === 'sales' && (
+          <Text>Sales content coming soon...</Text>
+        )}
         {activeTab === 'employees' && (
-          <div className="employees-section">
-            <div className="section-header">
-              <h2>Employee Management</h2>
-              <button className="primary-btn" onClick={() => setShowAddEmployeeModal(true)}><FiPlus /> Add Employee</button>
-            </div>
-            <div className="table-container">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Role</th>
-                    <th>Branch</th>
-                    <th>Status</th>
-                    <th>Performance</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {dummyData.employees.map(emp => (
-                    <tr key={emp.id}>
-                      <td>{emp.name}</td>
-                      <td>{emp.role}</td>
-                      <td>{emp.branch}</td>
-                      <td>{emp.status}</td>
-                      <td>{emp.performance}%</td>
-                      <td><button className="icon-btn"><FiEdit /></button></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <Text>Employees content coming soon...</Text>
         )}
+        {activeTab === 'reports' && (
+          <Text>Reports content coming soon...</Text>
+        )}
+      </Box>
 
-        {showAddEmployeeModal && (
-          <div className="modal-overlay">
-            <div className="modal-content">
-              <h3>Add New Employee</h3>
-              <div className="form-grid">
-                <div className="form-group"><label>Name</label><input /></div>
-                <div className="form-group"><label>Role</label>
-                  <select>
-                    <option>Sales</option>
-                    <option>RTO</option>
-                    <option>Accounts</option>
-                  </select>
-                </div>
-                <div className="form-group"><label>Branch</label>
-                  <select>
-                    <option>Downtown</option>
-                    <option>Uptown</option>
-                  </select>
-                </div>
-              </div>
-              <div className="modal-actions">
-                <button className="secondary-btn" onClick={() => setShowAddEmployeeModal(false)}>Cancel</button>
-                <button className="primary-btn">Create</button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+      {/* Sidebar Drawer */}
+      <Drawer isOpen={isMenuOpen} placement="left" onClose={onMenuClose}>
+        <DrawerOverlay />
+        <DrawerContent w={{ base: 'full', md: '250px' }} bg={cardBg} borderColor={borderColor}>
+          <DrawerCloseButton color={textColor} />
+          <DrawerHeader color={textColor} borderBottom="1px" borderColor={borderColor}>Menu</DrawerHeader>
+          <DrawerBody>
+            <VStack align="stretch" spacing={4}>
+              <Button
+                variant="ghost"
+                colorScheme="blue"
+                isActive={activeTab === 'dashboard'}
+                justifyContent="start"
+                _hover={{ bg: hoverBg }}
+                onClick={() => { setActiveTab('dashboard'); onMenuClose(); }}
+              >
+                Dashboard
+              </Button>
+              <Button
+                variant="ghost"
+                colorScheme="blue"
+                isActive={activeTab === 'sales'}
+                justifyContent="start"
+                _hover={{ bg: hoverBg }}
+                onClick={() => { setActiveTab('sales'); onMenuClose(); }}
+              >
+                Sales
+              </Button>
+              <Button
+                variant="ghost"
+                colorScheme="blue"
+                isActive={activeTab === 'employees'}
+                justifyContent="start"
+                _hover={{ bg: hoverBg }}
+                onClick={() => { setActiveTab('employees'); onMenuClose(); }}
+              >
+                Employees
+              </Button>
+              <Button
+                variant="ghost"
+                colorScheme="blue"
+                isActive={activeTab === 'reports'}
+                justifyContent="start"
+                _hover={{ bg: hoverBg }}
+                onClick={() => { setActiveTab('reports'); onMenuClose(); }}
+              >
+                Reports
+              </Button>
+            </VStack>
+          </DrawerBody>
+        </DrawerContent>
+      </Drawer>
+
+      {/* Add Employee Modal */}
+      <Modal isOpen={isAddEmployeeOpen} onClose={onAddEmployeeClose}>
+        <ModalOverlay />
+        <ModalContent bg={cardBg} borderRadius="xl" boxShadow="lg">
+          <ModalHeader color={textColor}>Add New Employee</ModalHeader>
+          <ModalCloseButton color={textColor} />
+          <ModalBody>
+            <VStack spacing={4}>
+              <FormControl>
+                <FormLabel>Name</FormLabel>
+                <Input
+                  placeholder="Enter employee name"
+                  bg={inputBg}
+                  borderColor={borderColor}
+                  _hover={{ borderColor: accentColor }}
+                  _focus={{ borderColor: accentColor }}
+                />
+              </FormControl>
+              <FormControl>
+                <FormLabel>Role</FormLabel>
+                <Select
+                  bg={inputBg}
+                  borderColor={borderColor}
+                  _hover={{ borderColor: accentColor }}
+                  _focus={{ borderColor: accentColor }}
+                >
+                  <option>Sales</option>
+                  <option>RTO</option>
+                  <option>Accounts</option>
+                </Select>
+              </FormControl>
+              <FormControl>
+                <FormLabel>Branch</FormLabel>
+                <Select
+                  bg={inputBg}
+                  borderColor={borderColor}
+                  _hover={{ borderColor: accentColor }}
+                  _focus={{ borderColor: accentColor }}
+                >
+                  <option>Downtown</option>
+                  <option>Uptown</option>
+                </Select>
+              </FormControl>
+            </VStack>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              colorScheme="blue"
+              onClick={onAddEmployeeClose}
+              _hover={{ bg: 'blue.600' }}
+            >
+              Create
+            </Button>
+            <Button
+              variant="ghost"
+              ml={2}
+              onClick={onAddEmployeeClose}
+              color={textColor}
+              _hover={{ bg: hoverBg }}
+            >
+              Cancel
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </Box>
   );
 };
 
