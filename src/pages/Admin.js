@@ -66,9 +66,10 @@ import {
   CardFooter,
   Stack,
   useBreakpointValue,
+  Icon,
 } from '@chakra-ui/react';
 import { HamburgerIcon, BellIcon, ArrowBackIcon, DownloadIcon, SearchIcon, FilterIcon, CheckIcon, TimeIcon, ChevronRightIcon, ChevronLeftIcon, StarIcon, InfoIcon, WarningIcon, CheckCircleIcon, CloseIcon, ChevronUpIcon, ChevronDownIcon, ExternalLinkIcon, ViewIcon, AttachmentIcon, SettingsIcon, RepeatIcon, AddIcon } from '@chakra-ui/icons';
-import { FiPlus, FiEdit, FiUsers, FiPieChart, FiBriefcase, FiLogOut, FiDownload, FiBell, FiImage, FiBarChart, FiMenu, FiTrendingUp, FiDollarSign, FiUserCheck, FiClock, FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiUsers, FiPieChart, FiBriefcase, FiLogOut, FiDownload, FiBell, FiImage, FiBarChart, FiMenu, FiTrendingUp, FiDollarSign, FiUserCheck, FiClock, FiCheckCircle, FiAlertCircle, FiTruck } from 'react-icons/fi';
 import { Line, Pie } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -84,6 +85,7 @@ import {
 } from 'chart.js';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaSearch } from 'react-icons/fa';
+import axios from 'axios';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend);
 
@@ -98,6 +100,10 @@ const Admin = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedFilter, setSelectedFilter] = useState('all');
   const isMobile = useBreakpointValue({ base: true, md: false });
+  const [analytics, setAnalytics] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [customers, setCustomers] = useState([]);
+  const [salesExecutives, setSalesExecutives] = useState([]);
 
   // Top-level useColorModeValue calls
   const bgGradient = useColorModeValue('linear(to-br, gray.50, gray.100)', 'linear(to-br, gray.900, gray.800)');
@@ -123,92 +129,43 @@ const Admin = () => {
   const glassHoverBg = useColorModeValue('rgba(66, 153, 225, 0.1)', 'rgba(66, 153, 225, 0.2)');
   const glassInputBg = useColorModeValue('rgba(255, 255, 255, 0.9)', 'rgba(26, 32, 44, 0.9)');
 
-  // Enhanced Dummy Data
-  const dummyData = {
-    bookings: [
-      { id: 1, customer: "John Doe", vehicle: "Honda City", status: "Booking", date: "2025-02-20", expectedDelivery: "2025-03-01", executive: "Alice", amount: 15000 },
-      { id: 2, customer: "Jane Smith", vehicle: "Toyota Corolla", status: "Delivery", date: "2025-02-22", expectedDelivery: "2025-02-28", executive: "Bob", amount: 18000 },
-      { id: 3, customer: "Mike Johnson", vehicle: "Hyundai Creta", status: "Completed", date: "2025-02-15", expectedDelivery: "2025-02-25", executive: "Charlie", amount: 20000 },
-      { id: 4, customer: "Sarah Williams", vehicle: "Maruti Swift", status: "RTO", date: "2025-02-18", expectedDelivery: "2025-03-05", executive: "Alice", amount: 12000 },
-    ],
-    salesExecutives: [
-      { id: 1, name: "Alice", bookings: 25, pending: 5, conversions: 20, rating: 4.8, branch: "Downtown" },
-      { id: 2, name: "Bob", bookings: 18, pending: 3, conversions: 15, rating: 4.5, branch: "Uptown" },
-      { id: 3, name: "Charlie", bookings: 15, pending: 2, conversions: 13, rating: 4.7, branch: "Downtown" },
-    ],
-    financial: {
-      totalRevenue: 2500000,
-      pendingPayments: 350000,
-      loans: 1200000,
-      taxes: 250000,
-      approvalsPending: [
-        { id: 1, customer: "John Doe", loan: 10000, tax: 1500, total: 15000 },
-        { id: 2, customer: "Sarah Williams", loan: 8000, tax: 1200, total: 12000 },
-      ]
-    },
-    rtoTasks: [
-      { id: 1, vehicle: "Honda City", status: "Pending", customer: "John Doe", days: 5 },
-      { id: 2, vehicle: "Toyota Corolla", status: "Completed", customer: "Jane Smith", days: 3 },
-      { id: 3, vehicle: "Maruti Swift", status: "In Progress", customer: "Sarah Williams", days: 2 },
-    ],
-    feedback: [
-      { id: 1, customer: "John Doe", rating: 5, comment: "Great service!", aspect: "Sales" },
-      { id: 2, customer: "Jane Smith", rating: 4, comment: "Good experience", aspect: "Delivery" },
-      { id: 3, customer: "Mike Johnson", rating: 5, comment: "Excellent support", aspect: "Service" },
-    ],
-    serviceBookings: [
-      { id: 1, customer: "John Doe", status: "Pending", date: "2025-03-01", type: "Regular Maintenance" },
-      { id: 2, customer: "Mike Johnson", status: "In Progress", date: "2025-02-28", type: "Repair" },
-    ],
-    notifications: [
-      { id: 1, message: "Booking confirmed for John Doe", time: "2025-02-20 10:00" },
-      { id: 2, message: "Delivery scheduled for Jane Smith", time: "2025-02-22 14:30" },
-    ],
-    deliveries: [
-      { id: 1, vehicle: "Toyota Corolla", customer: "Jane Smith", status: "On Time", expected: "2025-02-28", actual: "2025-02-27", image: "url1" },
-      { id: 2, vehicle: "Hyundai Creta", customer: "Mike Johnson", status: "Delayed", expected: "2025-02-25", actual: "2025-02-27", image: "url2" },
-    ],
-    employees: [
-      { id: 1, name: "Alice Smith", role: "Sales", branch: "Downtown", status: "Active", performance: 92 },
-      { id: 2, name: "Bob Johnson", role: "RTO", branch: "Uptown", status: "Active", performance: 85 },
-      { id: 3, name: "Charlie Brown", role: "Accounts", branch: "Downtown", status: "Active", performance: 88 },
-    ]
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        // Fetch analytics
+        const analyticsResponse = await axios.get('http://localhost:3000/admin/analytics', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setAnalytics(analyticsResponse.data.analytics);
 
-  const [dashboardData] = useState({
-    totalBookings: dummyData.bookings.length,
-    pendingDeliveries: dummyData.bookings.filter(b => b.status !== "Completed").length,
-    rtoPending: dummyData.rtoTasks.filter(t => t.status === "Pending").length,
-    totalRevenue: dummyData.financial.totalRevenue,
-    customerSatisfaction: dummyData.feedback.reduce((sum, f) => sum + f.rating, 0) / dummyData.feedback.length,
-    onTimeDeliveries: dummyData.deliveries.filter(d => d.status === "On Time").length,
-    serviceCompletionRate: (dummyData.serviceBookings.filter(s => s.status === "Completed").length / dummyData.serviceBookings.length) * 100 || 0
-  });
+        // Fetch customers
+        const customersResponse = await axios.get('http://localhost:3000/customers', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setCustomers(customersResponse.data.customers);
 
-  const salesChartData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr'],
-    datasets: [{
-      label: 'Sales Revenue',
-      data: [1200000, 1500000, 1800000, 2500000],
-      backgroundColor: 'rgba(99, 102, 241, 0.2)',
-      borderColor: 'rgba(99, 102, 241, 1)',
-      borderWidth: 2
-    }]
-  };
+        // Fetch sales executives
+        const salesResponse = await axios.get('http://localhost:3000/admin/employees', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setSalesExecutives(salesResponse.data.employees.filter(emp => emp.role === 'sales'));
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to fetch dashboard data',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const vehiclePieData = {
-    labels: dummyData.bookings.map(b => b.vehicle),
-    datasets: [{
-      data: dummyData.bookings.map(() => Math.floor(Math.random() * 10) + 1),
-      backgroundColor: ['#6366f1', '#14b8a6', '#f97316', '#ef4444']
-    }]
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    navigate('/login');
-  };
+    fetchData();
+  }, [toast]);
 
   const renderDashboard = () => (
     <MotionBox
@@ -216,112 +173,91 @@ const Admin = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={6}>
-        <Card
-          bg={cardBg}
-          borderRadius="xl"
-          boxShadow="lg"
-          _hover={{ transform: 'translateY(-5px)', boxShadow: 'xl' }}
-          transition="all 0.3s"
-        >
-          <CardBody>
-            <Stat>
-              <StatLabel color="gray.500">Total Bookings</StatLabel>
-              <StatNumber fontSize="2xl">{dashboardData.totalBookings}</StatNumber>
-              <StatHelpText>
-                <StatArrow type="increase" />
-                23.36%
-              </StatHelpText>
-            </Stat>
-          </CardBody>
-        </Card>
+      {isLoading ? (
+        <Flex justify="center" align="center" minH="200px">
+          <Spinner size="xl" color="blue.500" />
+        </Flex>
+      ) : analytics ? (
+        <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={6}>
+          <Card
+            bg={cardBg}
+            borderRadius="xl"
+            boxShadow="lg"
+            _hover={{ transform: 'translateY(-5px)', boxShadow: 'xl' }}
+            transition="all 0.3s"
+          >
+            <CardBody>
+              <Stat>
+                <StatLabel color="gray.500">Total Bookings</StatLabel>
+                <StatNumber fontSize="2xl">{analytics.total_bookings.current}</StatNumber>
+                <StatHelpText>
+                  <StatArrow type={analytics.total_bookings.percentage_change >= 0 ? 'increase' : 'decrease'} />
+                  {Math.abs(analytics.total_bookings.percentage_change).toFixed(1)}% from last month
+                </StatHelpText>
+              </Stat>
+            </CardBody>
+          </Card>
 
-        <Card
-          bg={cardBg}
-          borderRadius="xl"
-          boxShadow="lg"
-          _hover={{ transform: 'translateY(-5px)', boxShadow: 'xl' }}
-          transition="all 0.3s"
-        >
-          <CardBody>
-            <Stat>
-              <StatLabel color="gray.500">Pending Deliveries</StatLabel>
-              <StatNumber fontSize="2xl">{dashboardData.pendingDeliveries}</StatNumber>
-              <StatHelpText>
-                <StatArrow type="decrease" />
-                12.5%
-              </StatHelpText>
-            </Stat>
-          </CardBody>
-        </Card>
+          <Card
+            bg={cardBg}
+            borderRadius="xl"
+            boxShadow="lg"
+            _hover={{ transform: 'translateY(-5px)', boxShadow: 'xl' }}
+            transition="all 0.3s"
+          >
+            <CardBody>
+              <Stat>
+                <StatLabel color="gray.500">Pending Deliveries</StatLabel>
+                <StatNumber fontSize="2xl">{analytics.pending_deliveries.current}</StatNumber>
+                <StatHelpText>
+                  <StatArrow type={analytics.pending_deliveries.percentage_change >= 0 ? 'increase' : 'decrease'} />
+                  {Math.abs(analytics.pending_deliveries.percentage_change).toFixed(1)}% from last month
+                </StatHelpText>
+              </Stat>
+            </CardBody>
+          </Card>
 
-        <Card
-          bg={cardBg}
-          borderRadius="xl"
-          boxShadow="lg"
-          _hover={{ transform: 'translateY(-5px)', boxShadow: 'xl' }}
-          transition="all 0.3s"
-        >
-          <CardBody>
-            <Stat>
-              <StatLabel color="gray.500">RTO Pending</StatLabel>
-              <StatNumber fontSize="2xl">{dashboardData.rtoPending}</StatNumber>
-              <StatHelpText>
-                <StatArrow type="increase" />
-                8.2%
-              </StatHelpText>
-            </Stat>
-          </CardBody>
-        </Card>
+          <Card
+            bg={cardBg}
+            borderRadius="xl"
+            boxShadow="lg"
+            _hover={{ transform: 'translateY(-5px)', boxShadow: 'xl' }}
+            transition="all 0.3s"
+          >
+            <CardBody>
+              <Stat>
+                <StatLabel color="gray.500">RTO Pending</StatLabel>
+                <StatNumber fontSize="2xl">{analytics.rto_pending.current}</StatNumber>
+                <StatHelpText>
+                  <StatArrow type={analytics.rto_pending.percentage_change >= 0 ? 'increase' : 'decrease'} />
+                  {Math.abs(analytics.rto_pending.percentage_change).toFixed(1)}% from last month
+                </StatHelpText>
+              </Stat>
+            </CardBody>
+          </Card>
 
-        <Card
-          bg={cardBg}
-          borderRadius="xl"
-          boxShadow="lg"
-          _hover={{ transform: 'translateY(-5px)', boxShadow: 'xl' }}
-          transition="all 0.3s"
-        >
-          <CardBody>
-            <Stat>
-              <StatLabel color="gray.500">Total Revenue</StatLabel>
-              <StatNumber fontSize="2xl">${dashboardData.totalRevenue.toLocaleString()}</StatNumber>
-              <StatHelpText>
-                <StatArrow type="increase" />
-                15.8%
-              </StatHelpText>
-            </Stat>
-          </CardBody>
-        </Card>
-      </SimpleGrid>
-
-      <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6} mt={6}>
-        <Card
-          bg={cardBg}
-          borderRadius="xl"
-          boxShadow="lg"
-          height="400px"
-        >
-          <CardHeader>
-            <Heading size="md">Sales Trend</Heading>
-          </CardHeader>
-          <CardBody>
-            <Line data={salesChartData} options={{ responsive: true, maintainAspectRatio: false }} />
-          </CardBody>
-        </Card>
-        <Card
-          bg={cardBg}
-          borderRadius="xl"
-          boxShadow="lg"
-          height="400px"
-        >
-          <CardHeader>
-            <Heading size="md">Top Vehicles</Heading>
-          </CardHeader>
-          <CardBody>
-            <Pie data={vehiclePieData} options={{ responsive: true, maintainAspectRatio: false }} />
-          </CardBody>
-        </Card>
-      </SimpleGrid>
+          <Card
+            bg={cardBg}
+            borderRadius="xl"
+            boxShadow="lg"
+            _hover={{ transform: 'translateY(-5px)', boxShadow: 'xl' }}
+            transition="all 0.3s"
+          >
+            <CardBody>
+              <Stat>
+                <StatLabel color="gray.500">Total Revenue</StatLabel>
+                <StatNumber fontSize="2xl">₹{analytics.total_revenue.current.toLocaleString()}</StatNumber>
+                <StatHelpText>
+                  <StatArrow type={analytics.total_revenue.percentage_change >= 0 ? 'increase' : 'decrease'} />
+                  {Math.abs(analytics.total_revenue.percentage_change).toFixed(1)}% from last month
+                </StatHelpText>
+              </Stat>
+            </CardBody>
+          </Card>
+        </SimpleGrid>
+      ) : (
+        <Text>Failed to load analytics data</Text>
+      )}
 
       <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6} mt={6}>
         <Card
@@ -334,14 +270,14 @@ const Admin = () => {
           </CardHeader>
           <CardBody>
             <Stack spacing={4}>
-              {dummyData.bookings.slice(0, 5).map((booking) => (
-                <Flex key={booking.id} justify="space-between" align="center">
+              {customers.slice(0, 5).map((customer) => (
+                <Flex key={customer.id} justify="space-between" align="center">
                   <Box>
-                    <Text fontWeight="bold">{booking.customer}</Text>
-                    <Text fontSize="sm" color="gray.500">{booking.vehicle}</Text>
+                    <Text fontWeight="bold">{customer.customer_name}</Text>
+                    <Text fontSize="sm" color="gray.500">{customer.vehicle}</Text>
                   </Box>
-                  <Badge colorScheme={booking.status === "Completed" ? "green" : "orange"}>
-                    {booking.status}
+                  <Badge colorScheme={customer.rto_verified ? "green" : "orange"}>
+                    {customer.rto_verified ? "Verified" : "Pending"}
                   </Badge>
                 </Flex>
               ))}
@@ -359,18 +295,36 @@ const Admin = () => {
           </CardHeader>
           <CardBody>
             <Stack spacing={4}>
-              {dummyData.salesExecutives.map((executive) => (
-                <Flex key={executive.id} justify="space-between" align="center">
-                  <Box>
-                    <Text fontWeight="bold">{executive.name}</Text>
-                    <Text fontSize="sm" color="gray.500">{executive.branch}</Text>
-                  </Box>
-                  <HStack>
-                    <Badge colorScheme="green">{executive.rating}/5</Badge>
-                    <Text fontSize="sm" color="gray.500">{executive.bookings} bookings</Text>
-                  </HStack>
-                </Flex>
-              ))}
+              {salesExecutives
+                .map((executive) => {
+                  const executiveCustomers = customers.filter(c => c.created_by === executive.id);
+                  const verifiedCount = executiveCustomers.filter(c => c.rto_verified).length;
+                  const totalRevenue = executiveCustomers.reduce((sum, c) => sum + (c.amount_paid || 0), 0);
+                  
+                  return {
+                    ...executive,
+                    customerCount: executiveCustomers.length,
+                    verifiedCount,
+                    totalRevenue
+                  };
+                })
+                .sort((a, b) => b.customerCount - a.customerCount)
+                .slice(0, 5)
+                .map((executive) => (
+                  <Flex key={executive.id} justify="space-between" align="center" p={2} borderRadius="md" _hover={{ bg: 'gray.50' }}>
+                    <Box>
+                      <Text fontWeight="bold">{executive.name}</Text>
+                      <Text fontSize="sm" color="gray.500">{executive.customerCount} bookings</Text>
+                    </Box>
+                    <HStack spacing={4}>
+                      <Badge colorScheme="green">{executive.verifiedCount} verified</Badge>
+                      <Text fontSize="sm" color="gray.500">₹{executive.totalRevenue.toLocaleString()}</Text>
+                    </HStack>
+                  </Flex>
+                ))}
+              {salesExecutives.length === 0 && (
+                <Text color="gray.500" textAlign="center">No sales executives found</Text>
+              )}
             </Stack>
           </CardBody>
         </Card>
@@ -385,21 +339,30 @@ const Admin = () => {
           </CardHeader>
           <CardBody>
             <Stack spacing={4}>
-              {dummyData.financial.approvalsPending.map((approval) => (
-                <Flex key={approval.id} justify="space-between" align="center">
-                  <Box>
-                    <Text fontWeight="bold">{approval.customer}</Text>
-                    <Text fontSize="sm" color="gray.500">Total: ${approval.total}</Text>
-                  </Box>
-                  <Button size="sm" colorScheme="blue">Review</Button>
-                </Flex>
-              ))}
+              {customers
+                .filter(c => !c.rto_verified && c.sales_verified && c.accounts_verified)
+                .slice(0, 5)
+                .map((customer) => (
+                  <Flex key={customer.id} justify="space-between" align="center">
+                    <Box>
+                      <Text fontWeight="bold">{customer.customer_name}</Text>
+                      <Text fontSize="sm" color="gray.500">₹{customer.total_price?.toLocaleString()}</Text>
+                    </Box>
+                    <Button size="sm" colorScheme="blue">Review</Button>
+                  </Flex>
+                ))}
             </Stack>
           </CardBody>
         </Card>
       </SimpleGrid>
     </MotionBox>
   );
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    navigate('/login');
+  };
 
   return (
     <Box minH="100vh" bg={bgGradient} position="relative">
