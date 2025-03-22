@@ -168,6 +168,77 @@ const CustomerCard = ({ customer, onAction, isVerified, onSelect, onDownloadChas
   );
 };
 
+// Add this component before the RtoDashboard component
+const ImageViewer = ({ src, alt, onClose }) => {
+  const scale = useMotionValue(1);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  const handleWheel = (e) => {
+    e.preventDefault();
+    const delta = e.deltaY * -0.01;
+    const newScale = Math.min(Math.max(scale.get() + delta, 0.5), 3);
+    scale.set(newScale);
+  };
+
+  return (
+    <Modal isOpen={true} onClose={onClose} size="full" motionPreset="scale">
+      <ModalOverlay bg="rgba(0, 0, 0, 0.8)" backdropFilter="blur(10px)" />
+      <ModalContent
+        bg="transparent"
+        boxShadow="none"
+        overflow="hidden"
+        h="100vh"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+      >
+        <motion.div
+          style={{
+            scale,
+            x,
+            y,
+            cursor: 'grab',
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          whileTap={{ cursor: 'grabbing' }}
+          drag
+          dragMomentum={false}
+          dragElastic={0.1}
+          onWheel={handleWheel}
+        >
+          <Image
+            src={src}
+            alt={alt}
+            objectFit="contain"
+            maxH="90vh"
+            maxW="90vw"
+            borderRadius="lg"
+            boxShadow="0 0 50px rgba(0,0,0,0.5)"
+            fallbackSrc="https://via.placeholder.com/300?text=Image+Not+Available"
+          />
+        </motion.div>
+        <IconButton
+          icon={<CloseIcon />}
+          position="absolute"
+          top={4}
+          right={4}
+          color="white"
+          bg="rgba(0,0,0,0.5)"
+          _hover={{ bg: 'rgba(0,0,0,0.8)' }}
+          onClick={onClose}
+          size="lg"
+          borderRadius="full"
+        />
+      </ModalContent>
+    </Modal>
+  );
+};
+
 const RtoDashboard = () => {
   const { isOpen: isMenuOpen, onOpen: onMenuOpen, onClose: onMenuClose } = useDisclosure();
   const { isOpen: isRtoVerifiedOpen, onOpen: onRtoVerifiedOpen, onClose: onRtoVerifiedClose } = useDisclosure();
@@ -455,7 +526,6 @@ const RtoDashboard = () => {
 
   const handleImageClick = (imageUrl) => {
     setSelectedImage(imageUrl);
-    onImageModalOpen();
   };
 
   const handleDownloadUserData = () => {
@@ -607,83 +677,6 @@ const RtoDashboard = () => {
   };
 
   // Add new components for the customer details view
-  const ImageViewer = ({ src, alt, onClose }) => {
-    const scale = useMotionValue(1);
-    const rotate = useMotionValue(0);
-    const rotateY = useTransform(rotate, [-100, 100], [-30, 30]);
-    const rotateX = useTransform(rotate, [-100, 100], [30, -30]);
-
-    return (
-      <Modal isOpen={true} onClose={onClose} size="full" motionPreset="scale">
-        <ModalOverlay bg="rgba(0, 0, 0, 0.8)" backdropFilter="blur(10px)" />
-        <ModalContent
-          bg="transparent"
-          boxShadow="none"
-          overflow="hidden"
-          h="100vh"
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <motion.div
-            style={{
-              scale,
-              rotateY,
-              rotateX,
-              cursor: 'grab',
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            whileTap={{ cursor: 'grabbing' }}
-            drag
-            dragConstraints={{
-              top: -100,
-              left: -100,
-              right: 100,
-              bottom: 100,
-            }}
-            dragElastic={0.1}
-            onDragEnd={(_, info) => {
-              rotate.set(info.offset.x);
-            }}
-            onWheel={(e) => {
-              e.preventDefault();
-              const delta = e.deltaY * -0.01;
-              const newScale = Math.min(Math.max(scale.get() + delta, 0.5), 3);
-              scale.set(newScale);
-            }}
-          >
-            <Image
-              src={src}
-              alt={alt}
-              objectFit="contain"
-              maxH="90vh"
-              maxW="90vw"
-              borderRadius="lg"
-              boxShadow="0 0 50px rgba(0,0,0,0.5)"
-              fallbackSrc="https://via.placeholder.com/300?text=Image+Not+Available"
-            />
-          </motion.div>
-          <IconButton
-            icon={<CloseIcon />}
-            position="absolute"
-            top={4}
-            right={4}
-            color="white"
-            bg="rgba(0,0,0,0.5)"
-            _hover={{ bg: 'rgba(0,0,0,0.8)' }}
-            onClick={onClose}
-            size="lg"
-            borderRadius="full"
-          />
-        </ModalContent>
-      </Modal>
-    );
-  };
-
   const DetailCard = ({ title, children, icon }) => {
     const [isExpanded, setIsExpanded] = useState(true);
     const cardBg = useColorModeValue('rgba(255, 255, 255, 0.8)', 'rgba(26, 32, 44, 0.8)');
@@ -1312,15 +1305,6 @@ const RtoDashboard = () => {
                 </Flex>
               </VStack>
             </Box>
-
-            {/* Image Viewer Modal */}
-            {selectedImage && (
-              <ImageViewer
-                src={selectedImage}
-                alt="Selected Document"
-                onClose={() => setSelectedImage(null)}
-              />
-            )}
           </Flex>
         ) : (
           // Customer List (Default View)
@@ -1390,7 +1374,7 @@ const RtoDashboard = () => {
                         <Box
                           textAlign="center"
                           py={16}
-                  bg={cardBg}
+                          bg={cardBg}
                           borderRadius="2xl"
                           boxShadow="xl"
                           position="relative"
@@ -1413,7 +1397,7 @@ const RtoDashboard = () => {
                             <Text fontSize="md" color="gray.500">
                               Try adjusting your search or filters
                             </Text>
-                    </VStack>
+                          </VStack>
                         </Box>
                       ) : (
                         filteredCustomers(verifiedCustomers, searchQuery).map((customer) => (
@@ -1465,8 +1449,8 @@ const RtoDashboard = () => {
                             <Text fontSize="md" color="gray.500">
                               Try adjusting your search or filters
                             </Text>
-                    </VStack>
-                </Box>
+                          </VStack>
+                        </Box>
                       ) : (
                         filteredCustomers(pendingCustomers, searchQuery).map((customer) => (
                           <GridItem key={customer.id}>
@@ -1552,32 +1536,14 @@ const RtoDashboard = () => {
         </ModalContent>
       </Modal>
 
-      {/* Image Preview Modal */}
-      <Modal isOpen={isImageModalOpen} onClose={onImageModalClose} size="xl">
-        <ModalOverlay bg="rgba(0, 0, 0, 0.6)" />
-        <ModalContent
-          w="60%"
-          maxW="60%"
-          h="auto"
-          bg={cardBg}
-          borderRadius="2xl"
-          boxShadow="2xl"
-          overflow="hidden"
-        >
-          <ModalCloseButton color={textColor} zIndex={10} />
-          <ModalBody p={0}>
-            <Image
-              src={selectedImage}
-              alt="Selected Image"
-              objectFit="contain"
-              w="100%"
-              h="auto"
-              borderRadius="2xl"
-              fallbackSrc="https://via.placeholder.com/300?text=Image+Not+Available"
-            />
-          </ModalBody>
-        </ModalContent>
-      </Modal>
+      {/* Replace the Image Preview Modal with the ImageViewer component */}
+      {selectedImage && (
+        <ImageViewer
+          src={selectedImage}
+          alt="Selected Document"
+          onClose={() => setSelectedImage(null)}
+        />
+      )}
 
       {/* Toast Container */}
       <ToastContainer position="top-center" autoClose={2000} style={{ zIndex: 1500 }} />
