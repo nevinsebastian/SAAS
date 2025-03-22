@@ -966,32 +966,132 @@ const RtoDashboard = () => {
                 >
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Full Name</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.fullName}</Text>
+                      <Text fontSize="sm" color="gray.500">Customer Name</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.customer_name}</Text>
                     </Box>
                     <Box>
                       <Text fontSize="sm" color="gray.500">Address</Text>
                       <Text fontSize="md" color={textColor}>{customerData.address}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Father's Name</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.fathersName}</Text>
+                      <Text fontSize="sm" color="gray.500">Email</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.email}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">PAN Number</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.panNumber}</Text>
+                      <Text fontSize="sm" color="gray.500">Phone Number</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.phone_number}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Aadhar Number</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.aadharNumber}</Text>
+                      <Text fontSize="sm" color="gray.500">Mobile 1</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.mobile_1}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">Ward</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.ward}</Text>
+                      <Text fontSize="sm" color="gray.500">Mobile 2</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.mobile_2}</Text>
+                    </Box>
+                  </SimpleGrid>
+                </DetailCard>
+
+                {/* Nominee Information */}
+                <DetailCard
+                  title="Nominee Information"
+                  icon={<AttachmentIcon />}
+                >
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Nominee Name</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.nominee}</Text>
                     </Box>
                     <Box>
-                      <Text fontSize="sm" color="gray.500">RTO Office</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.rtoOffice}</Text>
+                      <Text fontSize="sm" color="gray.500">Nominee Relation</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.nominee_relation}</Text>
+                    </Box>
+                  </SimpleGrid>
+                </DetailCard>
+
+                {/* Vehicle Information */}
+                <DetailCard
+                  title="Vehicle Information"
+                  icon={<SettingsIcon />}
+                >
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Vehicle</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.vehicle}</Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Variant</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.variant}</Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Color</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.color}</Text>
+                    </Box>
+                  </SimpleGrid>
+                </DetailCard>
+
+                {/* Payment Information */}
+                <DetailCard
+                  title="Payment Information"
+                  icon={<RepeatIcon />}
+                >
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Payment Mode</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.payment_mode}</Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Finance Company</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.finance_company}</Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Finance Amount</Text>
+                      <Text fontSize="md" color={textColor}>₹{customerData.finance_amount}</Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">EMI</Text>
+                      <Text fontSize="md" color={textColor}>₹{customerData.emi}</Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Tenure (months)</Text>
+                      <Text fontSize="md" color={textColor}>{customerData.tenure}</Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Amount Paid</Text>
+                      <Text fontSize="md" color={textColor}>₹{customerData.amount_paid}</Text>
+                    </Box>
+                  </SimpleGrid>
+                </DetailCard>
+
+                {/* Pricing Details */}
+                <DetailCard
+                  title="Pricing Details"
+                  icon={<RepeatIcon />}
+                >
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Ex-Showroom</Text>
+                      <Text fontSize="md" color={textColor}>₹{customerData.ex_showroom}</Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Tax</Text>
+                      <Text fontSize="md" color={textColor}>₹{customerData.tax}</Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Insurance</Text>
+                      <Text fontSize="md" color={textColor}>₹{customerData.insurance}</Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Booking Fee</Text>
+                      <Text fontSize="md" color={textColor}>₹{customerData.booking_fee}</Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Accessories</Text>
+                      <Text fontSize="md" color={textColor}>₹{customerData.accessories}</Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500">Total Price</Text>
+                      <Text fontSize="md" color={textColor}>₹{customerData.total_price}</Text>
                     </Box>
                   </SimpleGrid>
                 </DetailCard>
@@ -1005,12 +1105,12 @@ const RtoDashboard = () => {
                     <Box>
                       <Text fontSize="sm" color="gray.500" mb={2}>Passport Photo</Text>
                       <Image
-                        src={customerData.photo}
-                        alt="Customer Photo"
+                        src={`data:image/jpeg;base64,${customerData.passport_photo_base64}`}
+                        alt="Passport Photo"
                         objectFit="cover"
                         borderRadius="lg"
                         cursor="pointer"
-                        onClick={() => handleImageClick(customerData.photo)}
+                        onClick={() => handleImageClick(`data:image/jpeg;base64,${customerData.passport_photo_base64}`)}
                         fallbackSrc="https://via.placeholder.com/150?text=No+Photo"
                         _hover={{ opacity: 0.8 }}
                         transition="all 0.2s"
@@ -1019,12 +1119,12 @@ const RtoDashboard = () => {
                     <Box>
                       <Text fontSize="sm" color="gray.500" mb={2}>Aadhar Front</Text>
                       <Image
-                        src={customerData.aadharFront}
+                        src={`data:image/jpeg;base64,${customerData.aadhar_front_base64}`}
                         alt="Aadhar Front"
                         objectFit="cover"
                         borderRadius="lg"
                         cursor="pointer"
-                        onClick={() => handleImageClick(customerData.aadharFront)}
+                        onClick={() => handleImageClick(`data:image/jpeg;base64,${customerData.aadhar_front_base64}`)}
                         fallbackSrc="https://via.placeholder.com/200x150?text=No+Aadhar+Front"
                         _hover={{ opacity: 0.8 }}
                         transition="all 0.2s"
@@ -1033,108 +1133,16 @@ const RtoDashboard = () => {
                     <Box>
                       <Text fontSize="sm" color="gray.500" mb={2}>Aadhar Back</Text>
                       <Image
-                        src={customerData.aadharBack}
+                        src={`data:image/jpeg;base64,${customerData.aadhar_back_base64}`}
                         alt="Aadhar Back"
                         objectFit="cover"
                         borderRadius="lg"
                         cursor="pointer"
-                        onClick={() => handleImageClick(customerData.aadharBack)}
+                        onClick={() => handleImageClick(`data:image/jpeg;base64,${customerData.aadhar_back_base64}`)}
                         fallbackSrc="https://via.placeholder.com/200x150?text=No+Aadhar+Back"
                         _hover={{ opacity: 0.8 }}
                         transition="all 0.2s"
                       />
-                    </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500" mb={2}>Signature</Text>
-                      <Image
-                        src={customerData.signature}
-                        alt="Signature"
-                        objectFit="cover"
-                        borderRadius="lg"
-                        cursor="pointer"
-                        onClick={() => handleImageClick(customerData.signature)}
-                        fallbackSrc="https://via.placeholder.com/150x50?text=No+Signature"
-                        _hover={{ opacity: 0.8 }}
-                        transition="all 0.2s"
-                      />
-                    </Box>
-                  </SimpleGrid>
-                </DetailCard>
-
-                {/* Vehicle Details */}
-                <DetailCard
-                  title="Vehicle Details"
-                  icon={<SettingsIcon />}
-                >
-                  <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500">Vehicle</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.vehicle}</Text>
-                    </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500">Variant</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.variant}</Text>
-                    </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500">Color</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.color}</Text>
-                    </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500">Chassis Number</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.chassisNumber}</Text>
-                    </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500">Engine Number</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.engineNumber}</Text>
-                    </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500">On-Road</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.onRoad}</Text>
-                    </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500">Insurance</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.insurance}</Text>
-                    </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500">Booking Charge</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.bookingCharge}</Text>
-                    </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500">Delivery Charge</Text>
-                      <Text fontSize="md" color={textColor}>{customerData.deliveryCharge}</Text>
-                    </Box>
-                  </SimpleGrid>
-                </DetailCard>
-
-                {/* Pricing Details */}
-                <DetailCard
-                  title="Pricing Details"
-                  icon={<RepeatIcon />}
-                >
-                  <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500">Ex-Showroom</Text>
-                      <Text fontSize="md" color={textColor}>₹{customerData.exShowroom}</Text>
-                    </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500">Tax</Text>
-                      <Text fontSize="md" color={textColor}>₹{customerData.tax}</Text>
-                    </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500">On-Road</Text>
-                      <Text fontSize="md" color={textColor}>₹{customerData.onRoad}</Text>
-                    </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500">Insurance</Text>
-                      <Text fontSize="md" color={textColor}>₹{customerData.insurance}</Text>
-                    </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500">Booking Charge</Text>
-                      <Text fontSize="md" color={textColor}>₹{customerData.bookingCharge}</Text>
-                    </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500">Delivery Charge</Text>
-                      <Text fontSize="md" color={textColor}>₹{customerData.deliveryCharge}</Text>
                     </Box>
                   </SimpleGrid>
                 </DetailCard>
