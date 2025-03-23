@@ -42,6 +42,7 @@ import {
 } from '@chakra-ui/react';
 import { AddIcon, CopyIcon, HamburgerIcon, SearchIcon, SettingsIcon, BellIcon, ChatIcon, ArrowBackIcon, CheckIcon, ExternalLinkIcon } from '@chakra-ui/icons';
 import { FaWhatsapp } from 'react-icons/fa';
+import { MdPersonAddAlt1 } from "react-icons/md";
 import Analytics from '../components/Analytics';
 import Notifications from '../components/Notifications';
 import Messages from '../components/Messages';
@@ -51,6 +52,12 @@ const checkmarkAnimation = keyframes`
   0% { transform: scale(0); }
   50% { transform: scale(1.2); }
   100% { transform: scale(1); }
+`;
+
+const glowAnimation = keyframes`
+  0% { box-shadow: 0 0 3px rgba(99, 102, 241, 0.4), 0 0 6px rgba(99, 102, 241, 0.3), 0 0 9px rgba(99, 102, 241, 0.2); }
+  50% { box-shadow: 0 0 6px rgba(99, 102, 241, 0.5), 0 0 12px rgba(99, 102, 241, 0.4), 0 0 18px rgba(99, 102, 241, 0.3); }
+  100% { box-shadow: 0 0 3px rgba(99, 102, 241, 0.4), 0 0 6px rgba(99, 102, 241, 0.3), 0 0 9px rgba(99, 102, 241, 0.2); }
 `;
 
 const SuccessAnimation = () => {
@@ -98,7 +105,9 @@ const SalesExecutive = () => {
   const [generatedLink, setGeneratedLink] = useState('');
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [currentCustomerPage, setCurrentCustomerPage] = useState(1);
   const notificationsPerPage = 6;
+  const customersPerPage = 6;
 
   const bgGradient = useColorModeValue('gray.50', 'gray.900');
   const cardBg = useColorModeValue('white', 'gray.800');
@@ -230,6 +239,7 @@ const SalesExecutive = () => {
         c.vehicle.toLowerCase().includes(searchQuery.toLowerCase())
       )
     );
+    setCurrentCustomerPage(1); // Reset to first page when filter changes
   };
 
   const handleSearch = (e) => {
@@ -241,6 +251,7 @@ const SalesExecutive = () => {
       c.vehicle.toLowerCase().includes(query.toLowerCase())
     );
     setFilteredCustomers(filtered);
+    setCurrentCustomerPage(1); // Reset to first page when search changes
   };
 
   const handleInputChange = (e) => {
@@ -419,6 +430,15 @@ const SalesExecutive = () => {
     setCurrentPage(page);
   };
 
+  const paginatedCustomers = filteredCustomers.slice(
+    (currentCustomerPage - 1) * customersPerPage,
+    currentCustomerPage * customersPerPage
+  );
+
+  const handleCustomerPageChange = (page) => {
+    setCurrentCustomerPage(page);
+  };
+
   return (
     <Box minH="100vh" bg={bgGradient} p={{ base: 2, md: 4 }} transition="filter 0.3s" filter={isDrawerOpen || isAnalyticsOpen || isNotificationsOpen || isMessagesOpen ? 'blur(4px)' : 'none'} position="relative">
       {/* Header */}
@@ -532,8 +552,8 @@ const SalesExecutive = () => {
           </HStack>
         </VStack>
 
-        <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={3} mb={20}>
-          {filteredCustomers.map(customer => (
+        <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={3} mb={{ base: "80px", md: 4 }}>
+          {paginatedCustomers.map(customer => (
             <Box key={customer.id} bg={cardBg} borderRadius="lg" p={3} boxShadow="sm" _hover={{ boxShadow: 'md', transform: 'translateY(-2px)' }} transition="all 0.2s" cursor="pointer" onClick={() => handleCustomerClick(customer.id)}>
               <Flex justify="space-between" align="center" mb={2}>
                 <Text fontWeight="medium" color={textColor} isTruncated>{customer.name}</Text>
@@ -561,9 +581,145 @@ const SalesExecutive = () => {
           ))}
         </SimpleGrid>
 
-        <Button leftIcon={<AddIcon />} colorScheme="purple" size="lg" borderRadius="full" position={{ base: 'fixed', md: 'static' }} bottom={{ base: 4, md: 'auto' }} right={{ base: 4, md: 'auto' }} boxShadow="lg" onClick={onDrawerOpen} zIndex={20} w={{ base: 'auto', md: 'full' }} px={{ base: 6, md: 4 }}>
-          <Text display={{ base: 'none', md: 'block' }}>New Customer</Text>
-        </Button>
+        {/* New Customer Button */}
+        <Box 
+          position={{ base: "fixed", md: "fixed" }}
+          bottom={{ base: "80px", md: "40px" }}
+          right={{ base: "20px", md: "40px" }}
+          zIndex={20}
+        >
+          <Button 
+            colorScheme="purple" 
+            size="lg" 
+            borderRadius="full" 
+            boxShadow="lg" 
+            onClick={onDrawerOpen} 
+            w="56px"
+            h="56px"
+            p={0}
+            bg="rgba(20, 30, 121, 0.6)"
+            backdropFilter="blur(8px)"
+            border="1px solid"
+            borderColor="whiteAlpha.300"
+            animation={`${glowAnimation} 4s infinite`}
+            _hover={{ 
+              transform: 'scale(1.05)',
+              boxShadow: '2xl',
+              bg: "rgba(20, 30, 121, 0.7)",
+              opacity: 0.9,
+              borderColor: "whiteAlpha.400",
+              animation: `${glowAnimation} 1s infinite`
+            }}
+            transition="all 0.2s"
+            position="relative"
+            overflow="hidden"
+          >
+            <Box
+              position="absolute"
+              top={0}
+              left={0}
+              right={0}
+              bottom={0}
+              bg="whiteAlpha.100"
+              backdropFilter="blur(4px)"
+              borderRadius="full"
+            />
+            <Box
+              position="absolute"
+              top="50%"
+              left="50%"
+              transform="translate(-50%, -50%)"
+              zIndex={1}
+              color="white"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <MdPersonAddAlt1 size={28} />
+            </Box>
+          </Button>
+        </Box>
+
+        {/* Customer List Pagination */}
+        {filteredCustomers.length > customersPerPage && (
+          <Box 
+            position={{ base: "fixed", md: "static" }}
+            bottom={{ base: 0, md: "auto" }}
+            left={0}
+            right={0}
+            p={4}
+            bg="whiteAlpha.100"
+            backdropFilter="blur(10px)"
+            borderTop={{ base: "1px solid", md: "none" }}
+            borderColor="whiteAlpha.300"
+            boxShadow={{ base: "0 -4px 6px -1px rgba(0, 0, 0, 0.1)", md: "none" }}
+            zIndex={2}
+            mb={{ base: 0, md: 4 }}
+          >
+            <Flex justify="center">
+              <HStack spacing={2}>
+                <Button
+                  size="sm"
+                  onClick={() => handleCustomerPageChange(currentCustomerPage - 1)}
+                  isDisabled={currentCustomerPage === 1}
+                  colorScheme="purple"
+                  variant="outline"
+                  borderRadius="full"
+                  px={4}
+                  bg="whiteAlpha.200"
+                  backdropFilter="blur(10px)"
+                  borderColor="whiteAlpha.300"
+                  _hover={{ 
+                    bg: "whiteAlpha.300",
+                    borderColor: "whiteAlpha.400"
+                  }}
+                >
+                  Previous
+                </Button>
+                {[...Array(Math.ceil(filteredCustomers.length / customersPerPage))].map((_, i) => (
+                  <Button
+                    key={i + 1}
+                    size="sm"
+                    onClick={() => handleCustomerPageChange(i + 1)}
+                    colorScheme="purple"
+                    variant={currentCustomerPage === i + 1 ? "solid" : "outline"}
+                    borderRadius="full"
+                    minW="8"
+                    h="8"
+                    p={0}
+                    bg={currentCustomerPage === i + 1 ? "purple.500" : "whiteAlpha.200"}
+                    backdropFilter="blur(10px)"
+                    borderColor="whiteAlpha.300"
+                    _hover={{ 
+                      bg: currentCustomerPage === i + 1 ? "purple.600" : "whiteAlpha.300",
+                      borderColor: "whiteAlpha.400"
+                    }}
+                  >
+                    {i + 1}
+                  </Button>
+                ))}
+                <Button
+                  size="sm"
+                  onClick={() => handleCustomerPageChange(currentCustomerPage + 1)}
+                  isDisabled={currentCustomerPage === Math.ceil(filteredCustomers.length / customersPerPage)}
+                  colorScheme="purple"
+                  variant="outline"
+                  borderRadius="full"
+                  px={4}
+                  bg="whiteAlpha.200"
+                  backdropFilter="blur(10px)"
+                  borderColor="whiteAlpha.300"
+                  _hover={{ 
+                    bg: "whiteAlpha.300",
+                    borderColor: "whiteAlpha.400"
+                  }}
+                >
+                  Next
+                </Button>
+              </HStack>
+            </Flex>
+          </Box>
+        )}
       </Box>
 
       {/* Sidebar Drawer */}
@@ -629,17 +785,20 @@ const SalesExecutive = () => {
                 autoComplete="off"
                 autoFocus
                 size="lg"
-                bg="white"
+                bg="purple.50"
                 border="1px solid"
-                borderColor="gray.200"
+                borderColor="purple.200"
                 _hover={{ 
-                  bg: "white",
-                  borderColor: "purple.200"
+                  bg: "purple.100",
+                  borderColor: "purple.300"
                 }}
                 _focus={{ 
-                  bg: "white",
-                  borderColor: "purple.500"
+                  bg: "blue.900",
+                  borderColor: "purple.500",
+                  boxShadow: "0 0 0 1px var(--chakra-colors-purple-500)"
                 }}
+                _placeholder={{ color: "purple.300" }}
+                color="whiteAlpha.900"
                 borderRadius="xl"
                 fontSize="md"
                 h="56px"
