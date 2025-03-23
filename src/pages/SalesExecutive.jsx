@@ -97,12 +97,18 @@ const SalesExecutive = () => {
   });
   const [generatedLink, setGeneratedLink] = useState('');
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const notificationsPerPage = 6;
 
   const bgGradient = useColorModeValue('gray.50', 'gray.900');
   const cardBg = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.700', 'gray.200');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const hoverBg = useColorModeValue('gray.100', 'gray.700');
+  const accentGradient = useColorModeValue(
+    'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+    'linear-gradient(135deg, #818cf8 0%, #a78bfa 100%)'
+  );
 
   const user = JSON.parse(localStorage.getItem('user')) || { username: 'sales_user' };
 
@@ -404,6 +410,15 @@ const SalesExecutive = () => {
 
   const isHomeActive = !isAnalyticsOpen && !isNotificationsOpen && !isMessagesOpen;
 
+  const paginatedNotifications = notifications.slice(
+    (currentPage - 1) * notificationsPerPage,
+    currentPage * notificationsPerPage
+  );
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
   return (
     <Box minH="100vh" bg={bgGradient} p={{ base: 2, md: 4 }} transition="filter 0.3s" filter={isDrawerOpen || isAnalyticsOpen || isNotificationsOpen || isMessagesOpen ? 'blur(4px)' : 'none'} position="relative">
       {/* Header */}
@@ -449,7 +464,7 @@ const SalesExecutive = () => {
               borderRadius="xl"
             >
               {notifications.length > 0 ? (
-                notifications.map(notification => (
+                notifications.slice(0, 3).map(notification => (
                   <MenuItem
                     key={notification.id}
                     bg={notification.read_at ? cardBg : 'blue.50'}
@@ -471,6 +486,22 @@ const SalesExecutive = () => {
                 ))
               ) : (
                 <MenuItem bg={cardBg}>No notifications</MenuItem>
+              )}
+              {notifications.length > 3 && (
+                <MenuItem
+                  bg={cardBg}
+                  onClick={() => {
+                    onNotificationsOpen();
+                    onMenuClose();
+                  }}
+                  _hover={{ 
+                    bg: hoverBg,
+                    transform: 'translateX(5px)'
+                  }}
+                  transition="all 0.2s"
+                >
+                  <Text color="purple.500" fontWeight="medium">View all notifications →</Text>
+                </MenuItem>
               )}
             </MenuList>
           </Menu>
@@ -598,13 +629,17 @@ const SalesExecutive = () => {
                 autoComplete="off"
                 autoFocus
                 size="lg"
-                bg="purple.500"
-                _hover={{ bg: "white" }}
-                _focus={{ bg: "white" }}
+                bg="white"
                 border="1px solid"
                 borderColor="gray.200"
-                _hover={{ borderColor: "purple.200" }}
-                _focus={{ borderColor: "purple.500" }}
+                _hover={{ 
+                  bg: "white",
+                  borderColor: "purple.200"
+                }}
+                _focus={{ 
+                  bg: "white",
+                  borderColor: "purple.500"
+                }}
                 borderRadius="xl"
                 fontSize="md"
                 h="56px"
@@ -715,8 +750,191 @@ const SalesExecutive = () => {
       </Drawer>
       <Drawer isOpen={isNotificationsOpen} placement="right" onClose={onNotificationsClose} size="full">
         <DrawerOverlay />
-        <DrawerContent>
-          <Notifications onClose={onNotificationsClose} user={{ username: 'Sales User' }} onMenuOpen={onMenuOpen} />
+        <DrawerContent bg={bgGradient}>
+          <Box p={4} h="100%" display="flex" flexDirection="column">
+            {/* Header */}
+            <Flex 
+              justify="space-between" 
+              align="center" 
+              mb={6} 
+              position="sticky" 
+              top={0} 
+              zIndex={2}
+              bg={bgGradient}
+              py={2}
+            >
+              <HStack spacing={3}>
+                <IconButton
+                  icon={<ArrowBackIcon />}
+                  onClick={onNotificationsClose}
+                  variant="ghost"
+                  aria-label="Close notifications"
+                  size="lg"
+                  fontSize="xl"
+                  color="purple.500"
+                  _hover={{ bg: 'purple.50' }}
+                />
+                <Heading 
+                  size="lg" 
+                  bgGradient={accentGradient} 
+                  bgClip="text"
+                  fontSize={{ base: "xl", md: "2xl" }}
+                >
+                  Notifications
+                </Heading>
+              </HStack>
+              <Badge 
+                colorScheme="purple" 
+                variant="subtle"
+                px={3}
+                py={1}
+                borderRadius="full"
+                fontSize="sm"
+              >
+                {unreadCount} unread
+              </Badge>
+            </Flex>
+            
+            {/* Notifications List with Bottom Padding for Pagination */}
+            <Box 
+              flex="1" 
+              overflowY="auto" 
+              pb={{ base: "120px", md: "40px" }} // Increased bottom padding
+              css={{
+                '&::-webkit-scrollbar': {
+                  width: '4px',
+                },
+                '&::-webkit-scrollbar-track': {
+                  width: '6px',
+                  background: 'transparent',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  background: 'rgba(159, 122, 234, 0.2)',
+                  borderRadius: '24px',
+                },
+              }}
+            >
+              <VStack spacing={3} align="stretch" mb={{ base: 4, md: 2 }}> {/* Added margin bottom to VStack */}
+                {paginatedNotifications.map(notification => (
+                  <Box
+                    key={notification.id}
+                    p={4}
+                    bg={notification.read_at ? cardBg : 'purple.50'}
+                    borderRadius="xl"
+                    border="1px solid"
+                    borderColor={notification.read_at ? borderColor : 'purple.200'}
+                    _hover={{ 
+                      transform: 'translateY(-2px)',
+                      boxShadow: 'lg',
+                      borderColor: 'purple.300'
+                    }}
+                    transition="all 0.2s"
+                    cursor="pointer"
+                    onClick={() => markNotificationAsRead(notification.id)}
+                    position="relative"
+                  >
+                    {!notification.read_at && (
+                      <Box
+                        position="absolute"
+                        top={2}
+                        right={2}
+                        w={2}
+                        h={2}
+                        bg="purple.500"
+                        borderRadius="full"
+                        boxShadow="0 0 0 4px rgba(159, 122, 234, 0.2)"
+                      />
+                    )}
+                    <VStack align="start" spacing={2}>
+                      <Text 
+                        fontWeight="bold" 
+                        fontSize={{ base: "md", md: "lg" }}
+                        color={notification.read_at ? textColor : "purple.700"}
+                      >
+                        {notification.title}
+                      </Text>
+                      <Text 
+                        color="gray.600" 
+                        fontSize={{ base: "sm", md: "md" }}
+                        lineHeight="1.5"
+                      >
+                        {notification.message}
+                      </Text>
+                      <HStack 
+                        spacing={2} 
+                        fontSize="xs" 
+                        color="gray.500"
+                        w="full"
+                        justify="space-between"
+                        align="center"
+                      >
+                        <Text>From: {notification.sender_name}</Text>
+                        <Text>{new Date(notification.created_at).toLocaleString()}</Text>
+                      </HStack>
+                    </VStack>
+                  </Box>
+                ))}
+              </VStack>
+            </Box>
+
+            {/* Pagination - Fixed at bottom */}
+            {notifications.length > notificationsPerPage && (
+              <Box 
+                position="fixed"
+                bottom={0}
+                left={0}
+                right={0}
+                bg={cardBg}
+                p={4}
+                boxShadow="0 -4px 6px -1px rgba(0, 0, 0, 0.1)"
+                zIndex={2}
+                borderTop="1px solid"
+                borderColor={borderColor}
+              >
+                <Flex justify="center">
+                  <HStack spacing={2}>
+                    <Button
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      isDisabled={currentPage === 1}
+                      colorScheme="purple"
+                      variant="outline"
+                      borderRadius="full"
+                      px={4}
+                    >
+                      Previous
+                    </Button>
+                    {[...Array(Math.ceil(notifications.length / notificationsPerPage))].map((_, i) => (
+                      <Button
+                        key={i + 1}
+                        size="sm"
+                        onClick={() => handlePageChange(i + 1)}
+                        colorScheme="purple"
+                        variant={currentPage === i + 1 ? "solid" : "outline"}
+                        borderRadius="full"
+                        minW="8"
+                        h="8"
+                        p={0}
+                      >
+                        {i + 1}
+                      </Button>
+                    ))}
+                    <Button
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      isDisabled={currentPage === Math.ceil(notifications.length / notificationsPerPage)}
+                      colorScheme="purple"
+                      variant="outline"
+                      borderRadius="full"
+                      px={4}
+                    >
+                      Next
+                    </Button>
+                  </HStack>
+                </Flex>
+              </Box>
+            )}
+          </Box>
         </DrawerContent>
       </Drawer>
       <Drawer isOpen={isMessagesOpen} placement="right" onClose={onMessagesClose} size="full">
