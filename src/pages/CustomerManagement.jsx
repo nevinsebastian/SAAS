@@ -38,6 +38,7 @@ import {
   DeleteIcon,
   CheckIcon,
   ArrowForwardIcon,
+  CopyIcon,
 } from '@chakra-ui/icons';
 import axios from 'axios';
 
@@ -574,6 +575,87 @@ const CustomerManagement = () => {
                 <Divider my={4} opacity={0.1} />
                 <Text fontWeight="medium" mb={2}>Address:</Text>
                 <Text fontSize="sm" color="gray.500">{customer.address || 'N/A'}</Text>
+                <Divider my={4} opacity={0.1} />
+                <Box>
+                  <Text fontWeight="medium" mb={2}>Customer Link:</Text>
+                  <HStack 
+                    spacing={2} 
+                    bgGradient={accentGradient}
+                    p={2} 
+                    borderRadius="lg" 
+                    border="1px solid" 
+                    borderColor="whiteAlpha.300"
+                    boxShadow="sm"
+                  >
+                    <Text 
+                      fontSize="sm" 
+                      color="whiteAlpha.900" 
+                      wordBreak="break-all" 
+                      flex="1"
+                    >
+                      http://172.20.10.8:3001/customer-details/{customer.id}
+                    </Text>
+                    <IconButton
+                      icon={<CopyIcon />}
+                      size="sm"
+                      variant="ghost"
+                      colorScheme="red.600"
+                      onClick={() => {
+                        const link = `http://172.20.10.8:3000/customer-details/${customer.id}`;
+                        if (navigator.clipboard && window.isSecureContext) {
+                          navigator.clipboard.writeText(link)
+                            .then(() => {
+                              toast({
+                                title: 'Success',
+                                description: 'Link copied to clipboard!',
+                                status: 'success',
+                                duration: 2000,
+                                isClosable: true,
+                              });
+                            })
+                            .catch(() => {
+                              toast({
+                                title: 'Error',
+                                description: 'Failed to copy link',
+                                status: 'error',
+                                duration: 2000,
+                                isClosable: true,
+                              });
+                            });
+                        } else {
+                          // Fallback for older browsers
+                          const tempInput = document.createElement('input');
+                          tempInput.value = link;
+                          document.body.appendChild(tempInput);
+                          tempInput.select();
+                          tempInput.setSelectionRange(0, 99999);
+                          try {
+                            document.execCommand('copy');
+                            toast({
+                              title: 'Success',
+                              description: 'Link copied to clipboard!',
+                              status: 'success',
+                              duration: 2000,
+                              isClosable: true,
+                            });
+                          } catch (err) {
+                            toast({
+                              title: 'Error',
+                              description: 'Failed to copy link',
+                              status: 'error',
+                              duration: 2000,
+                              isClosable: true,
+                            });
+                          }
+                          document.body.removeChild(tempInput);
+                        }
+                      }}
+                      aria-label="Copy link"
+                      _hover={{ bg: "purple.100" }}
+                      transition="all 0.2s"
+                    />
+                  </HStack>
+                </Box>
               </CardBody>
             </Card>
 

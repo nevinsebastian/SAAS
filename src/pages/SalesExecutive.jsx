@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import api from '../api';
+import { keyframes } from '@emotion/react';
 import {
   Box,
   Button,
@@ -39,11 +40,37 @@ import {
   ModalCloseButton,
   Progress,
 } from '@chakra-ui/react';
-import { AddIcon, CopyIcon, HamburgerIcon, SearchIcon, SettingsIcon, BellIcon, ChatIcon, ArrowBackIcon, CheckIcon } from '@chakra-ui/icons';
+import { AddIcon, CopyIcon, HamburgerIcon, SearchIcon, SettingsIcon, BellIcon, ChatIcon, ArrowBackIcon, CheckIcon, ExternalLinkIcon } from '@chakra-ui/icons';
 import { FaWhatsapp } from 'react-icons/fa';
 import Analytics from '../components/Analytics';
 import Notifications from '../components/Notifications';
 import Messages from '../components/Messages';
+
+// Success animation keyframes
+const checkmarkAnimation = keyframes`
+  0% { transform: scale(0); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+`;
+
+const SuccessAnimation = () => {
+  return (
+    <Box
+      w="80px"
+      h="80px"
+      borderRadius="full"
+      bg="green.500"
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      mx="auto"
+      mb={4}
+      animation={`${checkmarkAnimation} 0.5s ease-in-out`}
+    >
+      <CheckIcon w={40} h={40} color="white" />
+    </Box>
+  );
+};
 
 const SalesExecutive = () => {
   const navigate = useNavigate();
@@ -69,6 +96,7 @@ const SalesExecutive = () => {
     price: '',
   });
   const [generatedLink, setGeneratedLink] = useState('');
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
 
   const bgGradient = useColorModeValue('gray.50', 'gray.900');
   const cardBg = useColorModeValue('white', 'gray.800');
@@ -247,6 +275,18 @@ const SalesExecutive = () => {
     onDrawerClose();
   };
 
+  // Add success sound and vibration
+  const playSuccessSound = () => {
+    const audio = new Audio('/success.mp3'); // You'll need to add this sound file to your public folder
+    audio.play().catch(err => console.log('Audio play failed:', err));
+  };
+
+  const triggerVibration = () => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate([0, 50, 0]);
+    }
+  };
+
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
     try {
@@ -274,9 +314,20 @@ const SalesExecutive = () => {
       setFormData({ customer_name: '', phone_number: '', vehicle: '', variant: '', color: '', price: '' });
       setCurrentStep(0);
 
-      toast.success('Customer added successfully!', { position: 'top-center' });
+      // Show success animation and trigger effects
+      setShowSuccessAnimation(true);
+      playSuccessSound();
+      triggerVibration();
+
+      // Close the form modal and open success modal
       onDrawerClose();
       onSuccessModalOpen();
+
+      // Reset animation after 2 seconds
+      setTimeout(() => {
+        setShowSuccessAnimation(false);
+      }, 2000);
+
     } catch (err) {
       console.error('Failed to add customer:', err);
       toast.error(err.response?.data?.error || 'Failed to add customer', { position: 'top-center' });
@@ -589,26 +640,68 @@ const SalesExecutive = () => {
       </Modal>
 
       {/* Success Modal */}
-      <Modal isOpen={isSuccessModalOpen} onClose={onSuccessModalClose} size={{ base: 'full', md: 'md' }}>
-        <ModalOverlay />
-        <ModalContent bg={cardBg}>
-          <ModalHeader color={textColor}>Customer Created Successfully</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <VStack spacing={4} align="stretch">
-              <Text fontSize="sm" color={textColor} wordBreak="break-all">{generatedLink}</Text>
-              <HStack spacing={2}>
-                <Button leftIcon={<CopyIcon />} colorScheme="purple" variant="solid" size="md" onClick={() => handleCopyLink(generatedLink)}>
-                  Copy
-                </Button>
-                <Button leftIcon={<FaWhatsapp />} colorScheme="green" variant="solid" size="md" onClick={handleShareWhatsApp}>
-                  Share via WhatsApp
-                </Button>
-              </HStack>
+      <Modal isOpen={isSuccessModalOpen} onClose={onSuccessModalClose} size="sm" isCentered>
+        <ModalOverlay bg="rgba(0, 0, 0, 0.4)" backdropFilter="blur(4px)" />
+        <ModalContent bg={cardBg} borderRadius="xl">
+          <ModalHeader color={textColor} fontSize="xl" fontWeight="bold" textAlign="center" pb={0}>
+            Success!
+          </ModalHeader>
+          <ModalCloseButton onClick={onSuccessModalClose} />
+          <ModalBody pb={6}>
+            <VStack spacing={6} align="center">
+              {showSuccessAnimation && <SuccessAnimation />}
+              <Text color="green.500" textAlign="center" fontSize="lg" fontWeight="medium">
+                Customer Created Successfully!
+              </Text>
+              <Text color="gray.600" textAlign="center" fontSize="sm">
+                Share the link below with your customer
+              </Text>
+              <Box 
+                w="full" 
+                p={3} 
+                bg="purple.50" 
+                borderRadius="lg" 
+                border="1px solid" 
+                borderColor="purple.200"
+                cursor="pointer"
+                onClick={() => window.open(generatedLink, '_blank')}
+                _hover={{ bg: "purple.100" }}
+                transition="all 0.2s"
+              >
+                <HStack justify="space-between">
+                  <Text fontSize="sm" color="purple.700" wordBreak="break-all" flex="1">
+                    {generatedLink}
+                  </Text>
+                  <ExternalLinkIcon color="purple.500" />
+                </HStack>
+              </Box>
             </VStack>
           </ModalBody>
-          <ModalFooter>
-            <Button colorScheme="purple" onClick={onSuccessModalClose}>Close</Button>
+          <ModalFooter pb={6} px={6}>
+            <HStack spacing={3} w="full">
+              <Button 
+                leftIcon={<CopyIcon />} 
+                colorScheme="purple" 
+                variant="solid" 
+                flex={1}
+                size="lg"
+                borderRadius="xl"
+                onClick={handleCopyLink}
+              >
+                Copy Link
+              </Button>
+              <Button 
+                leftIcon={<FaWhatsapp />} 
+                colorScheme="green" 
+                variant="solid" 
+                flex={1}
+                size="lg"
+                borderRadius="xl"
+                onClick={handleShareWhatsApp}
+              >
+                Share
+              </Button>
+            </HStack>
           </ModalFooter>
         </ModalContent>
       </Modal>
