@@ -56,6 +56,8 @@ const SalesExecutive = () => {
   const [customers, setCustomers] = useState([]);
   const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [formData, setFormData] = useState({
     customer_name: '',
     phone_number: '',
@@ -69,6 +71,10 @@ const SalesExecutive = () => {
   const bgGradient = useColorModeValue('gray.50', 'gray.900');
   const cardBg = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.700', 'gray.200');
+  const borderColor = useColorModeValue('gray.200', 'gray.700');
+  const hoverBg = useColorModeValue('gray.100', 'gray.700');
+
+  const user = JSON.parse(localStorage.getItem('user')) || { username: 'sales_user' };
 
   // Fetch customers on mount
   useEffect(() => {
@@ -97,6 +103,59 @@ const SalesExecutive = () => {
     fetchCustomers();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty dependency array for mount-only fetch
+
+  // Fetch notifications
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        if (!user || !user.id) {
+          console.error('User data not found');
+          return;
+        }
+        const response = await api.get(`/notifications/employee/${user.id}`);
+        setNotifications(response.data.notifications);
+        setUnreadCount(response.data.notifications.filter(n => !n.read_at).length);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to fetch notifications',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+      }
+    };
+
+    // Only fetch notifications if we have user data
+    if (user && user.id) {
+      fetchNotifications();
+      // Set up polling for new notifications every 30 seconds
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [toast, user]);
+
+  const markNotificationAsRead = async (notificationId) => {
+    try {
+      await api.put(`/notifications/${notificationId}/read`);
+      setNotifications(prev =>
+        prev.map(n =>
+          n.id === notificationId ? { ...n, read_at: new Date().toISOString() } : n
+        )
+      );
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to mark notification as read',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -242,14 +301,77 @@ const SalesExecutive = () => {
           <IconButton icon={<HamburgerIcon />} variant="ghost" onClick={onMenuOpen} aria-label="Open menu" />
           <Heading size="md" color="purple.600">Sales Hub</Heading>
         </HStack>
-        <Menu>
-          <MenuButton>
-            <Avatar name="Sales User" size="sm" />
-          </MenuButton>
-          <MenuList>
-            <MenuItem onClick={handleLogout}>Sign Out</MenuItem>
-          </MenuList>
-        </Menu>
+        <HStack spacing={2}>
+          <Menu>
+            <MenuButton
+              as={IconButton}
+              icon={<BellIcon />}
+              variant="ghost"
+              color="white"
+              aria-label="Notifications"
+              position="relative"
+              _hover={{ 
+                bg: 'whiteAlpha.200',
+                transform: 'scale(1.1)'
+              }}
+              transition="all 0.2s"
+            >
+              {unreadCount > 0 && (
+                <Badge 
+                  colorScheme="red" 
+                  borderRadius="full" 
+                  position="absolute" 
+                  top="-1" 
+                  right="-1"
+                  boxShadow="lg"
+                >
+                  {unreadCount}
+                </Badge>
+              )}
+            </MenuButton>
+            <MenuList 
+              maxH="400px" 
+              overflowY="auto" 
+              bg={cardBg} 
+              borderColor={borderColor}
+              boxShadow="xl"
+              borderRadius="xl"
+            >
+              {notifications.length > 0 ? (
+                notifications.map(notification => (
+                  <MenuItem
+                    key={notification.id}
+                    bg={notification.read_at ? cardBg : 'blue.50'}
+                    _hover={{ 
+                      bg: hoverBg,
+                      transform: 'translateX(5px)'
+                    }}
+                    transition="all 0.2s"
+                    onClick={() => markNotificationAsRead(notification.id)}
+                  >
+                    <VStack align="start" spacing={1} width="100%">
+                      <Text fontWeight="bold" fontSize="sm">{notification.title}</Text>
+                      <Text fontSize="sm" color="gray.600">{notification.message}</Text>
+                      <Text fontSize="xs" color="gray.500">
+                        From: {notification.sender_name} • {new Date(notification.created_at).toLocaleString()}
+                      </Text>
+                    </VStack>
+                  </MenuItem>
+                ))
+              ) : (
+                <MenuItem bg={cardBg}>No notifications</MenuItem>
+              )}
+            </MenuList>
+          </Menu>
+          <Menu>
+            <MenuButton>
+              <Avatar name="Sales User" size="sm" />
+            </MenuButton>
+            <MenuList>
+              <MenuItem onClick={handleLogout}>Sign Out</MenuItem>
+            </MenuList>
+          </Menu>
+        </HStack>
       </Flex>
 
       {/* Main Content */}

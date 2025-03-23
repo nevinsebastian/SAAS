@@ -67,6 +67,7 @@ import {
   Stack,
   useBreakpointValue,
   Icon,
+  Textarea,
 } from '@chakra-ui/react';
 import { HamburgerIcon, BellIcon, ArrowBackIcon, DownloadIcon, SearchIcon, FilterIcon, CheckIcon, TimeIcon, ChevronRightIcon, ChevronLeftIcon, StarIcon, InfoIcon, WarningIcon, CheckCircleIcon, CloseIcon, ChevronUpIcon, ChevronDownIcon, ExternalLinkIcon, ViewIcon, AttachmentIcon, SettingsIcon, RepeatIcon, AddIcon } from '@chakra-ui/icons';
 import { FiPlus, FiEdit, FiUsers, FiPieChart, FiBriefcase, FiLogOut, FiDownload, FiBell, FiImage, FiBarChart, FiMenu, FiTrendingUp, FiDollarSign, FiUserCheck, FiClock, FiCheckCircle, FiAlertCircle, FiTruck, FiEdit2, FiTrash2, FiMail, FiPhone, FiMapPin, FiUser } from 'react-icons/fi';
@@ -121,6 +122,15 @@ const Admin = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('role'); // 'role' or 'branch'
   const [sortOrder, setSortOrder] = useState('asc');
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [selectedBranch, setSelectedBranch] = useState(null);
+  const [selectedRole, setSelectedRole] = useState('');
+  const [notificationTitle, setNotificationTitle] = useState('');
+  const [notificationMessage, setNotificationMessage] = useState('');
+  const [targetType, setTargetType] = useState('all');
+  const [user, setUser] = useState(null);
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   // Top-level useColorModeValue calls
   const cardBg = useColorModeValue('white', 'gray.800');
@@ -230,6 +240,113 @@ const Admin = () => {
 
     fetchData();
   }, [toast]);
+
+  useEffect(() => {
+    // Get user from localStorage
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+    if (storedUser) {
+      setUser(storedUser);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (user && user.id) {
+      fetchNotifications();
+    }
+  }, [user]);
+
+  const fetchNotifications = async () => {
+    try {
+      const response = await api.get(`/notifications/employee/${user.id}`);
+      setNotifications(response.data.notifications);
+      
+      const unreadResponse = await api.get(`/notifications/unread-count/${user.id}`);
+      setUnreadCount(unreadResponse.data.count);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch notifications',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const sendNotification = async () => {
+    try {
+      let targetId = null;
+      switch (targetType) {
+        case 'employee':
+          targetId = selectedEmployee;
+          break;
+        case 'branch':
+          targetId = selectedBranch;
+          break;
+        case 'role':
+          targetId = selectedRole;
+          break;
+        case 'role_in_branch':
+          targetId = {
+            role: selectedRole,
+            branch_id: selectedBranch
+          };
+          break;
+        default:
+          targetId = null;
+      }
+
+      await api.post('/notifications/send', {
+        title: notificationTitle,
+        message: notificationMessage,
+        targetType,
+        targetId,
+      });
+
+      toast({
+        title: 'Success',
+        description: 'Notification sent successfully',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+
+      onClose();
+      setNotificationTitle('');
+      setNotificationMessage('');
+      setTargetType('all');
+      setSelectedEmployee(null);
+      setSelectedBranch(null);
+      setSelectedRole('');
+      fetchNotifications();
+    } catch (error) {
+      console.error('Error sending notification:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to send notification',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const markAsRead = async (notificationId) => {
+    try {
+      await api.put(`/notifications/${notificationId}/read`);
+      fetchNotifications();
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to mark notification as read',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
 
   const renderDashboard = () => (
     <MotionBox
@@ -881,6 +998,189 @@ const Admin = () => {
     </MotionBox>
   );
 
+  const renderNotifications = () => {
+    return (
+      <Box>
+        <HStack justify="space-between" mb={4}>
+          <Text fontSize="xl" fontWeight="bold">Notifications</Text>
+          <Button leftIcon={<BellIcon />} colorScheme="blue" onClick={onOpen}>
+            Send Notification
+          </Button>
+        </HStack>
+
+        <VStack spacing={4} align="stretch">
+          {notifications.map((notification) => (
+            <Box
+              key={notification.id}
+              p={4}
+              borderWidth="1px"
+              borderRadius="lg"
+              bg={notification.is_read ? 'white' : 'blue.50'}
+              _hover={{ shadow: 'md' }}
+            >
+              <HStack justify="space-between">
+                <VStack align="start" spacing={1}>
+                  <Text fontWeight="bold">{notification.title}</Text>
+                  <Text color="gray.600">{notification.message}</Text>
+                  <Text fontSize="sm" color="gray.500">
+                    From: {notification.sender_name} • {new Date(notification.created_at).toLocaleString()}
+                  </Text>
+                </VStack>
+                {!notification.is_read && (
+                  <Badge colorScheme="blue">New</Badge>
+                )}
+              </HStack>
+              {!notification.is_read && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  colorScheme="blue"
+                  mt={2}
+                  onClick={() => markAsRead(notification.id)}
+                >
+                  Mark as Read
+                </Button>
+              )}
+            </Box>
+          ))}
+        </VStack>
+
+        <Modal isOpen={isOpen} onClose={onClose} size="xl">
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>Send Notification</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody pb={6}>
+              <VStack spacing={4}>
+                <FormControl isRequired>
+                  <FormLabel>Title</FormLabel>
+                  <Input
+                    value={notificationTitle}
+                    onChange={(e) => setNotificationTitle(e.target.value)}
+                    placeholder="Enter notification title"
+                  />
+                </FormControl>
+
+                <FormControl isRequired>
+                  <FormLabel>Message</FormLabel>
+                  <Textarea
+                    value={notificationMessage}
+                    onChange={(e) => setNotificationMessage(e.target.value)}
+                    placeholder="Enter notification message"
+                    rows={4}
+                  />
+                </FormControl>
+
+                <FormControl isRequired>
+                  <FormLabel>Send To</FormLabel>
+                  <Select
+                    value={targetType}
+                    onChange={(e) => setTargetType(e.target.value)}
+                  >
+                    <option value="all">All Employees</option>
+                    <option value="role">By Role</option>
+                    <option value="branch">By Branch</option>
+                    <option value="role_in_branch">By Role in Branch</option>
+                    <option value="employee">Specific Employee</option>
+                  </Select>
+                </FormControl>
+
+                {targetType === 'role' && (
+                  <FormControl isRequired>
+                    <FormLabel>Select Role</FormLabel>
+                    <Select
+                      value={selectedRole}
+                      onChange={(e) => setSelectedRole(e.target.value)}
+                    >
+                      <option value="">Select a role</option>
+                      <option value="sales">Sales</option>
+                      <option value="accounts">Accounts</option>
+                      <option value="rto">RTO</option>
+                    </Select>
+                  </FormControl>
+                )}
+
+                {targetType === 'branch' && (
+                  <FormControl isRequired>
+                    <FormLabel>Select Branch</FormLabel>
+                    <Select
+                      value={selectedBranch}
+                      onChange={(e) => setSelectedBranch(e.target.value)}
+                    >
+                      <option value="">Select a branch</option>
+                      {branches.map((branch) => (
+                        <option key={branch.id} value={branch.id}>
+                          {branch.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </FormControl>
+                )}
+
+                {targetType === 'role_in_branch' && (
+                  <>
+                    <FormControl isRequired>
+                      <FormLabel>Select Branch</FormLabel>
+                      <Select
+                        value={selectedBranch}
+                        onChange={(e) => setSelectedBranch(e.target.value)}
+                      >
+                        <option value="">Select a branch</option>
+                        {branches.map((branch) => (
+                          <option key={branch.id} value={branch.id}>
+                            {branch.name}
+                          </option>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    <FormControl isRequired>
+                      <FormLabel>Select Role</FormLabel>
+                      <Select
+                        value={selectedRole}
+                        onChange={(e) => setSelectedRole(e.target.value)}
+                      >
+                        <option value="">Select a role</option>
+                        <option value="sales">Sales</option>
+                        <option value="accounts">Accounts</option>
+                        <option value="rto">RTO</option>
+                      </Select>
+                    </FormControl>
+                  </>
+                )}
+
+                {targetType === 'employee' && (
+                  <FormControl isRequired>
+                    <FormLabel>Select Employee</FormLabel>
+                    <Select
+                      value={selectedEmployee}
+                      onChange={(e) => setSelectedEmployee(e.target.value)}
+                    >
+                      <option value="">Select an employee</option>
+                      {employees.map((employee) => (
+                        <option key={employee.id} value={employee.id}>
+                          {employee.name} ({employee.role})
+                        </option>
+                      ))}
+                    </Select>
+                  </FormControl>
+                )}
+
+                <Button
+                  colorScheme="blue"
+                  width="full"
+                  onClick={sendNotification}
+                  isDisabled={!notificationTitle || !notificationMessage}
+                >
+                  Send Notification
+                </Button>
+              </VStack>
+            </ModalBody>
+          </ModalContent>
+        </Modal>
+      </Box>
+    );
+  };
+
   return (
     <Box minH="100vh" bg={bgGradient} position="relative">
       {/* Header with glassmorphism */}
@@ -923,17 +1223,79 @@ const Admin = () => {
         </HStack>
 
         <HStack spacing={4}>
-          <IconButton
-            icon={<BellIcon />}
-            variant="ghost"
-            color="white"
-            aria-label="Notifications"
-            _hover={{ 
-              bg: 'whiteAlpha.200',
-              transform: 'scale(1.1)'
-            }}
-            transition="all 0.2s"
-          />
+          <Menu>
+            <MenuButton
+              as={IconButton}
+              icon={<BellIcon />}
+              variant="ghost"
+              color="white"
+              aria-label="Notifications"
+              position="relative"
+              _hover={{ 
+                bg: 'whiteAlpha.200',
+                transform: 'scale(1.1)'
+              }}
+              transition="all 0.2s"
+            >
+              {unreadCount > 0 && (
+                <Badge 
+                  colorScheme="red" 
+                  borderRadius="full" 
+                  position="absolute" 
+                  top="-1" 
+                  right="-1"
+                  boxShadow="lg"
+                >
+                  {unreadCount}
+                </Badge>
+              )}
+            </MenuButton>
+            <MenuList 
+              maxH="400px" 
+              overflowY="auto" 
+              bg={cardBg} 
+              borderColor={borderColor}
+              boxShadow="xl"
+              borderRadius="xl"
+            >
+              {notifications.length > 0 ? (
+                notifications.map(notification => (
+                  <MenuItem 
+                    key={notification.id} 
+                    bg={notification.is_read ? cardBg : 'blue.50'} 
+                    _hover={{ 
+                      bg: hoverBg,
+                      transform: 'translateX(5px)'
+                    }}
+                    transition="all 0.2s"
+                  >
+                    <VStack align="start" spacing={1} width="100%">
+                      <Text fontWeight="bold" fontSize="sm">{notification.title}</Text>
+                      <Text fontSize="sm" color="gray.600">{notification.message}</Text>
+                      <Text fontSize="xs" color="gray.500">
+                        From: {notification.sender_name} • {new Date(notification.created_at).toLocaleString()}
+                      </Text>
+                      {!notification.is_read && (
+                        <Button
+                          size="xs"
+                          variant="ghost"
+                          colorScheme="blue"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            markAsRead(notification.id);
+                          }}
+                        >
+                          Mark as Read
+                        </Button>
+                      )}
+                    </VStack>
+                  </MenuItem>
+                ))
+              ) : (
+                <MenuItem bg={cardBg}>No notifications</MenuItem>
+              )}
+            </MenuList>
+          </Menu>
           <Menu>
             <MenuButton>
               <Avatar 
@@ -988,6 +1350,7 @@ const Admin = () => {
           <Text>Sales content coming soon...</Text>
         )}
         {activeTab === 'employees' && renderEmployees()}
+        {activeTab === 'notifications' && renderNotifications()}
         {activeTab === 'reports' && (
           <Text>Reports content coming soon...</Text>
         )}
@@ -1030,6 +1393,16 @@ const Admin = () => {
                 onClick={() => { setActiveTab('employees'); onMenuClose(); }}
               >
                 Employees
+              </Button>
+              <Button
+                variant="ghost"
+                colorScheme="blue"
+                isActive={activeTab === 'notifications'}
+                justifyContent="start"
+                _hover={{ bg: hoverBg }}
+                onClick={() => { setActiveTab('notifications'); onMenuClose(); }}
+              >
+                Notifications
               </Button>
               <Button
                 variant="ghost"

@@ -58,6 +58,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import jsPDF from 'jspdf'; // Add jsPDF for PDF generation
 import { rtoApi } from '../api';
+import api from '../api';
 import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import { FaSearch } from 'react-icons/fa';
 
@@ -243,8 +244,11 @@ const RtoDashboard = () => {
   const { isOpen: isMenuOpen, onOpen: onMenuOpen, onClose: onMenuClose } = useDisclosure();
   const { isOpen: isRtoVerifiedOpen, onOpen: onRtoVerifiedOpen, onClose: onRtoVerifiedClose } = useDisclosure();
   const { isOpen: isImageModalOpen, onOpen: onImageModalOpen, onClose: onImageModalClose } = useDisclosure();
+  const { isOpen: isNotificationsOpen, onOpen: onNotificationsOpen, onClose: onNotificationsClose } = useDisclosure();
   const { colorMode, toggleColorMode } = useColorMode();
   const toast = useToast();
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // Top-level useColorModeValue calls
   const bgGradient = useColorModeValue('linear(to-br, gray.50, gray.100)', 'linear(to-br, gray.900, gray.800)');
@@ -359,14 +363,62 @@ const RtoDashboard = () => {
     fetchCustomers();
   }, []);
 
-  const notifications = [
-    { id: 1, message: 'New booking added: John Doe', time: '2025-03-01 10:00 AM', seen: false },
-    { id: 2, message: 'RTO upload completed for Jane Smith', time: '2025-03-02 09:00 AM', seen: false },
-  ];
+  // Fetch notifications
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user || !user.id) {
+          console.error('User data not found');
+          return;
+        }
+        const response = await api.get(`/notifications/employee/${user.id}`);
+        setNotifications(response.data.notifications);
+        setUnreadCount(response.data.notifications.filter(n => !n.read_at).length);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to fetch notifications',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+      }
+    };
 
-  const unseenNotifications = notifications.filter(n => !n.seen);
+    // Only fetch notifications if we have user data
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user && user.id) {
+      fetchNotifications();
+      // Set up polling for new notifications every 30 seconds
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [toast]);
 
-  // Add history handling
+  const markNotificationAsRead = async (notificationId) => {
+    try {
+      await api.put(`/notifications/${notificationId}/read`);
+      setNotifications(prev =>
+        prev.map(n =>
+          n.id === notificationId ? { ...n, read_at: new Date().toISOString() } : n
+        )
+      );
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to mark notification as read',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+
+  // Update history handling
   useEffect(() => {
     const handlePopState = (event) => {
       if (selectedCustomer) {
@@ -924,7 +976,7 @@ const RtoDashboard = () => {
               }}
               transition="all 0.2s"
             >
-              {unseenNotifications.length > 0 && (
+              {unreadCount > 0 && (
                 <Badge 
                   colorScheme="red" 
                   borderRadius="full" 
@@ -933,7 +985,7 @@ const RtoDashboard = () => {
                   right="-1"
                   boxShadow="lg"
                 >
-                  {unseenNotifications.length}
+                  {unreadCount}
                 </Badge>
               )}
             </MenuButton>
@@ -945,20 +997,22 @@ const RtoDashboard = () => {
               boxShadow="xl"
               borderRadius="xl"
             >
-              {unseenNotifications.length > 0 ? (
-                unseenNotifications.map(n => (
+              {notifications.length > 0 ? (
+                notifications.map(notification => (
                   <MenuItem 
-                    key={n.id} 
+                    key={notification.id} 
                     bg={cardBg} 
                     _hover={{ 
                       bg: hoverBg,
                       transform: 'translateX(5px)'
                     }}
                     transition="all 0.2s"
+                    onClick={() => markNotificationAsRead(notification.id)}
                   >
                     <VStack align="start" spacing={1}>
-                      <Text fontSize="sm" color={textColor}>{n.message}</Text>
-                      <Text fontSize="xs" color="gray.500">{n.time}</Text>
+                      <Text fontSize="sm" color={textColor}>{notification.title}</Text>
+                      <Text fontSize="xs" color="gray.500">{notification.message}</Text>
+                      <Text fontSize="xs" color="gray.500">{new Date(notification.created_at).toLocaleString()}</Text>
                     </VStack>
                   </MenuItem>
                 ))
@@ -1374,7 +1428,7 @@ const RtoDashboard = () => {
                         <Box
                           textAlign="center"
                           py={16}
-                          bg={cardBg}
+                  bg={cardBg}
                           borderRadius="2xl"
                           boxShadow="xl"
                           position="relative"
@@ -1397,7 +1451,7 @@ const RtoDashboard = () => {
                             <Text fontSize="md" color="gray.500">
                               Try adjusting your search or filters
                             </Text>
-                          </VStack>
+                    </VStack>
                         </Box>
                       ) : (
                         filteredCustomers(verifiedCustomers, searchQuery).map((customer) => (
@@ -1449,8 +1503,8 @@ const RtoDashboard = () => {
                             <Text fontSize="md" color="gray.500">
                               Try adjusting your search or filters
                             </Text>
-                          </VStack>
-                        </Box>
+                    </VStack>
+                </Box>
                       ) : (
                         filteredCustomers(pendingCustomers, searchQuery).map((customer) => (
                           <GridItem key={customer.id}>
@@ -1539,7 +1593,7 @@ const RtoDashboard = () => {
       {/* Replace the Image Preview Modal with the ImageViewer component */}
       {selectedImage && (
         <ImageViewer
-          src={selectedImage}
+              src={selectedImage}
           alt="Selected Document"
           onClose={() => setSelectedImage(null)}
         />

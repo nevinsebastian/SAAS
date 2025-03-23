@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_URL } from '../config';
 import {
   Box,
   Button,
@@ -106,7 +107,7 @@ export default function Login({ setUserRole }) {
     setError('');
 
     try {
-      const response = await fetch('http://172.20.10.8:3000/auth/login', {
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -123,6 +124,13 @@ export default function Login({ setUserRole }) {
       // Decode role from token (optional, or fetch from response if backend sends it)
       const decodedToken = JSON.parse(atob(token.split('.')[1]));
       const role = decodedToken.role;
+
+      // Store user data in localStorage
+      localStorage.setItem('user', JSON.stringify({
+        id: decodedToken.id,
+        email: decodedToken.email,
+        role: decodedToken.role
+      }));
 
       // Set role in parent component
       setUserRole(role);
