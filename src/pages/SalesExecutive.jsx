@@ -37,6 +37,7 @@ import {
   ModalBody,
   ModalFooter,
   ModalCloseButton,
+  Progress,
 } from '@chakra-ui/react';
 import { AddIcon, CopyIcon, HamburgerIcon, SearchIcon, SettingsIcon, BellIcon, ChatIcon, ArrowBackIcon, CheckIcon } from '@chakra-ui/icons';
 import { FaWhatsapp } from 'react-icons/fa';
@@ -58,6 +59,7 @@ const SalesExecutive = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState({
     customer_name: '',
     phone_number: '',
@@ -75,6 +77,15 @@ const SalesExecutive = () => {
   const hoverBg = useColorModeValue('gray.100', 'gray.700');
 
   const user = JSON.parse(localStorage.getItem('user')) || { username: 'sales_user' };
+
+  const formSteps = [
+    { name: 'customer_name', label: 'Customer Name', required: true },
+    { name: 'phone_number', label: 'Phone Number', required: true },
+    { name: 'vehicle', label: 'Vehicle', required: true },
+    { name: 'variant', label: 'Variant (optional)', required: false },
+    { name: 'color', label: 'Color (optional)', required: false },
+    { name: 'price', label: 'Price (optional)', required: false },
+  ];
 
   // Fetch customers on mount
   useEffect(() => {
@@ -106,6 +117,9 @@ const SalesExecutive = () => {
 
   // Fetch notifications
   useEffect(() => {
+    let isSubscribed = true;
+    let intervalId = null;
+
     const fetchNotifications = async () => {
       try {
         if (!user || !user.id) {
@@ -113,28 +127,39 @@ const SalesExecutive = () => {
           return;
         }
         const response = await api.get(`/notifications/employee/${user.id}`);
-        setNotifications(response.data.notifications);
-        setUnreadCount(response.data.notifications.filter(n => !n.read_at).length);
+        if (isSubscribed) {
+          setNotifications(response.data.notifications);
+          setUnreadCount(response.data.notifications.filter(n => !n.read_at).length);
+        }
       } catch (error) {
         console.error('Error fetching notifications:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to fetch notifications',
-          status: 'error',
-          duration: 3000,
-          isClosable: true,
-        });
+        if (isSubscribed) {
+          toast({
+            title: 'Error',
+            description: 'Failed to fetch notifications',
+            status: 'error',
+            duration: 3000,
+            isClosable: true,
+          });
+        }
       }
     };
 
     // Only fetch notifications if we have user data
     if (user && user.id) {
       fetchNotifications();
-      // Set up polling for new notifications every 30 seconds
-      const interval = setInterval(fetchNotifications, 30000);
-      return () => clearInterval(interval);
+      // Set up polling for new notifications every 60 seconds
+      intervalId = setInterval(fetchNotifications, 60000);
     }
-  }, [toast, user]);
+
+    // Cleanup function
+    return () => {
+      isSubscribed = false;
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [user?.id]); // Only depend on user.id instead of the entire user object
 
   const markNotificationAsRead = async (notificationId) => {
     try {
@@ -188,8 +213,42 @@ const SalesExecutive = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleNext = () => {
+    if (currentStep < formSteps.length - 1) {
+      setCurrentStep(currentStep + 1);
+      // Add a small delay to ensure the new input is rendered
+      setTimeout(() => {
+        const nextInput = document.querySelector(`input[name="${formSteps[currentStep + 1].name}"]`);
+        if (nextInput) {
+          nextInput.focus();
+        }
+      }, 100);
+    } else {
+      handleSubmit();
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleCancel = () => {
+    setCurrentStep(0);
+    setFormData({
+      customer_name: '',
+      phone_number: '',
+      vehicle: '',
+      variant: '',
+      color: '',
+      price: '',
+    });
+    onDrawerClose();
+  };
+
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     try {
       const response = await api.post('/customers', {
         customer_name: formData.customer_name,
@@ -205,7 +264,7 @@ const SalesExecutive = () => {
         name: response.data.customer.customer_name,
         phone: response.data.customer.phone_number,
         vehicle: response.data.customer.vehicle,
-        status: response.data.customer.status, // Use backend status
+        status: response.data.customer.status,
         date: new Date(response.data.customer.created_at).toISOString().split('T')[0],
       };
 
@@ -213,6 +272,7 @@ const SalesExecutive = () => {
       setFilteredCustomers(prev => [...prev, newCustomer]);
       setGeneratedLink(response.data.uniqueLink);
       setFormData({ customer_name: '', phone_number: '', vehicle: '', variant: '', color: '', price: '' });
+      setCurrentStep(0);
 
       toast.success('Customer added successfully!', { position: 'top-center' });
       onDrawerClose();
@@ -441,27 +501,92 @@ const SalesExecutive = () => {
         </DrawerContent>
       </Drawer>
 
-      {/* Add Customer Drawer */}
-      <Drawer isOpen={isDrawerOpen} placement="bottom" onClose={onDrawerClose} size={{ base: 'md', md: 'sm' }}>
-        <DrawerOverlay bg="rgba(0, 0, 0, 0.4)" backdropFilter="blur(4px)" />
-        <DrawerContent bg={cardBg} borderTopRadius="lg">
-          <DrawerCloseButton zIndex={10} />
-          <DrawerHeader color={textColor}>Add New Customer</DrawerHeader>
-          <DrawerBody pb={6} maxH={{ base: "70vh", md: "auto" }} overflowY="auto">
-            <VStack as="form" onSubmit={handleSubmit} spacing={3} h="full">
-              <VStack spacing={3} w="full" flex="1">
-                <Input name="customer_name" placeholder="Customer Name" value={formData.customer_name} onChange={handleInputChange} variant="filled" isRequired />
-                <Input name="phone_number" placeholder="Phone Number" value={formData.phone_number} onChange={handleInputChange} variant="filled" isRequired />
-                <Input name="vehicle" placeholder="Vehicle" value={formData.vehicle} onChange={handleInputChange} variant="filled" isRequired />
-                <Input name="variant" placeholder="Variant (optional)" value={formData.variant} onChange={handleInputChange} variant="filled" />
-                <Input name="color" placeholder="Color (optional)" value={formData.color} onChange={handleInputChange} variant="filled" />
-                <Input name="price" placeholder="Price (optional)" value={formData.price} onChange={handleInputChange} variant="filled" type="number" />
-              </VStack>
-              <Button type="submit" colorScheme="purple" w="full" size="md">Add Customer</Button>
+      {/* Replace the Add Customer Drawer with Modal */}
+      <Modal isOpen={isDrawerOpen} onClose={handleCancel} size="sm" isCentered>
+        <ModalOverlay bg="rgba(0, 0, 0, 0.4)" backdropFilter="blur(4px)" />
+        <ModalContent bg={cardBg} borderRadius="xl">
+          <ModalHeader color={textColor} fontSize="xl" fontWeight="bold" textAlign="center" pb={0}>
+            Add New Customer
+          </ModalHeader>
+          <ModalCloseButton onClick={handleCancel} />
+          <ModalBody pb={6}>
+            <VStack spacing={8} w="full">
+              {/* Progress Dots */}
+              <HStack spacing={3} justify="center" mt={2}>
+                {formSteps.map((_, index) => (
+                  <Box
+                    key={index}
+                    w={3}
+                    h={3}
+                    borderRadius="full"
+                    bg={index === currentStep ? "purple.500" : index < currentStep ? "purple.200" : "gray.200"}
+                    transition="all 0.2s"
+                    boxShadow={index === currentStep ? "0 0 0 4px rgba(159, 122, 234, 0.2)" : "none"}
+                  />
+                ))}
+              </HStack>
+
+              {/* Step Label */}
+              <Text 
+                color="gray.500" 
+                fontSize="sm" 
+                textAlign="center"
+                fontWeight="medium"
+              >
+                {formSteps[currentStep].label}
+              </Text>
+
+              {/* Current Step Input */}
+              <Input
+                name={formSteps[currentStep].name}
+                placeholder={`Enter ${formSteps[currentStep].label.toLowerCase()}`}
+                value={formData[formSteps[currentStep].name]}
+                onChange={handleInputChange}
+                variant="filled"
+                isRequired={formSteps[currentStep].required}
+                autoComplete="off"
+                autoFocus
+                size="lg"
+                bg="purple.500"
+                _hover={{ bg: "white" }}
+                _focus={{ bg: "white" }}
+                border="1px solid"
+                borderColor="gray.200"
+                _hover={{ borderColor: "purple.200" }}
+                _focus={{ borderColor: "purple.500" }}
+                borderRadius="xl"
+                fontSize="md"
+                h="56px"
+              />
             </VStack>
-          </DrawerBody>
-        </DrawerContent>
-      </Drawer>
+          </ModalBody>
+          <ModalFooter pb={6} px={6}>
+            <HStack spacing={3} w="full">
+              <Button 
+                variant="ghost" 
+                onClick={handleCancel} 
+                flex={1}
+                size="lg"
+                borderRadius="xl"
+                _hover={{ bg: "gray.100" }}
+              >
+                Cancel
+              </Button>
+              <Button
+                colorScheme="purple"
+                onClick={handleNext}
+                flex={1}
+                size="lg"
+                borderRadius="xl"
+                isDisabled={formSteps[currentStep].required && !formData[formSteps[currentStep].name]}
+                _disabled={{ opacity: 0.6, cursor: "not-allowed" }}
+              >
+                {currentStep === formSteps.length - 1 ? 'Submit' : 'Next'}
+              </Button>
+            </HStack>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       {/* Success Modal */}
       <Modal isOpen={isSuccessModalOpen} onClose={onSuccessModalClose} size={{ base: 'full', md: 'md' }}>
