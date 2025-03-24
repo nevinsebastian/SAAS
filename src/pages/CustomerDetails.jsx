@@ -981,6 +981,101 @@ const CustomerDetails = () => {
           position="relative"
           overflow="hidden"
         >
+          {/* Booking Status Section */}
+          <Box mb={6}>
+            <Heading size="md" mb={4} color={textColor}>Booking Status</Heading>
+            <VStack spacing={4} align="stretch">
+              <Box
+                bg="whiteAlpha.200"
+                p={4}
+                borderRadius="lg"
+                backdropFilter="blur(10px)"
+              >
+                <VStack spacing={4} align="stretch">
+                  <Flex justify="space-between" align="center">
+                    <Text fontSize="lg" fontWeight="bold">Verification Status</Text>
+                    <Badge
+                      colorScheme={verificationStatus.color}
+                      px={3}
+                      py={1}
+                      borderRadius="full"
+                    >
+                      {verificationStatus.status}
+                    </Badge>
+                  </Flex>
+                  <Progress
+                    value={verificationStatus.progress}
+                    colorScheme={verificationStatus.color}
+                    size="sm"
+                    borderRadius="full"
+                  />
+                  <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                    <Box
+                      bg="whiteAlpha.100"
+                      p={3}
+                      borderRadius="md"
+                      border="1px solid"
+                      borderColor={customer.sales_verified ? "green.500" : "gray.500"}
+                    >
+                      <VStack align="start" spacing={1}>
+                        <Text fontSize="sm" color="gray.500">Sales Verification</Text>
+                        <HStack>
+                          <Icon
+                            as={customer.sales_verified ? CheckCircleIcon : TimeIcon}
+                            color={customer.sales_verified ? "green.500" : "yellow.500"}
+                          />
+                          <Text>
+                            {customer.sales_verified ? "Verified" : "Pending"}
+                          </Text>
+                        </HStack>
+                      </VStack>
+                    </Box>
+                    <Box
+                      bg="whiteAlpha.100"
+                      p={3}
+                      borderRadius="md"
+                      border="1px solid"
+                      borderColor={customer.accounts_verified ? "green.500" : "gray.500"}
+                    >
+                      <VStack align="start" spacing={1}>
+                        <Text fontSize="sm" color="gray.500">Accounts Verification</Text>
+                        <HStack>
+                          <Icon
+                            as={customer.accounts_verified ? CheckCircleIcon : TimeIcon}
+                            color={customer.accounts_verified ? "green.500" : "yellow.500"}
+                          />
+                          <Text>
+                            {customer.accounts_verified ? "Verified" : "Pending"}
+                          </Text>
+                        </HStack>
+                      </VStack>
+                    </Box>
+                    <Box
+                      bg="whiteAlpha.100"
+                      p={3}
+                      borderRadius="md"
+                      border="1px solid"
+                      borderColor={customer.rto_verified ? "green.500" : "gray.500"}
+                    >
+                      <VStack align="start" spacing={1}>
+                        <Text fontSize="sm" color="gray.500">RTO Verification</Text>
+                        <HStack>
+                          <Icon
+                            as={customer.rto_verified ? CheckCircleIcon : TimeIcon}
+                            color={customer.rto_verified ? "green.500" : "yellow.500"}
+                          />
+                          <Text>
+                            {customer.rto_verified ? "Verified" : "Pending"}
+                          </Text>
+                        </HStack>
+                      </VStack>
+                    </Box>
+                  </SimpleGrid>
+                </VStack>
+              </Box>
+            </VStack>
+          </Box>
+
           <Flex justify="space-between" align="center" mb={6}>
             <VStack align="start" spacing={1}>
               <Heading size="lg" bgGradient={accentGradient} bgClip="text">
