@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Box,
@@ -149,6 +149,18 @@ const slideOut = keyframes`
   to { transform: translateX(100%); }
 `;
 
+const float = keyframes`
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+`;
+
+const gradientBorder = keyframes`
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+`;
+
 // Modern Color Schemes
 const modernColors = {
   primary: {
@@ -196,6 +208,9 @@ const cardStyles = {
 const CustomerDetails = () => {
   const { customerId } = useParams();
   const toast = useToast();
+  const [scrollY, setScrollY] = useState(0);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const [headerVisible, setHeaderVisible] = useState(true);
   const { isOpen: isServiceModalOpen, onOpen: onServiceModalOpen, onClose: onServiceModalClose } = useDisclosure();
   const [customer, setCustomer] = useState(null);
   const [formData, setFormData] = useState({
@@ -313,6 +328,36 @@ const CustomerDetails = () => {
     };
     fetchCustomer();
   }, [customerId, toast]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      setScrollY(currentScrollY);
+      
+      // Show/hide header based on scroll direction
+      if (currentScrollY > lastScrollY) {
+        setHeaderVisible(false);
+      } else {
+        setHeaderVisible(true);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
+
+  // Calculate transparency based on scroll position
+  const headerOpacity = useMemo(() => {
+    if (scrollY < 100) return 0.2;
+    return Math.min(0.4, 0.2 + (scrollY / 1000));
+  }, [scrollY]);
+
+  const bottomNavOpacity = useMemo(() => {
+    if (scrollY < 100) return 0.15;
+    return Math.max(0.05, 0.15 - (scrollY / 1000));
+  }, [scrollY]);
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -458,10 +503,19 @@ const CustomerDetails = () => {
       bottom={0}
       left={0}
       right={0}
-      bg={cardBg}
+      bg={`rgba(17, 24, 39, ${bottomNavOpacity})`}
       boxShadow="0 -4px 6px -1px rgba(0, 0, 0, 0.1)"
       zIndex={1000}
       display={{ base: 'block', md: 'none' }}
+      backdropFilter="blur(8px)"
+      borderTop="1px solid"
+      borderColor="whiteAlpha.200"
+      transform="translateY(0)"
+      transition="all 0.3s"
+      _hover={{
+        transform: 'translateY(-5px)',
+        boxShadow: '0 -10px 15px -3px rgba(0, 0, 0, 0.1), 0 -4px 6px -2px rgba(0, 0, 0, 0.05)',
+      }}
     >
       <Flex justify="space-around" p={3}>
         <IconButton
@@ -471,6 +525,11 @@ const CustomerDetails = () => {
           colorScheme={activeTab === 'booking' ? 'purple' : 'gray'}
           onClick={() => setActiveTab('booking')}
           size="lg"
+          _hover={{
+            transform: 'scale(1.1)',
+            transition: 'all 0.2s',
+          }}
+          animation={activeTab === 'booking' ? `${pulse} 2s infinite` : 'none'}
         />
         <IconButton
           icon={<SettingsIcon />}
@@ -479,6 +538,11 @@ const CustomerDetails = () => {
           colorScheme={activeTab === 'service' ? 'purple' : 'gray'}
           onClick={() => setActiveTab('service')}
           size="lg"
+          _hover={{
+            transform: 'scale(1.1)',
+            transition: 'all 0.2s',
+          }}
+          animation={activeTab === 'service' ? `${pulse} 2s infinite` : 'none'}
         />
       </Flex>
     </Box>
@@ -887,16 +951,22 @@ const CustomerDetails = () => {
 
   const renderHeader = () => (
     <Box 
-      bg={cardBg} 
+      bg={`rgba(17, 24, 39, ${headerOpacity})`}
       position="fixed"
       top={0}
       left={0}
       right={0}
       zIndex={1000}
       boxShadow="0 4px 6px -1px rgba(0, 0, 0, 0.1)"
-      backdropFilter="blur(10px)"
+      backdropFilter="blur(8px)"
       borderBottom="1px solid"
-      borderColor="whiteAlpha.300"
+      borderColor="whiteAlpha.200"
+      transform={headerVisible ? 'translateY(0)' : 'translateY(-100%)'}
+      transition="all 0.3s ease-in-out"
+      _hover={{
+        transform: headerVisible ? 'translateY(0)' : 'translateY(-100%)',
+        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+      }}
     >
       <Flex 
         justify="space-between" 
@@ -912,6 +982,7 @@ const CustomerDetails = () => {
             boxSize="40px" 
             objectFit="contain"
             fallback={<Box boxSize="40px" bg="gray.200" borderRadius="full" />}
+            animation={`${float} 3s ease-in-out infinite`}
           />
           <VStack align="start" spacing={0}>
             <Heading size="md" bgGradient={accentGradient} bgClip="text">
@@ -929,6 +1000,10 @@ const CustomerDetails = () => {
               variant="ghost"
               colorScheme="purple"
               position="relative"
+              _hover={{
+                transform: 'scale(1.1)',
+                transition: 'all 0.2s',
+              }}
             >
               {notifications.length > 0 && (
                 <Badge
@@ -943,6 +1018,7 @@ const CustomerDetails = () => {
                   alignItems="center"
                   justifyContent="center"
                   fontSize="xs"
+                  animation={`${pulse} 2s infinite`}
                 >
                   {notifications.length}
                 </Badge>
@@ -990,6 +1066,28 @@ const CustomerDetails = () => {
                 p={4}
                 borderRadius="lg"
                 backdropFilter="blur(10px)"
+                border="1px solid"
+                borderColor="whiteAlpha.300"
+                position="relative"
+                _hover={{
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    borderRadius: 'lg',
+                    padding: '1px',
+                    background: 'linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b649, #2c3e50)',
+                    backgroundSize: '300% 300%',
+                    animation: `${gradientBorder} 3s ease infinite`,
+                    WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                    WebkitMaskComposite: 'xor',
+                    maskComposite: 'exclude',
+                    pointerEvents: 'none',
+                  },
+                }}
               >
                 <VStack spacing={4} align="stretch">
                   <Flex justify="space-between" align="center">
@@ -998,6 +1096,10 @@ const CustomerDetails = () => {
                       px={3}
                       py={1}
                       borderRadius="full"
+                      _hover={{
+                        transform: 'scale(1.05)',
+                        transition: 'all 0.2s',
+                      }}
                     >
                       {verificationStatus.status}
                     </Badge>
@@ -1007,6 +1109,13 @@ const CustomerDetails = () => {
                     colorScheme={verificationStatus.color}
                     size="sm"
                     borderRadius="full"
+                    sx={{
+                      '& > div': {
+                        background: 'linear-gradient(45deg, #ff6b6b, #4ecdc4)',
+                        backgroundSize: '200% 200%',
+                        animation: `${gradientBorder} 3s ease infinite`,
+                      },
+                    }}
                   />
                   <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
                     <Box
@@ -1015,6 +1124,11 @@ const CustomerDetails = () => {
                       borderRadius="md"
                       border="1px solid"
                       borderColor={customer.sales_verified ? "green.500" : "gray.500"}
+                      _hover={{
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                        transition: 'all 0.2s',
+                      }}
                     >
                       <VStack align="start" spacing={1}>
                         <Text fontSize="sm" color="gray.500">Sales Verification</Text>
@@ -1035,6 +1149,11 @@ const CustomerDetails = () => {
                       borderRadius="md"
                       border="1px solid"
                       borderColor={customer.accounts_verified ? "green.500" : "gray.500"}
+                      _hover={{
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                        transition: 'all 0.2s',
+                      }}
                     >
                       <VStack align="start" spacing={1}>
                         <Text fontSize="sm" color="gray.500">Accounts Verification</Text>
@@ -1055,6 +1174,11 @@ const CustomerDetails = () => {
                       borderRadius="md"
                       border="1px solid"
                       borderColor={customer.rto_verified ? "green.500" : "gray.500"}
+                      _hover={{
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                        transition: 'all 0.2s',
+                      }}
                     >
                       <VStack align="start" spacing={1}>
                         <Text fontSize="sm" color="gray.500">RTO Verification</Text>
@@ -1604,61 +1728,81 @@ const CustomerDetails = () => {
             pb={{ base: '80px', md: '40px' }}
             px={{ base: 4, md: 6 }}
           >
-            {renderBookingStatus()}
-            {/* Employee Details Box */}
-            <MotionCard
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              mb={6}
-              overflow="hidden"
-            >
-              <CardBody p={0}>
-                <Box
-                  bg={cardBg}
-                  p={6}
-                  position="relative"
+            <AnimatePresence mode="wait">
+              <motion.div
+                key="booking"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.3 }}
+              >
+                {renderBookingStatus()}
+                {/* Employee Details Box */}
+                <MotionCard
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                  mb={6}
                   overflow="hidden"
                 >
-                  <VStack spacing={4} align="stretch">
-                    <Heading size="md" color={textColor}>Employee Details</Heading>
+                  <CardBody p={0}>
                     <Box
-                      bg="whiteAlpha.200"
-                      p={4}
-                      borderRadius="lg"
-                      backdropFilter="blur(10px)"
+                      bg={cardBg}
+                      p={6}
+                      position="relative"
+                      overflow="hidden"
                     >
-                      <HStack justify="space-between" align="center" spacing={2}>
-                        <HStack spacing={2} flex={1} minW={0}>
-                          <Avatar size="md" name={customer.sales_employee || 'John Doe'} />
-                          <VStack align="start" spacing={0.5} flex={1} minW={0}>
-                            <Text fontSize="md" fontWeight="bold" noOfLines={1}>{customer.sales_employee || 'John Doe'}</Text>
-                            <Text fontSize="sm" color="gray.500" noOfLines={1}>Sales Executive</Text>
-                            <Text fontSize="sm" color="gray.500" noOfLines={1}>+91 98765 43210</Text>
-                            <HStack spacing={1}>
-                              <Text fontSize="sm" color="gray.500">Rating:</Text>
-                              <HStack spacing={0.5}>
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <Icon key={star} as={StarIcon} color="yellow.400" boxSize={3} />
-                                ))}
-                              </HStack>
+                      <VStack spacing={4} align="stretch">
+                        <Heading size="md" color={textColor}>Employee Details</Heading>
+                        <Box
+                          bg="whiteAlpha.200"
+                          p={4}
+                          borderRadius="lg"
+                          backdropFilter="blur(10px)"
+                          border="1px solid"
+                          borderColor="whiteAlpha.300"
+                          _hover={{
+                            transform: 'translateY(-2px)',
+                            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                          }}
+                        >
+                          <HStack justify="space-between" align="center" spacing={2}>
+                            <HStack spacing={2} flex={1} minW={0}>
+                              <Avatar size="md" name={customer.sales_employee || 'John Doe'} />
+                              <VStack align="start" spacing={0.5} flex={1} minW={0}>
+                                <Text fontSize="md" fontWeight="bold" noOfLines={1}>{customer.sales_employee || 'John Doe'}</Text>
+                                <Text fontSize="sm" color="gray.500" noOfLines={1}>Sales Executive</Text>
+                                <Text fontSize="sm" color="gray.500" noOfLines={1}>+91 98765 43210</Text>
+                                <HStack spacing={1}>
+                                  <Text fontSize="sm" color="gray.500">Rating:</Text>
+                                  <HStack spacing={0.5}>
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                      <Icon key={star} as={StarIcon} color="yellow.400" boxSize={3} />
+                                    ))}
+                                  </HStack>
+                                </HStack>
+                              </VStack>
                             </HStack>
-                          </VStack>
-                        </HStack>
-                        <IconButton
-                          icon={<ChatIcon />}
-                          aria-label="Chat with employee"
-                          colorScheme="purple"
-                          onClick={() => setIsChatOpen(true)}
-                          size="md"
-                          flexShrink={0}
-                        />
-                      </HStack>
+                            <IconButton
+                              icon={<ChatIcon />}
+                              aria-label="Chat with employee"
+                              colorScheme="purple"
+                              onClick={() => setIsChatOpen(true)}
+                              size="md"
+                              flexShrink={0}
+                              _hover={{
+                                transform: 'scale(1.1)',
+                                transition: 'all 0.2s',
+                              }}
+                            />
+                          </HStack>
+                        </Box>
+                      </VStack>
                     </Box>
-                  </VStack>
-                </Box>
-              </CardBody>
-            </MotionCard>
+                  </CardBody>
+                </MotionCard>
+              </motion.div>
+            </AnimatePresence>
           </Box>
         );
       case 'service':
@@ -1677,18 +1821,32 @@ const CustomerDetails = () => {
             pb={{ base: '80px', md: '40px' }}
             px={{ base: 4, md: 6 }}
           >
-            <Flex justify="space-between" align="center" mb={6}>
-              <Heading size="lg" color={textColor}>Service</Heading>
-              <IconButton
-                icon={<ChatIcon />}
-                aria-label="Chat with service team"
-                colorScheme="purple"
-                onClick={() => setIsChatOpen(true)}
-                size="lg"
-              />
-            </Flex>
-            {renderServiceHistory()}
-            {renderServiceBooking()}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key="service"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Flex justify="space-between" align="center" mb={6}>
+                  <Heading size="lg" color={textColor}>Service</Heading>
+                  <IconButton
+                    icon={<ChatIcon />}
+                    aria-label="Chat with service team"
+                    colorScheme="purple"
+                    onClick={() => setIsChatOpen(true)}
+                    size="lg"
+                    _hover={{
+                      transform: 'scale(1.1)',
+                      transition: 'all 0.2s',
+                    }}
+                  />
+                </Flex>
+                {renderServiceHistory()}
+                {renderServiceBooking()}
+              </motion.div>
+            </AnimatePresence>
           </Box>
         );
       default:
@@ -1697,13 +1855,29 @@ const CustomerDetails = () => {
   };
 
   const ServiceDetailsModal = ({ isOpen, onClose, service }) => (
-    <Modal isOpen={isOpen} onClose={onClose} size="xl">
+    <Modal isOpen={isOpen} onClose={onClose} size="xl" motionPreset="slideInBottom">
       <ModalOverlay bg="rgba(0, 0, 0, 0.4)" backdropFilter="blur(4px)" />
-      <ModalContent bg={cardBg} borderRadius="xl">
-        <ModalHeader bgGradient={accentGradient} bgClip="text">
+      <ModalContent 
+        bg={cardBg} 
+        borderRadius="xl"
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 50 }}
+        transition={{ duration: 0.3 }}
+      >
+        <ModalHeader 
+          bgGradient={accentGradient} 
+          bgClip="text"
+          animation={`${gradientBorder} 3s ease infinite`}
+        >
           Service Details
         </ModalHeader>
-        <ModalCloseButton />
+        <ModalCloseButton 
+          _hover={{
+            transform: 'rotate(90deg)',
+            transition: 'all 0.3s',
+          }}
+        />
         <ModalBody>
           {service ? (
             <VStack spacing={6} align="stretch">
@@ -1712,6 +1886,12 @@ const CustomerDetails = () => {
                 p={4}
                 borderRadius="lg"
                 backdropFilter="blur(10px)"
+                border="1px solid"
+                borderColor="whiteAlpha.300"
+                _hover={{
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                }}
               >
                 <VStack align="start" spacing={4}>
                   <Text fontSize="lg" fontWeight="bold">{service.type}</Text>
@@ -1725,6 +1905,12 @@ const CustomerDetails = () => {
                 p={4}
                 borderRadius="lg"
                 backdropFilter="blur(10px)"
+                border="1px solid"
+                borderColor="whiteAlpha.300"
+                _hover={{
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                }}
               >
                 <Text fontSize="sm" color="gray.500" mb={2}>Service Details</Text>
                 <VStack align="start" spacing={2}>
@@ -1737,6 +1923,12 @@ const CustomerDetails = () => {
                 p={4}
                 borderRadius="lg"
                 backdropFilter="blur(10px)"
+                border="1px solid"
+                borderColor="whiteAlpha.300"
+                _hover={{
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                }}
               >
                 <Text fontSize="sm" color="gray.500" mb={2}>Service Executive</Text>
                 <HStack>
@@ -1754,6 +1946,12 @@ const CustomerDetails = () => {
                 p={4}
                 borderRadius="lg"
                 backdropFilter="blur(10px)"
+                border="1px solid"
+                borderColor="whiteAlpha.300"
+                _hover={{
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                }}
               >
                 <Text fontSize="sm" color="gray.500" mb={2}>Cost Details</Text>
                 <VStack align="start" spacing={2}>
@@ -1783,7 +1981,6 @@ const CustomerDetails = () => {
                   colorScheme="purple"
                   size="lg"
                   onClick={() => {
-                    // Handle report download
                     toast({
                       title: 'Report Downloaded',
                       description: 'Service report has been downloaded successfully',
@@ -1791,6 +1988,11 @@ const CustomerDetails = () => {
                       duration: 3000,
                       isClosable: true,
                     });
+                  }}
+                  _hover={{
+                    transform: 'scale(1.05)',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                    transition: 'all 0.2s',
                   }}
                 >
                   Download Report
@@ -1800,7 +2002,6 @@ const CustomerDetails = () => {
                   colorScheme="yellow"
                   size="lg"
                   onClick={() => {
-                    // Handle rating
                     toast({
                       title: 'Rating Submitted',
                       description: 'Thank you for your feedback',
@@ -1808,6 +2009,11 @@ const CustomerDetails = () => {
                       duration: 3000,
                       isClosable: true,
                     });
+                  }}
+                  _hover={{
+                    transform: 'scale(1.05)',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                    transition: 'all 0.2s',
                   }}
                 >
                   Rate Service
