@@ -46,7 +46,25 @@ import {
   MenuList,
   MenuItem,
   Portal,
+  Card,
+  CardBody,
+  CardHeader,
+  CardFooter,
+  SimpleGrid,
+  Stat,
+  StatLabel,
+  StatNumber,
+  StatHelpText,
+  StatArrow,
+  useColorMode,
+  Tooltip,
+  ScaleFade,
+  Fade,
+  SlideFade,
+  Slide,
+  useStyleConfig,
 } from '@chakra-ui/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { keyframes } from '@emotion/react';
 import { 
   CheckCircleIcon, 
@@ -57,8 +75,6 @@ import {
   PhoneIcon,
   EmailIcon,
   LocationIcon,
-  CarIcon,
-  CreditCardIcon,
   SettingsIcon,
   ChevronRightIcon,
   ChevronDownIcon,
@@ -70,10 +86,48 @@ import {
   AddIcon,
   ChevronLeftIcon,
   ChevronLeftIcon as ChevronLeftIconAlias,
+  StarIcon,
+  WarningTwoIcon,
+  CheckIcon,
+  InfoOutlineIcon,
+  RepeatIcon,
+  RepeatClockIcon,
+  TriangleUpIcon,
+  TriangleDownIcon,
+  ExternalLinkIcon,
+  PhoneIcon as PhoneIconAlias,
+  EmailIcon as EmailIconAlias,
+  CalendarIcon as CalendarIconAlias,
+  TimeIcon as TimeIconAlias,
+
+  SettingsIcon as SettingsIconAlias,
+  ChevronRightIcon as ChevronRightIconAlias,
+  ChevronDownIcon as ChevronDownIconAlias,
+  EditIcon as EditIconAlias,
+  BellIcon as BellIconAlias,
+  ChatIcon as ChatIconAlias,
+  ViewIcon as ViewIconAlias,
+  CloseIcon as CloseIconAlias,
+  AddIcon as AddIconAlias,
+  ChevronLeftIcon as ChevronLeftIconAlias2,
+  StarIcon as StarIconAlias,
+  WarningTwoIcon as WarningTwoIconAlias,
+  CheckIcon as CheckIconAlias,
+  InfoOutlineIcon as InfoOutlineIconAlias,
+  RepeatIcon as RepeatIconAlias,
+  RepeatClockIcon as RepeatClockIconAlias,
+  TriangleUpIcon as TriangleUpIconAlias,
+  TriangleDownIcon as TriangleDownIconAlias,
+  ExternalLinkIcon as ExternalLinkIconAlias,
 } from '@chakra-ui/icons';
 import axios from 'axios';
 
-// Animations
+// Modern UI Components
+const MotionBox = motion(Box);
+const MotionFlex = motion(Flex);
+const MotionCard = motion(Card);
+
+// Modern Animations
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
@@ -84,6 +138,60 @@ const pulse = keyframes`
   50% { transform: scale(1.05); }
   100% { transform: scale(1); }
 `;
+
+const slideIn = keyframes`
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+`;
+
+const slideOut = keyframes`
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+`;
+
+// Modern Color Schemes
+const modernColors = {
+  primary: {
+    50: '#f0f9ff',
+    100: '#e0f2fe',
+    200: '#bae6fd',
+    300: '#7dd3fc',
+    400: '#38bdf8',
+    500: '#0ea5e9',
+    600: '#0284c7',
+    700: '#0369a1',
+    800: '#075985',
+    900: '#0c4a6e',
+  },
+  secondary: {
+    50: '#fdf4ff',
+    100: '#fae8ff',
+    200: '#f5d0fe',
+    300: '#f0abfc',
+    400: '#e879f9',
+    500: '#d946ef',
+    600: '#c026d3',
+    700: '#a21caf',
+    800: '#86198f',
+    900: '#701a75',
+  },
+};
+
+// Modern Card Styles
+const cardStyles = {
+  baseStyle: {
+    container: {
+      bg: 'white',
+      borderRadius: 'xl',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      transition: 'all 0.2s',
+      _hover: {
+        transform: 'translateY(-2px)',
+        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+      },
+    },
+  },
+};
 
 const CustomerDetails = () => {
   const { customerId } = useParams();
@@ -158,6 +266,7 @@ const CustomerDetails = () => {
     { id: 2, sender: 'support', text: 'Hi! How can I assist you today?', time: '10:01 AM' },
   ]);
   const [newMessage, setNewMessage] = useState('');
+  const [selectedService, setSelectedService] = useState(null);
 
   const bgGradient = useColorModeValue(
     'linear-gradient(135deg, #1a365d 0%, #2d3748 100%)',
@@ -338,6 +447,11 @@ const CustomerDetails = () => {
     setNewMessage('');
   };
 
+  const handleServiceClick = (service) => {
+    setSelectedService(service);
+    onServiceModalOpen();
+  };
+
   const renderBottomNav = () => (
     <Box
       position="fixed"
@@ -356,17 +470,6 @@ const CustomerDetails = () => {
           variant="ghost"
           colorScheme={activeTab === 'booking' ? 'purple' : 'gray'}
           onClick={() => setActiveTab('booking')}
-          size="lg"
-        />
-        <IconButton
-          icon={<ChatIcon />}
-          aria-label="Chat"
-          variant="ghost"
-          colorScheme={activeTab === 'chat' ? 'purple' : 'gray'}
-          onClick={() => {
-            setActiveTab('chat');
-            setIsChatOpen(true);
-          }}
           size="lg"
         />
         <IconButton
@@ -514,107 +617,879 @@ const CustomerDetails = () => {
   };
 
   const renderServiceHistory = () => (
-    <Box>
-      <Heading size="md" mb={4} color={textColor}>Service History</Heading>
-      <VStack spacing={4} align="stretch">
-        {serviceHistory.slice((currentPage - 1) * 4, currentPage * 4).map((service) => (
-          <Box
-            key={service.id}
-            bg="whiteAlpha.200"
-            p={4}
-            borderRadius="lg"
-            border="1px solid"
-            borderColor="whiteAlpha.300"
-          >
-            <Flex justify="space-between" align="center">
-              <VStack align="start" spacing={1}>
-                <Text fontWeight="bold" color={textColor}>{service.type}</Text>
-                <Text fontSize="sm" color="gray.500">{service.date}</Text>
-                <Text fontSize="sm">{service.notes}</Text>
+    <MotionCard
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      mb={6}
+      overflow="hidden"
+    >
+      <CardBody p={0}>
+        <Box
+          bg={cardBg}
+          p={4}
+          position="relative"
+          overflow="hidden"
+        >
+          <VStack spacing={6} align="stretch">
+            {/* Vehicle Summary */}
+            <Box
+              bg="whiteAlpha.200"
+              p={4}
+              borderRadius="lg"
+              backdropFilter="blur(10px)"
+            >
+              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                <Box>
+                  <Text fontSize="sm" color="gray.500" mb={1}>First Service</Text>
+                  <HStack>
+                    <Text fontSize="lg" color={textColor}>15 Mar 2024</Text>
+                    <Badge colorScheme={serviceHistory.some(s => s.type === 'First Service' && s.status === 'Completed') ? 'green' : 'yellow'}>
+                      {serviceHistory.some(s => s.type === 'First Service' && s.status === 'Completed') ? 'Done' : 'Not Done'}
+                    </Badge>
+                  </HStack>
+                </Box>
+                <Box>
+                  <Text fontSize="sm" color="gray.500" mb={1}>Total Kilometers</Text>
+                  <Text fontSize="lg" color={textColor}>5,000 km</Text>
+                </Box>
+                <Box>
+                  <Text fontSize="sm" color="gray.500" mb={1}>Vehicle Condition</Text>
+                  <Button
+                    variant="ghost"
+                    colorScheme="purple"
+                    onClick={() => {
+                      setSelectedService(null);
+                      onServiceModalOpen();
+                    }}
+                  >
+                    View Details
+                  </Button>
+                </Box>
+              </SimpleGrid>
+            </Box>
+
+            {/* Service History */}
+            <Box>
+              <Heading size="md" mb={4} color={textColor}>Service History</Heading>
+              <VStack spacing={4} align="stretch">
+                {serviceHistory.slice((currentPage - 1) * 4, currentPage * 4).map((service) => (
+                  <Box
+                    key={service.id}
+                    bg="whiteAlpha.200"
+                    p={4}
+                    borderRadius="lg"
+                    border="1px solid"
+                    borderColor="whiteAlpha.300"
+                    cursor="pointer"
+                    _hover={{ transform: 'translateY(-2px)', boxShadow: 'lg' }}
+                    transition="all 0.2s"
+                    onClick={() => handleServiceClick(service)}
+                  >
+                    <Flex justify="space-between" align="center">
+                      <VStack align="start" spacing={1}>
+                        <Text fontWeight="bold" color={textColor}>{service.type}</Text>
+                        <Text fontSize="sm" color="gray.500">{service.date}</Text>
+                        <Text fontSize="sm" color="gray.500">{service.notes}</Text>
+                      </VStack>
+                      <Badge
+                        colorScheme={service.status === 'Completed' ? 'green' : 'yellow'}
+                        px={2}
+                        py={1}
+                        borderRadius="full"
+                      >
+                        {service.status}
+                      </Badge>
+                    </Flex>
+                  </Box>
+                ))}
               </VStack>
-              <Badge
-                colorScheme={service.status === 'Completed' ? 'green' : 'yellow'}
-                px={2}
-                py={1}
-                borderRadius="full"
-              >
-                {service.status}
-              </Badge>
-            </Flex>
-          </Box>
-        ))}
-      </VStack>
-      {renderPagination()}
-    </Box>
+              {renderPagination()}
+            </Box>
+          </VStack>
+        </Box>
+      </CardBody>
+    </MotionCard>
   );
 
   const renderServiceBooking = () => (
-    <Box mt={6}>
-      <Heading size="md" mb={4} color={textColor}>Book New Service</Heading>
-      <VStack spacing={4} align="stretch">
-        <FormControl>
-          <FormLabel>Service Type</FormLabel>
-          <Select
-            value={serviceType}
-            onChange={(e) => setServiceType(e.target.value)}
-            variant="filled"
-            bg="whiteAlpha.200"
-            _hover={{ bg: "whiteAlpha.300" }}
-            _focus={{ bg: "whiteAlpha.400" }}
-          >
-            <option value="">Select service type</option>
-            <option value="General Service">General Service</option>
-            <option value="Oil Change">Oil Change</option>
-            <option value="Brake Service">Brake Service</option>
-            <option value="Tire Rotation">Tire Rotation</option>
-            <option value="Custom">Custom Service</option>
-          </Select>
-        </FormControl>
-
-        {serviceType === 'Custom' && (
-          <FormControl>
-            <FormLabel>Custom Service Description</FormLabel>
-            <Input
-              value={customService}
-              onChange={(e) => setCustomService(e.target.value)}
-              placeholder="Describe your custom service"
-              variant="filled"
-              bg="whiteAlpha.200"
-              _hover={{ bg: "whiteAlpha.300" }}
-              _focus={{ bg: "whiteAlpha.400" }}
-            />
-          </FormControl>
-        )}
-
-        <FormControl>
-          <FormLabel>Additional Notes (Optional)</FormLabel>
-          <Textarea
-            value={serviceNotes}
-            onChange={(e) => setServiceNotes(e.target.value)}
-            placeholder="Add any additional notes"
-            variant="filled"
-            bg="whiteAlpha.200"
-            _hover={{ bg: "whiteAlpha.300" }}
-            _focus={{ bg: "whiteAlpha.400" }}
-            rows={3}
-          />
-        </FormControl>
-
-        <Button
-          colorScheme="purple"
-          size="lg"
-          onClick={handleServiceSubmit}
-          bgGradient={accentGradient}
-          _hover={{ 
-            transform: 'translateY(-2px)',
-            boxShadow: 'xl'
-          }}
-          transition="all 0.2s"
+    <MotionCard
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      overflow="hidden"
+    >
+      <CardBody p={0}>
+        <Box
+          bg={cardBg}
+          p={6}
+          position="relative"
+          overflow="hidden"
         >
-          Submit Service Request
-        </Button>
-      </VStack>
+          <VStack spacing={6} align="stretch">
+            <Heading size="md" color={textColor}>Book New Service</Heading>
+            <FormControl>
+              <FormLabel>Service Type</FormLabel>
+              <Select
+                value={serviceType}
+                onChange={(e) => setServiceType(e.target.value)}
+                variant="filled"
+                bg="whiteAlpha.200"
+                _hover={{ bg: "whiteAlpha.300" }}
+                _focus={{ bg: "whiteAlpha.400" }}
+              >
+                <option value="">Select service type</option>
+                <option value="General Service">General Service</option>
+                <option value="Oil Change">Oil Change</option>
+                <option value="Brake Service">Brake Service</option>
+                <option value="Tire Rotation">Tire Rotation</option>
+                <option value="Custom">Custom Service</option>
+              </Select>
+            </FormControl>
+
+            {serviceType === 'Custom' && (
+              <FormControl>
+                <FormLabel>Custom Service Description</FormLabel>
+                <Input
+                  value={customService}
+                  onChange={(e) => setCustomService(e.target.value)}
+                  placeholder="Describe your custom service"
+                  variant="filled"
+                  bg="whiteAlpha.200"
+                  _hover={{ bg: "whiteAlpha.300" }}
+                  _focus={{ bg: "whiteAlpha.400" }}
+                />
+              </FormControl>
+            )}
+
+            <FormControl>
+              <FormLabel>Additional Notes (Optional)</FormLabel>
+              <Textarea
+                value={serviceNotes}
+                onChange={(e) => setServiceNotes(e.target.value)}
+                placeholder="Add any additional notes"
+                variant="filled"
+                bg="whiteAlpha.200"
+                _hover={{ bg: "whiteAlpha.300" }}
+                _focus={{ bg: "whiteAlpha.400" }}
+                rows={3}
+              />
+            </FormControl>
+
+            <Button
+              colorScheme="purple"
+              size="lg"
+              onClick={handleServiceSubmit}
+              bgGradient={accentGradient}
+              _hover={{ 
+                transform: 'translateY(-2px)',
+                boxShadow: 'xl'
+              }}
+              transition="all 0.2s"
+            >
+              Submit Service Request
+            </Button>
+          </VStack>
+        </Box>
+      </CardBody>
+    </MotionCard>
+  );
+
+  // Vehicle Condition Modal
+  const VehicleConditionModal = ({ isOpen, onClose, service }) => (
+    <Modal isOpen={isOpen} onClose={onClose} size="xl">
+      <ModalOverlay bg="rgba(0, 0, 0, 0.4)" backdropFilter="blur(4px)" />
+      <ModalContent bg={cardBg} borderRadius="xl">
+        <ModalHeader bgGradient={accentGradient} bgClip="text">
+          Vehicle Condition Details
+        </ModalHeader>
+        <ModalCloseButton />
+        <ModalBody>
+          <VStack spacing={6} align="stretch">
+            <Box
+              bg="whiteAlpha.200"
+              p={4}
+              borderRadius="lg"
+              backdropFilter="blur(10px)"
+            >
+              <Text fontSize="sm" color="gray.500" mb={2}>Exterior Condition</Text>
+              <VStack align="start" spacing={2}>
+                <HStack>
+                  <Icon as={CheckCircleIcon} color="green.500" />
+                  <Text>Paint: Excellent</Text>
+                </HStack>
+                <HStack>
+                  <Icon as={CheckCircleIcon} color="green.500" />
+                  <Text>Body: No dents or scratches</Text>
+                </HStack>
+                <HStack>
+                  <Icon as={CheckCircleIcon} color="green.500" />
+                  <Text>Windows: Clean and intact</Text>
+                </HStack>
+              </VStack>
+            </Box>
+
+            <Box
+              bg="whiteAlpha.200"
+              p={4}
+              borderRadius="lg"
+              backdropFilter="blur(10px)"
+            >
+              <Text fontSize="sm" color="gray.500" mb={2}>Mechanical Condition</Text>
+              <VStack align="start" spacing={2}>
+                <HStack>
+                  <Icon as={CheckCircleIcon} color="green.500" />
+                  <Text>Engine: Running smoothly</Text>
+                </HStack>
+                <HStack>
+                  <Icon as={CheckCircleIcon} color="green.500" />
+                  <Text>Brakes: Responsive</Text>
+                </HStack>
+                <HStack>
+                  <Icon as={CheckCircleIcon} color="green.500" />
+                  <Text>Suspension: No issues</Text>
+                </HStack>
+              </VStack>
+            </Box>
+
+            <Box
+              bg="whiteAlpha.200"
+              p={4}
+              borderRadius="lg"
+              backdropFilter="blur(10px)"
+            >
+              <Text fontSize="sm" color="gray.500" mb={2}>Tire Condition</Text>
+              <VStack align="start" spacing={2}>
+                <HStack>
+                  <Icon as={CheckCircleIcon} color="green.500" />
+                  <Text>Tread Depth: Good</Text>
+                </HStack>
+                <HStack>
+                  <Icon as={CheckCircleIcon} color="green.500" />
+                  <Text>Pressure: Optimal</Text>
+                </HStack>
+                <HStack>
+                  <Icon as={CheckCircleIcon} color="green.500" />
+                  <Text>Alignment: Correct</Text>
+                </HStack>
+              </VStack>
+            </Box>
+          </VStack>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="ghost" mr={3} onClick={onClose}>
+            Close
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
+  );
+
+  const renderHeader = () => (
+    <Box 
+      bg={cardBg} 
+      position="fixed"
+      top={0}
+      left={0}
+      right={0}
+      zIndex={1000}
+      boxShadow="0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+      backdropFilter="blur(10px)"
+      borderBottom="1px solid"
+      borderColor="whiteAlpha.300"
+    >
+      <Flex 
+        justify="space-between" 
+        align="center" 
+        p={4}
+        maxW="1200px"
+        mx="auto"
+      >
+        <HStack spacing={4}>
+          <Image 
+            src={process.env.PUBLIC_URL + '/dealersync.jpeg'} 
+            alt="Dealership Logo" 
+            boxSize="40px" 
+            objectFit="contain"
+            fallback={<Box boxSize="40px" bg="gray.200" borderRadius="full" />}
+          />
+          <VStack align="start" spacing={0}>
+            <Heading size="md" bgGradient={accentGradient} bgClip="text">
+              DealrSync
+            </Heading>
+            <Text fontSize="sm" color="gray.500">Your Trusted Onboarding Partner</Text>
+          </VStack>
+        </HStack>
+        <HStack spacing={4}>
+          <Menu>
+            <MenuButton
+              as={IconButton}
+              icon={<BellIcon />}
+              aria-label="Notifications"
+              variant="ghost"
+              colorScheme="purple"
+              position="relative"
+            >
+              {notifications.length > 0 && (
+                <Badge
+                  position="absolute"
+                  top={-2}
+                  right={-2}
+                  colorScheme="red"
+                  borderRadius="full"
+                  minW="20px"
+                  h="20px"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  fontSize="xs"
+                >
+                  {notifications.length}
+                </Badge>
+              )}
+            </MenuButton>
+            <Portal>
+              <MenuList>
+                {notifications.map((notification) => (
+                  <MenuItem key={notification.id}>
+                    <VStack align="start" spacing={0}>
+                      <Text>{notification.message}</Text>
+                      <Text fontSize="xs" color="gray.500">{notification.time}</Text>
+                    </VStack>
+                  </MenuItem>
+                ))}
+              </MenuList>
+            </Portal>
+          </Menu>
+        </HStack>
+      </Flex>
     </Box>
+  );
+
+  const renderBookingStatus = () => (
+    <MotionCard
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      mb={6}
+      overflow="hidden"
+    >
+      <CardBody p={0}>
+        <Box
+          bg={cardBg}
+          p={6}
+          position="relative"
+          overflow="hidden"
+        >
+          <Flex justify="space-between" align="center" mb={6}>
+            <VStack align="start" spacing={1}>
+              <Heading size="lg" bgGradient={accentGradient} bgClip="text">
+                Customer Details
+              </Heading>
+              <Text fontSize="sm" color="gray.500">
+                Created by {customer.sales_employee || 'John Doe'} on {new Date(customer.created_at).toLocaleDateString()}
+              </Text>
+            </VStack>
+            {customer.status !== 'Pending' && (
+              <IconButton
+                icon={isBookingDetailsOpen ? <ChevronDownIcon /> : <ChevronRightIcon />}
+                aria-label="Toggle booking details"
+                variant="ghost"
+                colorScheme="purple"
+                onClick={() => setIsBookingDetailsOpen(!isBookingDetailsOpen)}
+                size="lg"
+              />
+            )}
+          </Flex>
+
+          <Collapse in={isBookingDetailsOpen || customer.status === 'Pending'}>
+            {customer.status === 'Pending' ? (
+              <form onSubmit={handleSubmit}>
+                <VStack spacing={6} align="stretch">
+                  <Grid templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={6}>
+                    <FormControl>
+                      <FormLabel color={textColor}>Full Name</FormLabel>
+                      <Input 
+                        name="name" 
+                        value={formData.name} 
+                        onChange={handleInputChange} 
+                        variant="filled" 
+                        isDisabled 
+                        bg="whiteAlpha.200"
+                        _hover={{ bg: "whiteAlpha.300" }}
+                        _focus={{ bg: "whiteAlpha.400" }}
+                      />
+                    </FormControl>
+                    <FormControl>
+                      <FormLabel color={textColor}>Date of Birth</FormLabel>
+                      <Input 
+                        name="dob" 
+                        type="date" 
+                        value={formData.dob} 
+                        onChange={handleInputChange} 
+                        variant="filled"
+                        bg="whiteAlpha.200"
+                        _hover={{ bg: "whiteAlpha.300" }}
+                        _focus={{ bg: "whiteAlpha.400" }}
+                      />
+                    </FormControl>
+                    <FormControl>
+                      <FormLabel color={textColor}>Address</FormLabel>
+                      <Input 
+                        name="address" 
+                        value={formData.address} 
+                        onChange={handleInputChange} 
+                        variant="filled"
+                        bg="whiteAlpha.200"
+                        _hover={{ bg: "whiteAlpha.300" }}
+                        _focus={{ bg: "whiteAlpha.400" }}
+                      />
+                    </FormControl>
+                    <FormControl>
+                      <FormLabel color={textColor}>Mobile 1</FormLabel>
+                      <Input 
+                        name="mobile_1" 
+                        value={formData.mobile_1} 
+                        onChange={handleInputChange} 
+                        variant="filled" 
+                        isDisabled
+                        bg="whiteAlpha.200"
+                        _hover={{ bg: "whiteAlpha.300" }}
+                        _focus={{ bg: "whiteAlpha.400" }}
+                      />
+                    </FormControl>
+                    <FormControl>
+                      <FormLabel color={textColor}>Mobile 2 (Optional)</FormLabel>
+                      <Input 
+                        name="mobile_2" 
+                        value={formData.mobile_2} 
+                        onChange={handleInputChange} 
+                        variant="filled"
+                        bg="whiteAlpha.200"
+                        _hover={{ bg: "whiteAlpha.300" }}
+                        _focus={{ bg: "whiteAlpha.400" }}
+                      />
+                    </FormControl>
+                    <FormControl>
+                      <FormLabel color={textColor}>Email</FormLabel>
+                      <Input 
+                        name="email" 
+                        type="email" 
+                        value={formData.email} 
+                        onChange={handleInputChange} 
+                        variant="filled"
+                        bg="whiteAlpha.200"
+                        _hover={{ bg: "whiteAlpha.300" }}
+                        _focus={{ bg: "whiteAlpha.400" }}
+                      />
+                    </FormControl>
+                    <FormControl>
+                      <FormLabel color={textColor}>Nominee</FormLabel>
+                      <Input 
+                        name="nominee" 
+                        value={formData.nominee} 
+                        onChange={handleInputChange} 
+                        variant="filled"
+                        bg="whiteAlpha.200"
+                        _hover={{ bg: "whiteAlpha.300" }}
+                        _focus={{ bg: "whiteAlpha.400" }}
+                      />
+                    </FormControl>
+                    <FormControl>
+                      <FormLabel color={textColor}>Relation with Nominee</FormLabel>
+                      <Input 
+                        name="nominee_relation" 
+                        value={formData.nominee_relation} 
+                        onChange={handleInputChange} 
+                        variant="filled"
+                        bg="whiteAlpha.200"
+                        _hover={{ bg: "whiteAlpha.300" }}
+                        _focus={{ bg: "whiteAlpha.400" }}
+                      />
+                    </FormControl>
+                    <FormControl>
+                      <FormLabel color={textColor}>Payment Mode</FormLabel>
+                      <Select 
+                        name="payment_mode" 
+                        value={formData.payment_mode} 
+                        onChange={handleInputChange} 
+                        variant="filled"
+                        bg="whiteAlpha.200"
+                        _hover={{ bg: "whiteAlpha.300" }}
+                        _focus={{ bg: "whiteAlpha.400" }}
+                      >
+                        <option value="">Select payment mode</option>
+                        <option value="Cash">Cash</option>
+                        <option value="Finance">Finance</option>
+                      </Select>
+                    </FormControl>
+                    {formData.payment_mode === 'Finance' && (
+                      <>
+                        <FormControl>
+                          <FormLabel color={textColor}>Finance Company</FormLabel>
+                          <Input 
+                            name="finance_company" 
+                            value={formData.finance_company} 
+                            onChange={handleInputChange} 
+                            variant="filled"
+                            bg="whiteAlpha.200"
+                            _hover={{ bg: "whiteAlpha.300" }}
+                            _focus={{ bg: "whiteAlpha.400" }}
+                          />
+                        </FormControl>
+                        <FormControl>
+                          <FormLabel color={textColor}>Finance Amount</FormLabel>
+                          <Input 
+                            name="finance_amount" 
+                            type="number" 
+                            value={formData.finance_amount} 
+                            onChange={handleInputChange} 
+                            variant="filled"
+                            bg="whiteAlpha.200"
+                            _hover={{ bg: "whiteAlpha.300" }}
+                            _focus={{ bg: "whiteAlpha.400" }}
+                          />
+                        </FormControl>
+                      </>
+                    )}
+                  </Grid>
+
+                  <Box>
+                    <FormLabel color={textColor}>Required Documents</FormLabel>
+                    <Grid templateColumns={{ base: '1fr', md: '1fr 1fr 1fr' }} gap={4}>
+                      <FormControl>
+                        <FormLabel color={textColor}>Aadhar Front</FormLabel>
+                        <Input 
+                          name="aadhar_front" 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={handleFileChange} 
+                          variant="filled"
+                          bg="whiteAlpha.200"
+                          _hover={{ bg: "whiteAlpha.300" }}
+                          _focus={{ bg: "whiteAlpha.400" }}
+                        />
+                      </FormControl>
+                      <FormControl>
+                        <FormLabel color={textColor}>Aadhar Back</FormLabel>
+                        <Input 
+                          name="aadhar_back" 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={handleFileChange} 
+                          variant="filled"
+                          bg="whiteAlpha.200"
+                          _hover={{ bg: "whiteAlpha.300" }}
+                          _focus={{ bg: "whiteAlpha.400" }}
+                        />
+                      </FormControl>
+                      <FormControl>
+                        <FormLabel color={textColor}>Passport Photo</FormLabel>
+                        <Input 
+                          name="passport_photo" 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={handleFileChange} 
+                          variant="filled"
+                          bg="whiteAlpha.200"
+                          _hover={{ bg: "whiteAlpha.300" }}
+                          _focus={{ bg: "whiteAlpha.400" }}
+                        />
+                      </FormControl>
+                    </Grid>
+                  </Box>
+
+                  <Button 
+                    type="submit" 
+                    colorScheme="purple" 
+                    size="lg" 
+                    w="full" 
+                    isLoading={isSubmitting}
+                    bgGradient={accentGradient}
+                    _hover={{ 
+                      transform: 'translateY(-2px)',
+                      boxShadow: 'xl'
+                    }}
+                    transition="all 0.2s"
+                  >
+                    Submit Details
+                  </Button>
+                </VStack>
+              </form>
+            ) : (
+              <VStack spacing={6} align="stretch">
+                <Flex justify="flex-end">
+                  <IconButton
+                    icon={<EditIcon />}
+                    aria-label="Edit details"
+                    variant="ghost"
+                    colorScheme="purple"
+                    onClick={() => setIsEditing(!isEditing)}
+                    size="lg"
+                  />
+                </Flex>
+
+                {isEditing ? (
+                  <form onSubmit={handleSubmit}>
+                    <Grid templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={6}>
+                      <FormControl>
+                        <FormLabel color={textColor}>Full Name</FormLabel>
+                        <Input 
+                          name="name" 
+                          value={formData.name} 
+                          onChange={handleInputChange} 
+                          variant="filled" 
+                          isDisabled 
+                          bg="whiteAlpha.200"
+                          _hover={{ bg: "whiteAlpha.300" }}
+                          _focus={{ bg: "whiteAlpha.400" }}
+                        />
+                      </FormControl>
+                      <FormControl>
+                        <FormLabel color={textColor}>Date of Birth</FormLabel>
+                        <Input 
+                          name="dob" 
+                          type="date" 
+                          value={formData.dob} 
+                          onChange={handleInputChange} 
+                          variant="filled"
+                          bg="whiteAlpha.200"
+                          _hover={{ bg: "whiteAlpha.300" }}
+                          _focus={{ bg: "whiteAlpha.400" }}
+                        />
+                      </FormControl>
+                      <FormControl>
+                        <FormLabel color={textColor}>Address</FormLabel>
+                        <Input 
+                          name="address" 
+                          value={formData.address} 
+                          onChange={handleInputChange} 
+                          variant="filled"
+                          bg="whiteAlpha.200"
+                          _hover={{ bg: "whiteAlpha.300" }}
+                          _focus={{ bg: "whiteAlpha.400" }}
+                        />
+                      </FormControl>
+                      <FormControl>
+                        <FormLabel color={textColor}>Mobile 1</FormLabel>
+                        <Input 
+                          name="mobile_1" 
+                          value={formData.mobile_1} 
+                          onChange={handleInputChange} 
+                          variant="filled" 
+                          isDisabled
+                          bg="whiteAlpha.200"
+                          _hover={{ bg: "whiteAlpha.300" }}
+                          _focus={{ bg: "whiteAlpha.400" }}
+                        />
+                      </FormControl>
+                      <FormControl>
+                        <FormLabel color={textColor}>Mobile 2 (Optional)</FormLabel>
+                        <Input 
+                          name="mobile_2" 
+                          value={formData.mobile_2} 
+                          onChange={handleInputChange} 
+                          variant="filled"
+                          bg="whiteAlpha.200"
+                          _hover={{ bg: "whiteAlpha.300" }}
+                          _focus={{ bg: "whiteAlpha.400" }}
+                        />
+                      </FormControl>
+                      <FormControl>
+                        <FormLabel color={textColor}>Email</FormLabel>
+                        <Input 
+                          name="email" 
+                          type="email" 
+                          value={formData.email} 
+                          onChange={handleInputChange} 
+                          variant="filled"
+                          bg="whiteAlpha.200"
+                          _hover={{ bg: "whiteAlpha.300" }}
+                          _focus={{ bg: "whiteAlpha.400" }}
+                        />
+                      </FormControl>
+                      <FormControl>
+                        <FormLabel color={textColor}>Nominee</FormLabel>
+                        <Input 
+                          name="nominee" 
+                          value={formData.nominee} 
+                          onChange={handleInputChange} 
+                          variant="filled"
+                          bg="whiteAlpha.200"
+                          _hover={{ bg: "whiteAlpha.300" }}
+                          _focus={{ bg: "whiteAlpha.400" }}
+                        />
+                      </FormControl>
+                      <FormControl>
+                        <FormLabel color={textColor}>Relation with Nominee</FormLabel>
+                        <Input 
+                          name="nominee_relation" 
+                          value={formData.nominee_relation} 
+                          onChange={handleInputChange} 
+                          variant="filled"
+                          bg="whiteAlpha.200"
+                          _hover={{ bg: "whiteAlpha.300" }}
+                          _focus={{ bg: "whiteAlpha.400" }}
+                        />
+                      </FormControl>
+                      <FormControl>
+                        <FormLabel color={textColor}>Payment Mode</FormLabel>
+                        <Select 
+                          name="payment_mode" 
+                          value={formData.payment_mode} 
+                          onChange={handleInputChange} 
+                          variant="filled"
+                          bg="whiteAlpha.200"
+                          _hover={{ bg: "whiteAlpha.300" }}
+                          _focus={{ bg: "whiteAlpha.400" }}
+                        >
+                          <option value="">Select payment mode</option>
+                          <option value="Cash">Cash</option>
+                          <option value="Finance">Finance</option>
+                        </Select>
+                      </FormControl>
+                      {formData.payment_mode === 'Finance' && (
+                        <>
+                          <FormControl>
+                            <FormLabel color={textColor}>Finance Company</FormLabel>
+                            <Input 
+                              name="finance_company" 
+                              value={formData.finance_company} 
+                              onChange={handleInputChange} 
+                              variant="filled"
+                              bg="whiteAlpha.200"
+                              _hover={{ bg: "whiteAlpha.300" }}
+                              _focus={{ bg: "whiteAlpha.400" }}
+                            />
+                          </FormControl>
+                          <FormControl>
+                            <FormLabel color={textColor}>Finance Amount</FormLabel>
+                            <Input 
+                              name="finance_amount" 
+                              type="number" 
+                              value={formData.finance_amount} 
+                              onChange={handleInputChange} 
+                              variant="filled"
+                              bg="whiteAlpha.200"
+                              _hover={{ bg: "whiteAlpha.300" }}
+                              _focus={{ bg: "whiteAlpha.400" }}
+                            />
+                          </FormControl>
+                        </>
+                      )}
+                    </Grid>
+                    <Button
+                      type="submit"
+                      colorScheme="purple"
+                      size="lg"
+                      mt={4}
+                      bgGradient={accentGradient}
+                      _hover={{ 
+                        transform: 'translateY(-2px)',
+                        boxShadow: 'xl'
+                      }}
+                      transition="all 0.2s"
+                    >
+                      Save Changes
+                    </Button>
+                  </form>
+                ) : (
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+                    <Box
+                      bg="whiteAlpha.200"
+                      p={4}
+                      borderRadius="lg"
+                      backdropFilter="blur(10px)"
+                    >
+                      <VStack align="start" spacing={4}>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500" mb={1}>Personal Information</Text>
+                          <VStack align="start" spacing={2}>
+                            <HStack>
+                              <Text fontSize="lg" color={textColor}>{customer.customer_name}</Text>
+                            </HStack>
+                            <HStack>
+                              <Icon as={CalendarIcon} color="purple.500" />
+                              <Text fontSize="lg" color={textColor}>{customer.dob || 'Not provided'}</Text>
+                            </HStack>
+                            <HStack>
+                              <Icon as={PhoneIcon} color="purple.500" />
+                              <Text fontSize="lg" color={textColor}>{customer.mobile_1}</Text>
+                            </HStack>
+                            <HStack>
+                              <Icon as={EmailIcon} color="purple.500" />
+                              <Text fontSize="lg" color={textColor}>{customer.email || 'Not provided'}</Text>
+                            </HStack>
+                          </VStack>
+                        </Box>
+                      </VStack>
+                    </Box>
+
+                    <Box
+                      bg="whiteAlpha.200"
+                      p={4}
+                      borderRadius="lg"
+                      backdropFilter="blur(10px)"
+                    >
+                      <VStack align="start" spacing={4}>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500" mb={1}>Vehicle Information</Text>
+                          <VStack align="start" spacing={2}>
+                            <HStack>
+                              <Text fontSize="lg" color={textColor}>{customer.vehicle}</Text>
+                            </HStack>
+                            <HStack>
+                              <Icon as={SettingsIcon} color="purple.500" />
+                              <Text fontSize="lg" color={textColor}>{customer.variant || 'Not specified'}</Text>
+                            </HStack>
+                            <HStack>
+                              <Icon as={ViewIcon} color="purple.500" />
+                              <Text fontSize="lg" color={textColor}>{customer.color || 'Not specified'}</Text>
+                            </HStack>
+                          </VStack>
+                        </Box>
+                      </VStack>
+                    </Box>
+
+                    <Box
+                      bg="whiteAlpha.200"
+                      p={4}
+                      borderRadius="lg"
+                      backdropFilter="blur(10px)"
+                      gridColumn={{ md: 'span 2' }}
+                    >
+                      <VStack align="start" spacing={4}>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500" mb={1}>Address & Payment Details</Text>
+                          <VStack align="start" spacing={2}>
+                            <HStack>
+                              <Text fontSize="lg" color={textColor}>{customer.address || 'Not provided'}</Text>
+                            </HStack>
+                            <HStack>
+                              <Text fontSize="lg" color={textColor}>{customer.payment_mode}</Text>
+                            </HStack>
+                            {customer.payment_mode === 'Finance' && (
+                              <>
+                                <HStack>
+                                  <Text fontSize="lg" color={textColor}>{customer.finance_company}</Text>
+                                </HStack>
+                                <HStack>
+                                  <Text fontSize="lg" color={textColor}>₹{customer.finance_amount}</Text>
+                                </HStack>
+                              </>
+                            )}
+                          </VStack>
+                        </Box>
+                      </VStack>
+                    </Box>
+                  </SimpleGrid>
+                )}
+              </VStack>
+            )}
+          </Collapse>
+        </Box>
+      </CardBody>
+    </MotionCard>
   );
 
   const renderContent = () => {
@@ -622,768 +1497,86 @@ const CustomerDetails = () => {
       case 'booking':
         return (
           <>
-            {/* Verification Progress */}
-            <Box 
-              bg={cardBg} 
-              borderRadius="xl" 
-              p={6} 
-              mb={6} 
-              boxShadow="xl"
-              backdropFilter="blur(10px)"
-              border="1px solid"
-              borderColor="whiteAlpha.300"
-              animation={`${fadeIn} 0.5s ease-out`}
+            {renderBookingStatus()}
+            {/* Employee Details Box */}
+            <MotionCard
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              mb={6}
+              overflow="hidden"
             >
-              <VStack spacing={6} align="stretch">
-                <Heading size="md" color={textColor} textAlign="center">
-                  Booking Status
-                </Heading>
-                
-                <Flex 
-                  justify="space-between" 
-                  align="center" 
+              <CardBody p={0}>
+                <Box
+                  bg={cardBg}
+                  p={6}
                   position="relative"
-                  px={4}
+                  overflow="hidden"
                 >
-                  {/* Sales Verification */}
-                  <Flex direction="column" align="center" flex={1}>
+                  <VStack spacing={4} align="stretch">
+                    <Heading size="md" color={textColor}>Employee Details</Heading>
                     <Box
-                      w="40px"
-                      h="40px"
-                      borderRadius="full"
-                      bg={customer.sales_verified ? "green.500" : "red.500"}
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                      position="relative"
-                      zIndex={2}
-                      cursor="pointer"
-                      onClick={() => setActiveStep('sales')}
-                      _hover={{ transform: 'scale(1.1)' }}
-                      transition="all 0.2s"
+                      bg="whiteAlpha.200"
+                      p={4}
+                      borderRadius="lg"
+                      backdropFilter="blur(10px)"
                     >
-                      <Icon 
-                        as={customer.sales_verified ? CheckCircleIcon : TimeIcon} 
-                        boxSize={6} 
-                        color="white"
-                      />
-                    </Box>
-                    <Text 
-                      fontSize="sm" 
-                      mt={2} 
-                      color={customer.sales_verified ? "green.500" : "gray.500"}
-                      fontWeight="medium"
-                    >
-                      Sales
-                    </Text>
-                  </Flex>
-
-                  {/* Accounts Verification */}
-                  <Flex direction="column" align="center" flex={1}>
-                    <Box
-                      w="40px"
-                      h="40px"
-                      borderRadius="full"
-                      bg={customer.accounts_verified ? "green.500" : "red.500"}
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                      position="relative"
-                      zIndex={2}
-                      cursor="pointer"
-                      onClick={() => setActiveStep('accounts')}
-                      _hover={{ transform: 'scale(1.1)' }}
-                      transition="all 0.2s"
-                    >
-                      <Icon 
-                        as={customer.accounts_verified ? CheckCircleIcon : TimeIcon} 
-                        boxSize={6} 
-                        color="white"
-                      />
-                    </Box>
-                    <Text 
-                      fontSize="sm" 
-                      mt={2} 
-                      color={customer.accounts_verified ? "green.500" : "gray.500"}
-                      fontWeight="medium"
-                    >
-                      Accounts
-                    </Text>
-                  </Flex>
-
-                  {/* RTO Verification */}
-                  <Flex direction="column" align="center" flex={1}>
-                    <Box
-                      w="40px"
-                      h="40px"
-                      borderRadius="full"
-                      bg={customer.rto_verified ? "green.500" : "red.500"}
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                      position="relative"
-                      zIndex={2}
-                      cursor="pointer"
-                      onClick={() => setActiveStep('rto')}
-                      _hover={{ transform: 'scale(1.1)' }}
-                      transition="all 0.2s"
-                    >
-                      <Icon 
-                        as={customer.rto_verified ? CheckCircleIcon : TimeIcon} 
-                        boxSize={6} 
-                        color="white"
-                      />
-                    </Box>
-                    <Text 
-                      fontSize="sm" 
-                      mt={2} 
-                      color={customer.rto_verified ? "green.500" : "gray.500"}
-                      fontWeight="medium"
-                    >
-                      RTO
-                    </Text>
-                  </Flex>
-
-                  {/* Progress Line */}
-                  <Box
-                    position="absolute"
-                    top="20px"
-                    left="0"
-                    right="0"
-                    height="2px"
-                    bg="gray.200"
-                    zIndex={1}
-                  />
-                </Flex>
-
-                {/* Status Details Modal */}
-                <Modal isOpen={!!activeStep} onClose={() => setActiveStep(null)} size="md">
-                  <ModalOverlay bg="rgba(0, 0, 0, 0.4)" backdropFilter="blur(4px)" />
-                  <ModalContent bg={cardBg} borderRadius="xl">
-                    <ModalHeader bgGradient={accentGradient} bgClip="text">
-                      {activeStep === 'sales' && 'Sales Verification Status'}
-                      {activeStep === 'accounts' && 'Accounts Verification Status'}
-                      {activeStep === 'rto' && 'RTO Verification Status'}
-                    </ModalHeader>
-                    <ModalCloseButton />
-                    <ModalBody>
-                      <VStack spacing={4} align="stretch">
-                        {activeStep === 'sales' && (
-                          <>
-                            <Box p={4} bg={customer.sales_verified ? "green.50" : "yellow.50"} borderRadius="md">
-                              <HStack spacing={3}>
-                                <Icon 
-                                  as={customer.sales_verified ? CheckCircleIcon : TimeIcon} 
-                                  boxSize={6} 
-                                  color={customer.sales_verified ? "green.500" : "yellow.500"}
-                                />
-                                <VStack align="start" spacing={1}>
-                                  <Text fontWeight="bold" color={textColor}>
-                                    {customer.sales_verified ? 'Verified' : 'Pending'}
-                                  </Text>
-                                  <Text fontSize="sm" color="gray.600">
-                                    {customer.status === 'Pending' 
-                                      ? 'Please upload your details to start the sales verification process.'
-                                      : customer.sales_verified 
-                                        ? 'Your data has been verified by our sales team. All information is correct and complete.'
-                                        : 'Your data is currently being reviewed by our sales team. This process typically takes 1-2 business days.'}
-                                  </Text>
-                                </VStack>
-                              </HStack>
-                            </Box>
-                            <Box>
-                              <Text fontWeight="medium" mb={2}>What's being verified:</Text>
-                              <VStack align="start" spacing={2}>
-                                <HStack>
-                                  <Icon as={CheckCircleIcon} color="green.500" />
-                                  <Text>Personal Information</Text>
-                                </HStack>
-                                <HStack>
-                                  <Icon as={CheckCircleIcon} color="green.500" />
-                                  <Text>Vehicle Selection</Text>
-                                </HStack>
-                                <HStack>
-                                  <Icon as={CheckCircleIcon} color="green.500" />
-                                  <Text>Documentation</Text>
-                                </HStack>
-                              </VStack>
-                            </Box>
-                          </>
-                        )}
-
-                        {activeStep === 'accounts' && (
-                          <>
-                            <Box p={4} bg={customer.accounts_verified ? "green.50" : "yellow.50"} borderRadius="md">
-                              <HStack spacing={3}>
-                                <Icon 
-                                  as={customer.accounts_verified ? CheckCircleIcon : TimeIcon} 
-                                  boxSize={6} 
-                                  color={customer.accounts_verified ? "green.500" : "yellow.500"}
-                                />
-                                <VStack align="start" spacing={1}>
-                                  <Text fontWeight="bold" color={textColor}>
-                                    {customer.accounts_verified ? 'Verified' : 'Pending'}
-                                  </Text>
-                                  <Text fontSize="sm" color="gray.600">
-                                    {!customer.sales_verified 
-                                      ? 'Sales verification must be completed before starting accounts verification.'
-                                      : customer.accounts_verified 
-                                        ? 'Your payment details have been verified by our accounts team. All financial transactions are confirmed.'
-                                        : 'Your payment details are being reviewed by our accounts team. This process typically takes 1-2 business days.'}
-                                  </Text>
-                                </VStack>
-                              </HStack>
-                            </Box>
-                            <Box>
-                              <Text fontWeight="medium" mb={2}>What's being verified:</Text>
-                              <VStack align="start" spacing={2}>
-                                <HStack>
-                                  <Icon as={CheckCircleIcon} color="green.500" />
-                                  <Text>Payment Details</Text>
-                                </HStack>
-                                <HStack>
-                                  <Icon as={CheckCircleIcon} color="green.500" />
-                                  <Text>Finance Information (if applicable)</Text>
-                                </HStack>
-                                <HStack>
-                                  <Icon as={CheckCircleIcon} color="green.500" />
-                                  <Text>Transaction Records</Text>
-                                </HStack>
-                              </VStack>
-                            </Box>
-                          </>
-                        )}
-
-                        {activeStep === 'rto' && (
-                          <>
-                            <Box p={4} bg={customer.rto_verified ? "green.50" : "yellow.50"} borderRadius="md">
-                              <HStack spacing={3}>
-                                <Icon 
-                                  as={customer.rto_verified ? CheckCircleIcon : TimeIcon} 
-                                  boxSize={6} 
-                                  color={customer.rto_verified ? "green.500" : "yellow.500"}
-                                />
-                                <VStack align="start" spacing={1}>
-                                  <Text fontWeight="bold" color={textColor}>
-                                    {customer.rto_verified ? 'Verified' : 'Pending'}
-                                  </Text>
-                                  <Text fontSize="sm" color="gray.600">
-                                    {!customer.accounts_verified 
-                                      ? 'Accounts verification must be completed before starting RTO verification.'
-                                      : customer.rto_verified 
-                                        ? 'Your data has been successfully uploaded to the Motor Vehicle Department of Kerala. Registration process is complete.'
-                                        : 'Your data is being processed for registration with the Motor Vehicle Department of Kerala. This process typically takes 3-5 business days.'}
-                                  </Text>
-                                </VStack>
-                              </HStack>
-                            </Box>
-                            <Box>
-                              <Text fontWeight="medium" mb={2}>What's being processed:</Text>
-                              <VStack align="start" spacing={2}>
-                                <HStack>
-                                  <Icon as={CheckCircleIcon} color="green.500" />
-                                  <Text>Vehicle Registration</Text>
-                                </HStack>
-                                <HStack>
-                                  <Icon as={CheckCircleIcon} color="green.500" />
-                                  <Text>RC Generation</Text>
-                                </HStack>
-                                <HStack>
-                                  <Icon as={CheckCircleIcon} color="green.500" />
-                                  <Text>Document Processing</Text>
-                                </HStack>
-                              </VStack>
-                            </Box>
-                          </>
-                        )}
-                      </VStack>
-                    </ModalBody>
-                    <ModalFooter>
-                      <Button 
-                        variant="ghost" 
-                        mr={3} 
-                        onClick={() => setActiveStep(null)}
-                        _hover={{ bg: "gray.100" }}
-                      >
-                        Close
-                      </Button>
-                    </ModalFooter>
-                  </ModalContent>
-                </Modal>
-              </VStack>
-            </Box>
-
-            {/* Customer Details Form or Display */}
-            <Box 
-              bg={cardBg} 
-              borderRadius="xl" 
-              p={6} 
-              mb={6} 
-              boxShadow="xl"
-              backdropFilter="blur(10px)"
-              border="1px solid"
-              borderColor="whiteAlpha.300"
-              animation={`${fadeIn} 0.5s ease-out`}
-            >
-              <Flex justify="space-between" align="center" mb={4}>
-                <Heading size="lg" bgGradient={accentGradient} bgClip="text">
-                  Booking Details
-                </Heading>
-                {customer.status !== 'Pending' && (
-                  <IconButton
-                    icon={isBookingDetailsOpen ? <ChevronDownIcon /> : <ChevronRightIcon />}
-                    aria-label="Toggle booking details"
-                    variant="ghost"
-                    colorScheme="purple"
-                    onClick={() => setIsBookingDetailsOpen(!isBookingDetailsOpen)}
-                  />
-                )}
-              </Flex>
-
-              <Collapse in={isBookingDetailsOpen || customer.status === 'Pending'}>
-                {customer.status === 'Pending' ? (
-                  <form onSubmit={handleSubmit}>
-                    <VStack spacing={6} align="stretch">
-                      <Grid templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={6}>
-                        <FormControl>
-                          <FormLabel color={textColor}>Full Name</FormLabel>
-                          <Input 
-                            name="name" 
-                            value={formData.name} 
-                            onChange={handleInputChange} 
-                            variant="filled" 
-                            isDisabled 
-                            bg="whiteAlpha.200"
-                            _hover={{ bg: "whiteAlpha.300" }}
-                            _focus={{ bg: "whiteAlpha.400" }}
-                          />
-                        </FormControl>
-                        <FormControl>
-                          <FormLabel color={textColor}>Date of Birth</FormLabel>
-                          <Input 
-                            name="dob" 
-                            type="date" 
-                            value={formData.dob} 
-                            onChange={handleInputChange} 
-                            variant="filled"
-                            bg="whiteAlpha.200"
-                            _hover={{ bg: "whiteAlpha.300" }}
-                            _focus={{ bg: "whiteAlpha.400" }}
-                          />
-                        </FormControl>
-                        <FormControl>
-                          <FormLabel color={textColor}>Address</FormLabel>
-                          <Input 
-                            name="address" 
-                            value={formData.address} 
-                            onChange={handleInputChange} 
-                            variant="filled"
-                            bg="whiteAlpha.200"
-                            _hover={{ bg: "whiteAlpha.300" }}
-                            _focus={{ bg: "whiteAlpha.400" }}
-                          />
-                        </FormControl>
-                        <FormControl>
-                          <FormLabel color={textColor}>Mobile 1</FormLabel>
-                          <Input 
-                            name="mobile_1" 
-                            value={formData.mobile_1} 
-                            onChange={handleInputChange} 
-                            variant="filled" 
-                            isDisabled
-                            bg="whiteAlpha.200"
-                            _hover={{ bg: "whiteAlpha.300" }}
-                            _focus={{ bg: "whiteAlpha.400" }}
-                          />
-                        </FormControl>
-                        <FormControl>
-                          <FormLabel color={textColor}>Mobile 2 (Optional)</FormLabel>
-                          <Input 
-                            name="mobile_2" 
-                            value={formData.mobile_2} 
-                            onChange={handleInputChange} 
-                            variant="filled"
-                            bg="whiteAlpha.200"
-                            _hover={{ bg: "whiteAlpha.300" }}
-                            _focus={{ bg: "whiteAlpha.400" }}
-                          />
-                        </FormControl>
-                        <FormControl>
-                          <FormLabel color={textColor}>Email</FormLabel>
-                          <Input 
-                            name="email" 
-                            type="email" 
-                            value={formData.email} 
-                            onChange={handleInputChange} 
-                            variant="filled"
-                            bg="whiteAlpha.200"
-                            _hover={{ bg: "whiteAlpha.300" }}
-                            _focus={{ bg: "whiteAlpha.400" }}
-                          />
-                        </FormControl>
-                        <FormControl>
-                          <FormLabel color={textColor}>Nominee</FormLabel>
-                          <Input 
-                            name="nominee" 
-                            value={formData.nominee} 
-                            onChange={handleInputChange} 
-                            variant="filled"
-                            bg="whiteAlpha.200"
-                            _hover={{ bg: "whiteAlpha.300" }}
-                            _focus={{ bg: "whiteAlpha.400" }}
-                          />
-                        </FormControl>
-                        <FormControl>
-                          <FormLabel color={textColor}>Relation with Nominee</FormLabel>
-                          <Input 
-                            name="nominee_relation" 
-                            value={formData.nominee_relation} 
-                            onChange={handleInputChange} 
-                            variant="filled"
-                            bg="whiteAlpha.200"
-                            _hover={{ bg: "whiteAlpha.300" }}
-                            _focus={{ bg: "whiteAlpha.400" }}
-                          />
-                        </FormControl>
-                        <FormControl>
-                          <FormLabel color={textColor}>Payment Mode</FormLabel>
-                          <Select 
-                            name="payment_mode" 
-                            value={formData.payment_mode} 
-                            onChange={handleInputChange} 
-                            variant="filled"
-                            bg="whiteAlpha.200"
-                            _hover={{ bg: "whiteAlpha.300" }}
-                            _focus={{ bg: "whiteAlpha.400" }}
-                          >
-                            <option value="">Select payment mode</option>
-                            <option value="Cash">Cash</option>
-                            <option value="Finance">Finance</option>
-                          </Select>
-                        </FormControl>
-                        {formData.payment_mode === 'Finance' && (
-                          <>
-                            <FormControl>
-                              <FormLabel color={textColor}>Finance Company</FormLabel>
-                              <Input 
-                                name="finance_company" 
-                                value={formData.finance_company} 
-                                onChange={handleInputChange} 
-                                variant="filled"
-                                bg="whiteAlpha.200"
-                                _hover={{ bg: "whiteAlpha.300" }}
-                                _focus={{ bg: "whiteAlpha.400" }}
-                              />
-                            </FormControl>
-                            <FormControl>
-                              <FormLabel color={textColor}>Finance Amount</FormLabel>
-                              <Input 
-                                name="finance_amount" 
-                                type="number" 
-                                value={formData.finance_amount} 
-                                onChange={handleInputChange} 
-                                variant="filled"
-                                bg="whiteAlpha.200"
-                                _hover={{ bg: "whiteAlpha.300" }}
-                                _focus={{ bg: "whiteAlpha.400" }}
-                              />
-                            </FormControl>
-                          </>
-                        )}
-                      </Grid>
-
-                      <Box>
-                        <FormLabel color={textColor}>Required Documents</FormLabel>
-                        <Grid templateColumns={{ base: '1fr', md: '1fr 1fr 1fr' }} gap={4}>
-                          <FormControl>
-                            <FormLabel color={textColor}>Aadhar Front</FormLabel>
-                            <Input 
-                              name="aadhar_front" 
-                              type="file" 
-                              accept="image/*" 
-                              onChange={handleFileChange} 
-                              variant="filled"
-                              bg="whiteAlpha.200"
-                              _hover={{ bg: "whiteAlpha.300" }}
-                              _focus={{ bg: "whiteAlpha.400" }}
-                            />
-                          </FormControl>
-                          <FormControl>
-                            <FormLabel color={textColor}>Aadhar Back</FormLabel>
-                            <Input 
-                              name="aadhar_back" 
-                              type="file" 
-                              accept="image/*" 
-                              onChange={handleFileChange} 
-                              variant="filled"
-                              bg="whiteAlpha.200"
-                              _hover={{ bg: "whiteAlpha.300" }}
-                              _focus={{ bg: "whiteAlpha.400" }}
-                            />
-                          </FormControl>
-                          <FormControl>
-                            <FormLabel color={textColor}>Passport Photo</FormLabel>
-                            <Input 
-                              name="passport_photo" 
-                              type="file" 
-                              accept="image/*" 
-                              onChange={handleFileChange} 
-                              variant="filled"
-                              bg="whiteAlpha.200"
-                              _hover={{ bg: "whiteAlpha.300" }}
-                              _focus={{ bg: "whiteAlpha.400" }}
-                            />
-                          </FormControl>
-                        </Grid>
-                      </Box>
-
-                      <Button 
-                        type="submit" 
-                        colorScheme="purple" 
-                        size="lg" 
-                        w="full" 
-                        isLoading={isSubmitting}
-                        bgGradient={accentGradient}
-                        _hover={{ 
-                          transform: 'translateY(-2px)',
-                          boxShadow: 'xl'
-                        }}
-                        transition="all 0.2s"
-                      >
-                        Submit Details
-                      </Button>
-                    </VStack>
-                  </form>
-                ) : (
-                  <VStack spacing={6} align="stretch">
-                    <Flex justify="flex-end">
-                      <IconButton
-                        icon={<EditIcon />}
-                        aria-label="Edit details"
-                        variant="ghost"
-                        colorScheme="purple"
-                        onClick={() => setIsEditing(!isEditing)}
-                      />
-                    </Flex>
-
-                    {isEditing ? (
-                      <form onSubmit={handleSubmit}>
-                        <Grid templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={6}>
-                          <FormControl>
-                            <FormLabel color={textColor}>Full Name</FormLabel>
-                            <Input 
-                              name="name" 
-                              value={formData.name} 
-                              onChange={handleInputChange} 
-                              variant="filled" 
-                              isDisabled 
-                              bg="whiteAlpha.200"
-                              _hover={{ bg: "whiteAlpha.300" }}
-                              _focus={{ bg: "whiteAlpha.400" }}
-                            />
-                          </FormControl>
-                          <FormControl>
-                            <FormLabel color={textColor}>Date of Birth</FormLabel>
-                            <Input 
-                              name="dob" 
-                              type="date" 
-                              value={formData.dob} 
-                              onChange={handleInputChange} 
-                              variant="filled"
-                              bg="whiteAlpha.200"
-                              _hover={{ bg: "whiteAlpha.300" }}
-                              _focus={{ bg: "whiteAlpha.400" }}
-                            />
-                          </FormControl>
-                          <FormControl>
-                            <FormLabel color={textColor}>Address</FormLabel>
-                            <Input 
-                              name="address" 
-                              value={formData.address} 
-                              onChange={handleInputChange} 
-                              variant="filled"
-                              bg="whiteAlpha.200"
-                              _hover={{ bg: "whiteAlpha.300" }}
-                              _focus={{ bg: "whiteAlpha.400" }}
-                            />
-                          </FormControl>
-                          <FormControl>
-                            <FormLabel color={textColor}>Mobile 1</FormLabel>
-                            <Input 
-                              name="mobile_1" 
-                              value={formData.mobile_1} 
-                              onChange={handleInputChange} 
-                              variant="filled" 
-                              isDisabled
-                              bg="whiteAlpha.200"
-                              _hover={{ bg: "whiteAlpha.300" }}
-                              _focus={{ bg: "whiteAlpha.400" }}
-                            />
-                          </FormControl>
-                          <FormControl>
-                            <FormLabel color={textColor}>Mobile 2 (Optional)</FormLabel>
-                            <Input 
-                              name="mobile_2" 
-                              value={formData.mobile_2} 
-                              onChange={handleInputChange} 
-                              variant="filled"
-                              bg="whiteAlpha.200"
-                              _hover={{ bg: "whiteAlpha.300" }}
-                              _focus={{ bg: "whiteAlpha.400" }}
-                            />
-                          </FormControl>
-                          <FormControl>
-                            <FormLabel color={textColor}>Email</FormLabel>
-                            <Input 
-                              name="email" 
-                              type="email" 
-                              value={formData.email} 
-                              onChange={handleInputChange} 
-                              variant="filled"
-                              bg="whiteAlpha.200"
-                              _hover={{ bg: "whiteAlpha.300" }}
-                              _focus={{ bg: "whiteAlpha.400" }}
-                            />
-                          </FormControl>
-                          <FormControl>
-                            <FormLabel color={textColor}>Nominee</FormLabel>
-                            <Input 
-                              name="nominee" 
-                              value={formData.nominee} 
-                              onChange={handleInputChange} 
-                              variant="filled"
-                              bg="whiteAlpha.200"
-                              _hover={{ bg: "whiteAlpha.300" }}
-                              _focus={{ bg: "whiteAlpha.400" }}
-                            />
-                          </FormControl>
-                          <FormControl>
-                            <FormLabel color={textColor}>Relation with Nominee</FormLabel>
-                            <Input 
-                              name="nominee_relation" 
-                              value={formData.nominee_relation} 
-                              onChange={handleInputChange} 
-                              variant="filled"
-                              bg="whiteAlpha.200"
-                              _hover={{ bg: "whiteAlpha.300" }}
-                              _focus={{ bg: "whiteAlpha.400" }}
-                            />
-                          </FormControl>
-                          <FormControl>
-                            <FormLabel color={textColor}>Payment Mode</FormLabel>
-                            <Select 
-                              name="payment_mode" 
-                              value={formData.payment_mode} 
-                              onChange={handleInputChange} 
-                              variant="filled"
-                              bg="whiteAlpha.200"
-                              _hover={{ bg: "whiteAlpha.300" }}
-                              _focus={{ bg: "whiteAlpha.400" }}
-                            >
-                              <option value="">Select payment mode</option>
-                              <option value="Cash">Cash</option>
-                              <option value="Finance">Finance</option>
-                            </Select>
-                          </FormControl>
-                          {formData.payment_mode === 'Finance' && (
-                            <>
-                              <FormControl>
-                                <FormLabel color={textColor}>Finance Company</FormLabel>
-                                <Input 
-                                  name="finance_company" 
-                                  value={formData.finance_company} 
-                                  onChange={handleInputChange} 
-                                  variant="filled"
-                                  bg="whiteAlpha.200"
-                                  _hover={{ bg: "whiteAlpha.300" }}
-                                  _focus={{ bg: "whiteAlpha.400" }}
-                                />
-                              </FormControl>
-                              <FormControl>
-                                <FormLabel color={textColor}>Finance Amount</FormLabel>
-                                <Input 
-                                  name="finance_amount" 
-                                  type="number" 
-                                  value={formData.finance_amount} 
-                                  onChange={handleInputChange} 
-                                  variant="filled"
-                                  bg="whiteAlpha.200"
-                                  _hover={{ bg: "whiteAlpha.300" }}
-                                  _focus={{ bg: "whiteAlpha.400" }}
-                                />
-                              </FormControl>
-                            </>
-                          )}
-                        </Grid>
-                        <Button
-                          type="submit"
+                      <HStack spacing={4}>
+                        <Avatar size="lg" name={customer.sales_employee || 'John Doe'} />
+                        <VStack align="start" spacing={1} flex={1}>
+                          <Text fontSize="lg" fontWeight="bold">{customer.sales_employee || 'John Doe'}</Text>
+                          <Text color="gray.500">Sales Executive</Text>
+                          <Text color="gray.500">+91 98765 43210</Text>
+                          <HStack>
+                            <Text color="gray.500">Rating:</Text>
+                            <HStack spacing={1}>
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <Icon key={star} as={StarIcon} color="yellow.400" />
+                              ))}
+                            </HStack>
+                          </HStack>
+                        </VStack>
+                        <IconButton
+                          icon={<ChatIcon />}
+                          aria-label="Chat with employee"
                           colorScheme="purple"
+                          onClick={() => setIsChatOpen(true)}
                           size="lg"
-                          mt={4}
-                          bgGradient={accentGradient}
-                          _hover={{ 
-                            transform: 'translateY(-2px)',
-                            boxShadow: 'xl'
-                          }}
-                          transition="all 0.2s"
-                        >
-                          Save Changes
-                        </Button>
-                      </form>
-                    ) : (
-                      <Grid templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={6}>
-                        <Box>
-                          <Text fontSize="sm" color="gray.500" mb={1}>Name</Text>
-                          <Text fontSize="lg" color={textColor}>{customer.customer_name}</Text>
-                        </Box>
-                        <Box>
-                          <Text fontSize="sm" color="gray.500" mb={1}>Vehicle</Text>
-                          <Text fontSize="lg" color={textColor}>{customer.vehicle}</Text>
-                        </Box>
-                        <Box>
-                          <Text fontSize="sm" color="gray.500" mb={1}>Variant</Text>
-                          <Text fontSize="lg" color={textColor}>{customer.variant || 'Not specified'}</Text>
-                        </Box>
-                        <Box>
-                          <Text fontSize="sm" color="gray.500" mb={1}>Color</Text>
-                          <Text fontSize="lg" color={textColor}>{customer.color || 'Not specified'}</Text>
-                        </Box>
-                        <Box>
-                          <Text fontSize="sm" color="gray.500" mb={1}>Date of Birth</Text>
-                          <Text fontSize="lg" color={textColor}>{customer.dob || 'Not provided'}</Text>
-                        </Box>
-                        <Box>
-                          <Text fontSize="sm" color="gray.500" mb={1}>Mobile</Text>
-                          <Text fontSize="lg" color={textColor}>{customer.mobile_1}</Text>
-                        </Box>
-                        <Box>
-                          <Text fontSize="sm" color="gray.500" mb={1}>Email</Text>
-                          <Text fontSize="lg" color={textColor}>{customer.email || 'Not provided'}</Text>
-                        </Box>
-                        <Box>
-                          <Text fontSize="sm" color="gray.500" mb={1}>Address</Text>
-                          <Text fontSize="lg" color={textColor}>{customer.address || 'Not provided'}</Text>
-                        </Box>
-                      </Grid>
-                    )}
+                        />
+                      </HStack>
+                    </Box>
                   </VStack>
-                )}
-              </Collapse>
-            </Box>
+                </Box>
+              </CardBody>
+            </MotionCard>
           </>
         );
       case 'service':
         return (
           <Box 
             bg={cardBg} 
-            borderRadius="xl" 
-            p={6} 
-            boxShadow="xl"
-            backdropFilter="blur(10px)"
-            border="1px solid"
-            borderColor="whiteAlpha.300"
-            animation={`${fadeIn} 0.5s ease-out`}
+            minH="100vh"
+            w="100%"
+            position="fixed"
+            top={0}
+            left={0}
+            right={0}
+            bottom={0}
+            overflowY="auto"
+            pt={{ base: '80px', md: '120px' }}
+            pb={{ base: '80px', md: '40px' }}
+            px={{ base: 4, md: 6 }}
           >
+            <Flex justify="space-between" align="center" mb={6}>
+              <Heading size="lg" color={textColor}>Service</Heading>
+              <IconButton
+                icon={<ChatIcon />}
+                aria-label="Chat with service team"
+                colorScheme="purple"
+                onClick={() => setIsChatOpen(true)}
+                size="lg"
+              />
+            </Flex>
             {renderServiceHistory()}
             {renderServiceBooking()}
           </Box>
@@ -1393,100 +1586,140 @@ const CustomerDetails = () => {
     }
   };
 
+  const ServiceDetailsModal = ({ isOpen, onClose, service }) => (
+    <Modal isOpen={isOpen} onClose={onClose} size="xl">
+      <ModalOverlay bg="rgba(0, 0, 0, 0.4)" backdropFilter="blur(4px)" />
+      <ModalContent bg={cardBg} borderRadius="xl">
+        <ModalHeader bgGradient={accentGradient} bgClip="text">
+          Service Details
+        </ModalHeader>
+        <ModalCloseButton />
+        <ModalBody>
+          {service ? (
+            <VStack spacing={6} align="stretch">
+              <Box
+                bg="whiteAlpha.200"
+                p={4}
+                borderRadius="lg"
+                backdropFilter="blur(10px)"
+              >
+                <VStack align="start" spacing={4}>
+                  <Text fontSize="lg" fontWeight="bold">{service.type}</Text>
+                  <Text>Date: {service.date}</Text>
+                  <Text>Status: {service.status}</Text>
+                </VStack>
+              </Box>
+  
+              <Box
+                bg="whiteAlpha.200"
+                p={4}
+                borderRadius="lg"
+                backdropFilter="blur(10px)"
+              >
+                <Text fontSize="sm" color="gray.500" mb={2}>Service Details</Text>
+                <VStack align="start" spacing={2}>
+                  <Text>{service.notes}</Text>
+                </VStack>
+              </Box>
+  
+              <Box
+                bg="whiteAlpha.200"
+                p={4}
+                borderRadius="lg"
+                backdropFilter="blur(10px)"
+              >
+                <Text fontSize="sm" color="gray.500" mb={2}>Service Executive</Text>
+                <HStack>
+                  <Avatar size="sm" name="John Doe" />
+                  <VStack align="start" spacing={0}>
+                    <Text fontWeight="bold">John Doe</Text>
+                    <Text fontSize="sm" color="gray.500">Service Manager</Text>
+                    <Text fontSize="sm" color="gray.500">+91 98765 43210</Text>
+                  </VStack>
+                </HStack>
+              </Box>
+  
+              <Box
+                bg="whiteAlpha.200"
+                p={4}
+                borderRadius="lg"
+                backdropFilter="blur(10px)"
+              >
+                <Text fontSize="sm" color="gray.500" mb={2}>Cost Details</Text>
+                <VStack align="start" spacing={2}>
+                  <HStack justify="space-between" w="full">
+                    <Text>Service Cost</Text>
+                    <Text fontWeight="bold">₹2,500</Text>
+                  </HStack>
+                  <HStack justify="space-between" w="full">
+                    <Text>Parts Cost</Text>
+                    <Text fontWeight="bold">₹1,500</Text>
+                  </HStack>
+                  <HStack justify="space-between" w="full">
+                    <Text>Tax (18%)</Text>
+                    <Text fontWeight="bold">₹720</Text>
+                  </HStack>
+                  <Divider />
+                  <HStack justify="space-between" w="full">
+                    <Text fontWeight="bold">Total Amount</Text>
+                    <Text fontWeight="bold" color="purple.500">₹4,720</Text>
+                  </HStack>
+                </VStack>
+              </Box>
+
+              <HStack spacing={4} justify="center">
+                <Button
+                  leftIcon={<ViewIcon />}
+                  colorScheme="purple"
+                  size="lg"
+                  onClick={() => {
+                    // Handle report download
+                    toast({
+                      title: 'Report Downloaded',
+                      description: 'Service report has been downloaded successfully',
+                      status: 'success',
+                      duration: 3000,
+                      isClosable: true,
+                    });
+                  }}
+                >
+                  Download Report
+                </Button>
+                <Button
+                  leftIcon={<StarIcon />}
+                  colorScheme="yellow"
+                  size="lg"
+                  onClick={() => {
+                    // Handle rating
+                    toast({
+                      title: 'Rating Submitted',
+                      description: 'Thank you for your feedback',
+                      status: 'success',
+                      duration: 3000,
+                      isClosable: true,
+                    });
+                  }}
+                >
+                  Rate Service
+                </Button>
+              </HStack>
+            </VStack>
+          ) : (
+            <Text>No service details available.</Text>
+          )}
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="ghost" mr={3} onClick={onClose}>
+            Close
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
+  );
+
   return (
     <Box minH="100vh" bg={bgGradient}>
-      {/* Fixed Header */}
-      <Box 
-        bg={cardBg} 
-        position="fixed"
-        top={0}
-        left={0}
-        right={0}
-        zIndex={1000}
-        boxShadow="0 4px 6px -1px rgba(0, 0, 0, 0.1)"
-        backdropFilter="blur(10px)"
-        borderBottom="1px solid"
-        borderColor="whiteAlpha.300"
-      >
-        <Flex 
-          justify="space-between" 
-          align="center" 
-          p={4}
-          direction={{ base: "column", md: "row" }}
-          gap={{ base: 4, md: 0 }}
-        >
-          <HStack spacing={4}>
-            <Image 
-              src={process.env.PUBLIC_URL + '/dealersync.jpeg'} 
-              alt="Dealership Logo" 
-              boxSize="40px" 
-              objectFit="contain"
-              fallback={<Box boxSize="40px" bg="gray.200" borderRadius="full" />}
-            />
-            <VStack align="start" spacing={0}>
-              <Heading size="md" bgGradient={accentGradient} bgClip="text">
-                DealrSync
-              </Heading>
-              <Text fontSize="sm" color="gray.500">Your Trusted Onboarding Partner</Text>
-            </VStack>
-          </HStack>
-          <HStack spacing={4}>
-            <Menu>
-              <MenuButton
-                as={IconButton}
-                icon={<BellIcon />}
-                aria-label="Notifications"
-                variant="ghost"
-                colorScheme="purple"
-                position="relative"
-              >
-                {notifications.length > 0 && (
-                  <Badge
-                    position="absolute"
-                    top={-2}
-                    right={-2}
-                    colorScheme="red"
-                    borderRadius="full"
-                    minW="20px"
-                    h="20px"
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                    fontSize="xs"
-                  >
-                    {notifications.length}
-                  </Badge>
-                )}
-              </MenuButton>
-              <Portal>
-                <MenuList>
-                  {notifications.map((notification) => (
-                    <MenuItem key={notification.id}>
-                      <VStack align="start" spacing={0}>
-                        <Text>{notification.message}</Text>
-                        <Text fontSize="xs" color="gray.500">{notification.time}</Text>
-                      </VStack>
-                    </MenuItem>
-                  ))}
-                </MenuList>
-              </Portal>
-            </Menu>
-            <Badge 
-              colorScheme={verificationStatus.color}
-              px={4}
-              py={2}
-              borderRadius="full"
-              fontSize="sm"
-              display="flex"
-              alignItems="center"
-              gap={2}
-            >
-              <Icon as={verificationStatus.icon} />
-              {verificationStatus.status}
-            </Badge>
-          </HStack>
-        </Flex>
-      </Box>
+      {renderHeader()}
 
       {/* Main Content with padding for fixed header and bottom nav */}
       <Box 
@@ -1504,6 +1737,12 @@ const CustomerDetails = () => {
 
       {/* Chat Panel */}
       {renderChat()}
+
+      {/* Vehicle Condition Modal */}
+      <VehicleConditionModal isOpen={isServiceModalOpen && !selectedService} onClose={onServiceModalClose} service={customer} />
+
+      {/* Service Details Modal */}
+      <ServiceDetailsModal isOpen={isServiceModalOpen && selectedService} onClose={onServiceModalClose} service={selectedService} />
     </Box>
   );
 };
