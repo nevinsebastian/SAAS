@@ -1043,12 +1043,13 @@ const SalesExecutive = () => {
                 bottom={0}
                 left={0}
                 right={0}
-                bg={cardBg}
                 p={4}
-                boxShadow="0 -4px 6px -1px rgba(0, 0, 0, 0.1)"
+                bg="whiteAlpha.100"
+                backdropFilter="blur(10px)"
+                borderTop={{ base: "1px solid", md: "none" }}
+                borderColor="whiteAlpha.300"
+                boxShadow={{ base: "0 -4px 6px -1px rgba(0, 0, 0, 0.1)", md: "none" }}
                 zIndex={2}
-                borderTop="1px solid"
-                borderColor={borderColor}
               >
                 <Flex justify="center">
                   <HStack spacing={2}>
@@ -1060,6 +1061,13 @@ const SalesExecutive = () => {
                       variant="outline"
                       borderRadius="full"
                       px={4}
+                      bg="whiteAlpha.200"
+                      backdropFilter="blur(10px)"
+                      borderColor="whiteAlpha.300"
+                      _hover={{ 
+                        bg: "whiteAlpha.300",
+                        borderColor: "whiteAlpha.400"
+                      }}
                     >
                       Previous
                     </Button>
@@ -1074,6 +1082,13 @@ const SalesExecutive = () => {
                         minW="8"
                         h="8"
                         p={0}
+                        bg={currentPage === i + 1 ? "purple.500" : "whiteAlpha.200"}
+                        backdropFilter="blur(10px)"
+                        borderColor="whiteAlpha.300"
+                        _hover={{ 
+                          bg: currentPage === i + 1 ? "purple.600" : "whiteAlpha.300",
+                          borderColor: "whiteAlpha.400"
+                        }}
                       >
                         {i + 1}
                       </Button>
@@ -1086,6 +1101,13 @@ const SalesExecutive = () => {
                       variant="outline"
                       borderRadius="full"
                       px={4}
+                      bg="whiteAlpha.200"
+                      backdropFilter="blur(10px)"
+                      borderColor="whiteAlpha.300"
+                      _hover={{ 
+                        bg: "whiteAlpha.300",
+                        borderColor: "whiteAlpha.400"
+                      }}
                     >
                       Next
                     </Button>
