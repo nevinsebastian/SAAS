@@ -1,0 +1,48 @@
+----------------+-----------------------------+-----------+----------+---------------------------------------
+ id                   | integer                     |           | not null | nextval('customers_id_seq'::regclass)
+ customer_name        | character varying(100)      |           | not null | 
+ phone_number         | character varying(15)       |           | not null | 
+ vehicle              | text                        |           | not null | 
+ variant              | character varying(50)       |           |          | 
+ color                | character varying(30)       |           |          | 
+ price                | numeric(15,2)               |           |          | 
+ created_at           | timestamp without time zone |           |          | CURRENT_TIMESTAMP
+ created_by           | integer                     |           | not null | 
+ status               | customer_status             |           |          | 'Pending'::customer_status
+ dob                  | date                        |           |          | 
+ address              | text                        |           |          | 
+ mobile_1             | character varying(15)       |           |          | 
+ mobile_2             | character varying(15)       |           |          | 
+ email                | character varying(100)      |           |          | 
+ nominee              | character varying(100)      |           |          | 
+ nominee_relation     | character varying(50)       |           |          | 
+ payment_mode         | character varying(50)       |           |          | 
+ finance_company      | character varying(100)      |           |          | 
+ finance_amount       | numeric(15,2)               |           |          | 
+ aadhar_front         | bytea                       |           |          | 
+ aadhar_back          | bytea                       |           |          | 
+ passport_photo       | bytea                       |           |          | 
+ amount_paid          | numeric(15,2)               |           |          | 0.00
+ ex_showroom          | numeric(15,2)               |           |          | 
+ tax                  | numeric(15,2)               |           |          | 
+ insurance            | numeric(15,2)               |           |          | 
+ booking_fee          | numeric(15,2)               |           |          | 
+ accessories          | numeric(15,2)               |           |          | 
+ total_price          | numeric(15,2)               |           |          | 0.00
+ sales_verified       | boolean                     |           |          | false
+ accounts_verified    | boolean                     |           |          | false
+ manager_verified     | boolean                     |           |          | false
+ rto_verified         | boolean                     |           |          | false
+ front_delivery_photo | bytea                       |           |          | 
+ back_delivery_photo  | bytea                       |           |          | 
+ delivery_photo       | bytea                       |           |          | 
+ emi                  | numeric(10,2)               |           |          | 
+ tenure               | integer                     |           |          | 
+ updated_at           | timestamp without time zone |           |          | CURRENT_TIMESTAMP
+Indexes:
+    "customers_pkey" PRIMARY KEY, btree (id)
+Foreign-key constraints:
+    "customers_created_by_fkey" FOREIGN KEY (created_by) REFERENCES employees(id)
+Triggers:
+    update_analytics_trigger AFTER INSERT OR DELETE OR UPDATE ON customers FOR EACH STATEMENT EXECUTE FUNCTION update_analytics()
+    update_customers_updated_at BEFORE UPDATE ON customers FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()

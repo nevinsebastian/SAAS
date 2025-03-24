@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Box,
@@ -226,10 +226,13 @@ const CustomerDetails = () => {
     finance_company: '',
     finance_amount: '',
   });
-  const [files, setFiles] = useState({
+  const [images, setImages] = useState({
     aadhar_front: null,
     aadhar_back: null,
     passport_photo: null,
+    front_delivery_photo: null,
+    back_delivery_photo: null,
+    delivery_photo: null,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -282,6 +285,7 @@ const CustomerDetails = () => {
   ]);
   const [newMessage, setNewMessage] = useState('');
   const [selectedService, setSelectedService] = useState(null);
+  const blobUrlsRef = useRef({});
 
   const bgGradient = useColorModeValue(
     'linear-gradient(135deg, #1a365d 0%, #2d3748 100%)',
@@ -299,12 +303,15 @@ const CustomerDetails = () => {
   useEffect(() => {
     const fetchCustomer = async () => {
       try {
-        const response = await axios.get(`http://172.20.10.8:3000/customers/${customerId}`);
+        const response = await axios.get(`http://172.20.10.8:3000/public/customers/${customerId}`);
         setCustomer(response.data.customer);
+        console.log('Full customer data:', response.data.customer);
+        
+        // Set form data from customer response
         setFormData(prev => ({
           ...prev,
           name: response.data.customer.customer_name,
-          mobile_1: response.data.customer.phone_number,
+          mobile_1: response.data.customer.mobile_1 || response.data.customer.phone_number,
           dob: response.data.customer.dob || '',
           address: response.data.customer.address || '',
           mobile_2: response.data.customer.mobile_2 || '',
@@ -315,6 +322,20 @@ const CustomerDetails = () => {
           finance_company: response.data.customer.finance_company || '',
           finance_amount: response.data.customer.finance_amount || '',
         }));
+
+        // Set images from the response
+        const newImages = {
+          aadhar_front: response.data.customer.aadhar_front_base64 ? `data:image/jpeg;base64,${response.data.customer.aadhar_front_base64}` : null,
+          aadhar_back: response.data.customer.aadhar_back_base64 ? `data:image/jpeg;base64,${response.data.customer.aadhar_back_base64}` : null,
+          passport_photo: response.data.customer.passport_photo_base64 ? `data:image/jpeg;base64,${response.data.customer.passport_photo_base64}` : null,
+          front_delivery_photo: response.data.customer.front_delivery_photo_base64 ? `data:image/jpeg;base64,${response.data.customer.front_delivery_photo_base64}` : null,
+          back_delivery_photo: response.data.customer.back_delivery_photo_base64 ? `data:image/jpeg;base64,${response.data.customer.back_delivery_photo_base64}` : null,
+          delivery_photo: response.data.customer.delivery_photo_base64 ? `data:image/jpeg;base64,${response.data.customer.delivery_photo_base64}` : null,
+        };
+
+        setImages(newImages);
+        console.log('Set images:', newImages);
+
       } catch (error) {
         console.error('Error fetching customer:', error);
         toast({
@@ -327,6 +348,13 @@ const CustomerDetails = () => {
       }
     };
     fetchCustomer();
+
+    // Cleanup blob URLs
+    return () => {
+      Object.values(blobUrlsRef.current).forEach((url) => {
+        if (url) URL.revokeObjectURL(url);
+      });
+    };
   }, [customerId, toast]);
 
   useEffect(() => {
@@ -364,7 +392,15 @@ const CustomerDetails = () => {
   };
 
   const handleFileChange = (e) => {
-    setFiles({ ...files, [e.target.name]: e.target.files[0] });
+    const file = e.target.files[0];
+    if (file) {
+      const imageUrl = URL.createObjectURL(file);
+      setImages(prev => ({
+        ...prev,
+        [e.target.name]: imageUrl
+      }));
+      blobUrlsRef.current[e.target.name] = imageUrl;
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -374,9 +410,12 @@ const CustomerDetails = () => {
 
     const formDataToSend = new FormData();
     Object.keys(formData).forEach(key => formData[key] && formDataToSend.append(key, formData[key]));
-    if (files.aadhar_front) formDataToSend.append('aadhar_front', files.aadhar_front);
-    if (files.aadhar_back) formDataToSend.append('aadhar_back', files.aadhar_back);
-    if (files.passport_photo) formDataToSend.append('passport_photo', files.passport_photo);
+    
+    // Handle file uploads
+    const fileInput = e.target.querySelector('input[type="file"]');
+    if (fileInput && fileInput.files[0]) {
+      formDataToSend.append(fileInput.name, fileInput.files[0]);
+    }
 
     try {
       const response = await axios.put(`http://172.20.10.8:3000/customers/${customerId}`, formDataToSend, {
@@ -715,7 +754,7 @@ const CustomerDetails = () => {
                 </Box>
                 <Box>
                   <Text fontSize="sm" color="gray.500" mb={1}>Total Kilometers</Text>
-                  <Text fontSize="lg" color={textColor}>5,000 km</Text>
+                    <Text fontSize="lg" color={textColor}>5,000 km</Text>
                 </Box>
                 <Box>
                   <Text fontSize="sm" color="gray.500" mb={1}>Vehicle Condition</Text>
@@ -752,8 +791,8 @@ const CustomerDetails = () => {
                   >
                     <Flex justify="space-between" align="center">
                       <VStack align="start" spacing={1}>
-                        <Text fontWeight="bold" color={textColor}>{service.type}</Text>
-                        <Text fontSize="sm" color="gray.500">{service.date}</Text>
+                          <Text fontWeight="bold" color={textColor}>{service.type}</Text>
+                          <Text fontSize="sm" color="gray.500">{service.date}</Text>
                         <Text fontSize="sm" color="gray.500">{service.notes}</Text>
                       </VStack>
                       <Badge
@@ -1040,6 +1079,298 @@ const CustomerDetails = () => {
         </HStack>
       </Flex>
     </Box>
+  );
+
+  const renderCustomerDetails = () => (
+    <MotionCard
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      mb={6}
+      overflow="hidden"
+    >
+      <CardBody p={0}>
+        <Box
+          bg={cardBg}
+          p={6}
+          position="relative"
+          overflow="hidden"
+        >
+          <VStack spacing={6} align="stretch">
+            <Heading size="md" color={textColor}>Complete Customer Details</Heading>
+            
+            {/* Basic Information */}
+            <Box
+              bg="whiteAlpha.200"
+              p={4}
+              borderRadius="lg"
+              backdropFilter="blur(10px)"
+            >
+              <Text fontSize="sm" color="gray.500" mb={3}>Basic Information</Text>
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                <Box>
+                  <Text fontSize="sm" color="gray.500">Customer Name</Text>
+                  <Text fontSize="lg">{customer.customer_name}</Text>
+                </Box>
+                <Box>
+                  <Text fontSize="sm" color="gray.500">Phone Number</Text>
+                  <Text fontSize="lg">{customer.phone_number}</Text>
+                </Box>
+                <Box>
+                  <Text fontSize="sm" color="gray.500">Date of Birth</Text>
+                  <Text fontSize="lg">{customer.dob ? new Date(customer.dob).toLocaleDateString() : 'Not provided'}</Text>
+                </Box>
+                <Box>
+                  <Text fontSize="sm" color="gray.500">Email</Text>
+                  <Text fontSize="lg">{customer.email || 'Not provided'}</Text>
+                </Box>
+                <Box>
+                  <Text fontSize="sm" color="gray.500">Address</Text>
+                  <Text fontSize="lg">{customer.address || 'Not provided'}</Text>
+                </Box>
+                <Box>
+                  <Text fontSize="sm" color="gray.500">Mobile 2</Text>
+                  <Text fontSize="lg">{customer.mobile_2 || 'Not provided'}</Text>
+                </Box>
+              </SimpleGrid>
+            </Box>
+
+            {/* Vehicle Information */}
+            <Box
+              bg="whiteAlpha.200"
+              p={4}
+              borderRadius="lg"
+              backdropFilter="blur(10px)"
+            >
+              <Text fontSize="sm" color="gray.500" mb={3}>Vehicle Information</Text>
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                <Box>
+                  <Text fontSize="sm" color="gray.500">Vehicle</Text>
+                  <Text fontSize="lg">{customer.vehicle}</Text>
+                </Box>
+                <Box>
+                  <Text fontSize="sm" color="gray.500">Variant</Text>
+                  <Text fontSize="lg">{customer.variant || 'Not specified'}</Text>
+                </Box>
+                <Box>
+                  <Text fontSize="sm" color="gray.500">Color</Text>
+                  <Text fontSize="lg">{customer.color || 'Not specified'}</Text>
+                </Box>
+                <Box>
+                  <Text fontSize="sm" color="gray.500">Ex Showroom Price</Text>
+                  <Text fontSize="lg">₹{customer.ex_showroom?.toLocaleString() || 'Not specified'}</Text>
+                </Box>
+              </SimpleGrid>
+            </Box>
+
+            {/* Payment Information */}
+            <Box
+              bg="whiteAlpha.200"
+              p={4}
+              borderRadius="lg"
+              backdropFilter="blur(10px)"
+            >
+              <Text fontSize="sm" color="gray.500" mb={3}>Payment Information</Text>
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                <Box>
+                  <Text fontSize="sm" color="gray.500">Payment Mode</Text>
+                  <Text fontSize="lg">{customer.payment_mode || 'Not specified'}</Text>
+                </Box>
+                <Box>
+                  <Text fontSize="sm" color="gray.500">Total Price</Text>
+                  <Text fontSize="lg">₹{customer.total_price?.toLocaleString() || '0'}</Text>
+                </Box>
+                <Box>
+                  <Text fontSize="sm" color="gray.500">Amount Paid</Text>
+                  <Text fontSize="lg">₹{customer.amount_paid?.toLocaleString() || '0'}</Text>
+                </Box>
+                <Box>
+                  <Text fontSize="sm" color="gray.500">Remaining Amount</Text>
+                  <Text fontSize="lg">₹{(customer.total_price - customer.amount_paid)?.toLocaleString() || '0'}</Text>
+                </Box>
+                <Box>
+                  <Text fontSize="sm" color="gray.500">Tax</Text>
+                  <Text fontSize="lg">₹{customer.tax?.toLocaleString() || 'Not specified'}</Text>
+                </Box>
+                <Box>
+                  <Text fontSize="sm" color="gray.500">Insurance</Text>
+                  <Text fontSize="lg">₹{customer.insurance?.toLocaleString() || 'Not specified'}</Text>
+                </Box>
+                <Box>
+                  <Text fontSize="sm" color="gray.500">Booking Fee</Text>
+                  <Text fontSize="lg">₹{customer.booking_fee?.toLocaleString() || 'Not specified'}</Text>
+                </Box>
+                <Box>
+                  <Text fontSize="sm" color="gray.500">Accessories</Text>
+                  <Text fontSize="lg">₹{customer.accessories?.toLocaleString() || 'Not specified'}</Text>
+                </Box>
+              </SimpleGrid>
+            </Box>
+
+            {/* Finance Information */}
+            {customer.payment_mode === 'Finance' && (
+              <Box
+                bg="whiteAlpha.200"
+                p={4}
+                borderRadius="lg"
+                backdropFilter="blur(10px)"
+              >
+                <Text fontSize="sm" color="gray.500" mb={3}>Finance Information</Text>
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                  <Box>
+                    <Text fontSize="sm" color="gray.500">Finance Company</Text>
+                    <Text fontSize="lg">{customer.finance_company || 'Not specified'}</Text>
+                  </Box>
+                  <Box>
+                    <Text fontSize="sm" color="gray.500">Finance Amount</Text>
+                    <Text fontSize="lg">₹{customer.finance_amount?.toLocaleString() || 'Not specified'}</Text>
+                  </Box>
+                  <Box>
+                    <Text fontSize="sm" color="gray.500">EMI</Text>
+                    <Text fontSize="lg">₹{customer.emi?.toLocaleString() || 'Not specified'}</Text>
+                  </Box>
+                  <Box>
+                    <Text fontSize="sm" color="gray.500">Tenure (months)</Text>
+                    <Text fontSize="lg">{customer.tenure || 'Not specified'}</Text>
+                  </Box>
+                </SimpleGrid>
+              </Box>
+            )}
+
+            {/* Nominee Information */}
+            <Box
+              bg="whiteAlpha.200"
+              p={4}
+              borderRadius="lg"
+              backdropFilter="blur(10px)"
+            >
+              <Text fontSize="sm" color="gray.500" mb={3}>Nominee Information</Text>
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                <Box>
+                  <Text fontSize="sm" color="gray.500">Nominee Name</Text>
+                  <Text fontSize="lg">{customer.nominee || 'Not provided'}</Text>
+                </Box>
+                <Box>
+                  <Text fontSize="sm" color="gray.500">Relation with Nominee</Text>
+                  <Text fontSize="lg">{customer.nominee_relation || 'Not provided'}</Text>
+                </Box>
+              </SimpleGrid>
+            </Box>
+
+            {/* Document Images */}
+            <Box
+              bg="whiteAlpha.200"
+              p={4}
+              borderRadius="lg"
+              backdropFilter="blur(10px)"
+            >
+              <Text fontSize="sm" color="gray.500" mb={3}>Document Images</Text>
+              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                <Box>
+                  <Text fontSize="sm" color="gray.500" mb={2}>Aadhar Front</Text>
+                  {images.aadhar_front ? (
+                    <Image
+                      src={images.aadhar_front}
+                      alt="Aadhar Front"
+                      borderRadius="md"
+                      boxSize="200px"
+                      objectFit="cover"
+                      fallback={<Text>Error loading image</Text>}
+                    />
+                  ) : (
+                    <Text>Not uploaded</Text>
+                  )}
+                </Box>
+                <Box>
+                  <Text fontSize="sm" color="gray.500" mb={2}>Aadhar Back</Text>
+                  {images.aadhar_back ? (
+                    <Image
+                      src={images.aadhar_back}
+                      alt="Aadhar Back"
+                      borderRadius="md"
+                      boxSize="200px"
+                      objectFit="cover"
+                      fallback={<Text>Error loading image</Text>}
+                    />
+                  ) : (
+                    <Text>Not uploaded</Text>
+                  )}
+                </Box>
+                <Box>
+                  <Text fontSize="sm" color="gray.500" mb={2}>Passport Photo</Text>
+                  {images.passport_photo ? (
+                    <Image
+                      src={images.passport_photo}
+                      alt="Passport Photo"
+                      borderRadius="md"
+                      boxSize="200px"
+                      objectFit="cover"
+                      fallback={<Text>Error loading image</Text>}
+                    />
+                  ) : (
+                    <Text>Not uploaded</Text>
+                  )}
+                </Box>
+              </SimpleGrid>
+            </Box>
+
+            {/* Delivery Photos */}
+            <Box
+              bg="whiteAlpha.200"
+              p={4}
+              borderRadius="lg"
+              backdropFilter="blur(10px)"
+            >
+              <Text fontSize="sm" color="gray.500" mb={3}>Delivery Photos</Text>
+              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                <Box>
+                  <Text fontSize="sm" color="gray.500" mb={2}>Front Delivery Photo</Text>
+                  {images.front_delivery_photo ? (
+                    <Image
+                      src={images.front_delivery_photo}
+                      alt="Front Delivery Photo"
+                      borderRadius="md"
+                      boxSize="200px"
+                      objectFit="cover"
+                    />
+                  ) : (
+                    <Text>Not uploaded</Text>
+                  )}
+                </Box>
+                <Box>
+                  <Text fontSize="sm" color="gray.500" mb={2}>Back Delivery Photo</Text>
+                  {images.back_delivery_photo ? (
+                    <Image
+                      src={images.back_delivery_photo}
+                      alt="Back Delivery Photo"
+                      borderRadius="md"
+                      boxSize="200px"
+                      objectFit="cover"
+                    />
+                  ) : (
+                    <Text>Not uploaded</Text>
+                  )}
+                </Box>
+                <Box>
+                  <Text fontSize="sm" color="gray.500" mb={2}>Delivery Photo</Text>
+                  {images.delivery_photo ? (
+                    <Image
+                      src={images.delivery_photo}
+                      alt="Delivery Photo"
+                      borderRadius="md"
+                      boxSize="200px"
+                      objectFit="cover"
+                    />
+                  ) : (
+                    <Text>Not uploaded</Text>
+                  )}
+                </Box>
+              </SimpleGrid>
+            </Box>
+          </VStack>
+        </Box>
+      </CardBody>
+    </MotionCard>
   );
 
   const renderBookingStatus = () => (
@@ -1612,95 +1943,276 @@ const CustomerDetails = () => {
                     </Button>
                   </form>
                 ) : (
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+                  <VStack spacing={6} align="stretch">
+                    {/* Basic Information */}
                     <Box
                       bg="whiteAlpha.200"
                       p={4}
                       borderRadius="lg"
                       backdropFilter="blur(10px)"
                     >
-                      <VStack align="start" spacing={4}>
+                      <Text fontSize="sm" color="gray.500" mb={3}>Basic Information</Text>
+                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                         <Box>
-                          <Text fontSize="sm" color="gray.500" mb={1}>Personal Information</Text>
-                          <VStack align="start" spacing={2}>
-                            <HStack>
-                              <Text fontSize="lg" color={textColor}>{customer.customer_name}</Text>
-                            </HStack>
-                            <HStack>
-                              <Icon as={CalendarIcon} color="purple.500" />
-                              <Text fontSize="lg" color={textColor}>{customer.dob || 'Not provided'}</Text>
-                            </HStack>
-                            <HStack>
-                              <Icon as={PhoneIcon} color="purple.500" />
-                              <Text fontSize="lg" color={textColor}>{customer.mobile_1}</Text>
-                            </HStack>
-                            <HStack>
-                              <Icon as={EmailIcon} color="purple.500" />
-                              <Text fontSize="lg" color={textColor}>{customer.email || 'Not provided'}</Text>
-                            </HStack>
-                          </VStack>
+                          <Text fontSize="sm" color="gray.500">Customer Name</Text>
+                          <Text fontSize="lg">{customer.customer_name}</Text>
                         </Box>
-                      </VStack>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500">Phone Number</Text>
+                          <Text fontSize="lg">{customer.phone_number}</Text>
+                        </Box>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500">Date of Birth</Text>
+                          <Text fontSize="lg">{customer.dob ? new Date(customer.dob).toLocaleDateString() : 'Not provided'}</Text>
+                        </Box>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500">Email</Text>
+                          <Text fontSize="lg">{customer.email || 'Not provided'}</Text>
+                        </Box>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500">Address</Text>
+                          <Text fontSize="lg">{customer.address || 'Not provided'}</Text>
+                        </Box>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500">Mobile 2</Text>
+                          <Text fontSize="lg">{customer.mobile_2 || 'Not provided'}</Text>
+                        </Box>
+                      </SimpleGrid>
                     </Box>
 
+                    {/* Vehicle Information */}
                     <Box
                       bg="whiteAlpha.200"
                       p={4}
                       borderRadius="lg"
                       backdropFilter="blur(10px)"
                     >
-                      <VStack align="start" spacing={4}>
+                      <Text fontSize="sm" color="gray.500" mb={3}>Vehicle Information</Text>
+                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                         <Box>
-                          <Text fontSize="sm" color="gray.500" mb={1}>Vehicle Information</Text>
-                          <VStack align="start" spacing={2}>
-                            <HStack>
-                              <Text fontSize="lg" color={textColor}>{customer.vehicle}</Text>
-                            </HStack>
-                            <HStack>
-                              <Icon as={SettingsIcon} color="purple.500" />
-                              <Text fontSize="lg" color={textColor}>{customer.variant || 'Not specified'}</Text>
-                            </HStack>
-                            <HStack>
-                              <Icon as={ViewIcon} color="purple.500" />
-                              <Text fontSize="lg" color={textColor}>{customer.color || 'Not specified'}</Text>
-                            </HStack>
-                          </VStack>
+                          <Text fontSize="sm" color="gray.500">Vehicle</Text>
+                          <Text fontSize="lg">{customer.vehicle}</Text>
                         </Box>
-                      </VStack>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500">Variant</Text>
+                          <Text fontSize="lg">{customer.variant || 'Not specified'}</Text>
+                        </Box>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500">Color</Text>
+                          <Text fontSize="lg">{customer.color || 'Not specified'}</Text>
+                        </Box>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500">Ex Showroom Price</Text>
+                          <Text fontSize="lg">₹{customer.ex_showroom?.toLocaleString() || 'Not specified'}</Text>
+                        </Box>
+                      </SimpleGrid>
                     </Box>
 
+                    {/* Payment Information */}
                     <Box
                       bg="whiteAlpha.200"
                       p={4}
                       borderRadius="lg"
                       backdropFilter="blur(10px)"
-                      gridColumn={{ md: 'span 2' }}
                     >
-                      <VStack align="start" spacing={4}>
+                      <Text fontSize="sm" color="gray.500" mb={3}>Payment Information</Text>
+                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                         <Box>
-                          <Text fontSize="sm" color="gray.500" mb={1}>Address & Payment Details</Text>
-                          <VStack align="start" spacing={2}>
-                            <HStack>
-                              <Text fontSize="lg" color={textColor}>{customer.address || 'Not provided'}</Text>
-                            </HStack>
-                            <HStack>
-                              <Text fontSize="lg" color={textColor}>{customer.payment_mode}</Text>
-                            </HStack>
+                          <Text fontSize="sm" color="gray.500">Payment Mode</Text>
+                          <Text fontSize="lg">{customer.payment_mode || 'Not specified'}</Text>
+                        </Box>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500">Total Price</Text>
+                          <Text fontSize="lg">₹{customer.total_price?.toLocaleString() || '0'}</Text>
+                        </Box>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500">Amount Paid</Text>
+                          <Text fontSize="lg">₹{customer.amount_paid?.toLocaleString() || '0'}</Text>
+                        </Box>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500">Remaining Amount</Text>
+                          <Text fontSize="lg">₹{(customer.total_price - customer.amount_paid)?.toLocaleString() || '0'}</Text>
+                        </Box>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500">Tax</Text>
+                          <Text fontSize="lg">₹{customer.tax?.toLocaleString() || 'Not specified'}</Text>
+                        </Box>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500">Insurance</Text>
+                          <Text fontSize="lg">₹{customer.insurance?.toLocaleString() || 'Not specified'}</Text>
+                        </Box>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500">Booking Fee</Text>
+                          <Text fontSize="lg">₹{customer.booking_fee?.toLocaleString() || 'Not specified'}</Text>
+                        </Box>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500">Accessories</Text>
+                          <Text fontSize="lg">₹{customer.accessories?.toLocaleString() || 'Not specified'}</Text>
+                        </Box>
+                      </SimpleGrid>
+                    </Box>
+
+                    {/* Finance Information */}
                             {customer.payment_mode === 'Finance' && (
-                              <>
-                                <HStack>
-                                  <Text fontSize="lg" color={textColor}>{customer.finance_company}</Text>
-                                </HStack>
-                                <HStack>
-                                  <Text fontSize="lg" color={textColor}>₹{customer.finance_amount}</Text>
-                                </HStack>
-                              </>
-                            )}
-                          </VStack>
+                      <Box
+                        bg="whiteAlpha.200"
+                        p={4}
+                        borderRadius="lg"
+                        backdropFilter="blur(10px)"
+                      >
+                        <Text fontSize="sm" color="gray.500" mb={3}>Finance Information</Text>
+                        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                          <Box>
+                            <Text fontSize="sm" color="gray.500">Finance Company</Text>
+                            <Text fontSize="lg">{customer.finance_company || 'Not specified'}</Text>
+                          </Box>
+                          <Box>
+                            <Text fontSize="sm" color="gray.500">Finance Amount</Text>
+                            <Text fontSize="lg">₹{customer.finance_amount?.toLocaleString() || 'Not specified'}</Text>
+                          </Box>
+                          <Box>
+                            <Text fontSize="sm" color="gray.500">EMI</Text>
+                            <Text fontSize="lg">₹{customer.emi?.toLocaleString() || 'Not specified'}</Text>
+                          </Box>
+                          <Box>
+                            <Text fontSize="sm" color="gray.500">Tenure (months)</Text>
+                            <Text fontSize="lg">{customer.tenure || 'Not specified'}</Text>
+                          </Box>
+                        </SimpleGrid>
+                      </Box>
+                    )}
+
+                    {/* Nominee Information */}
+                    <Box
+                      bg="whiteAlpha.200"
+                      p={4}
+                      borderRadius="lg"
+                      backdropFilter="blur(10px)"
+                    >
+                      <Text fontSize="sm" color="gray.500" mb={3}>Nominee Information</Text>
+                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500">Nominee Name</Text>
+                          <Text fontSize="lg">{customer.nominee || 'Not provided'}</Text>
                         </Box>
-                      </VStack>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500">Relation with Nominee</Text>
+                          <Text fontSize="lg">{customer.nominee_relation || 'Not provided'}</Text>
                     </Box>
                   </SimpleGrid>
+                    </Box>
+
+                    {/* Document Images */}
+                    <Box
+                      bg="whiteAlpha.200"
+                      p={4}
+                      borderRadius="lg"
+                      backdropFilter="blur(10px)"
+                    >
+                      <Text fontSize="sm" color="gray.500" mb={3}>Document Images</Text>
+                      <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500" mb={2}>Aadhar Front</Text>
+                          {images.aadhar_front ? (
+                            <Image
+                              src={images.aadhar_front}
+                              alt="Aadhar Front"
+                              borderRadius="md"
+                              boxSize="200px"
+                              objectFit="cover"
+                              fallback={<Text>Error loading image</Text>}
+                            />
+                          ) : (
+                            <Text>Not uploaded</Text>
+                          )}
+                        </Box>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500" mb={2}>Aadhar Back</Text>
+                          {images.aadhar_back ? (
+                            <Image
+                              src={images.aadhar_back}
+                              alt="Aadhar Back"
+                              borderRadius="md"
+                              boxSize="200px"
+                              objectFit="cover"
+                              fallback={<Text>Error loading image</Text>}
+                            />
+                          ) : (
+                            <Text>Not uploaded</Text>
+                          )}
+                        </Box>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500" mb={2}>Passport Photo</Text>
+                          {images.passport_photo ? (
+                            <Image
+                              src={images.passport_photo}
+                              alt="Passport Photo"
+                              borderRadius="md"
+                              boxSize="200px"
+                              objectFit="cover"
+                              fallback={<Text>Error loading image</Text>}
+                            />
+                          ) : (
+                            <Text>Not uploaded</Text>
+                          )}
+                        </Box>
+                      </SimpleGrid>
+                    </Box>
+
+                    {/* Delivery Photos */}
+                    <Box
+                      bg="whiteAlpha.200"
+                      p={4}
+                      borderRadius="lg"
+                      backdropFilter="blur(10px)"
+                    >
+                      <Text fontSize="sm" color="gray.500" mb={3}>Delivery Photos</Text>
+                      <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500" mb={2}>Front Delivery Photo</Text>
+                          {images.front_delivery_photo ? (
+                            <Image
+                              src={images.front_delivery_photo}
+                              alt="Front Delivery Photo"
+                              borderRadius="md"
+                              boxSize="200px"
+                              objectFit="cover"
+                            />
+                          ) : (
+                            <Text>Not uploaded</Text>
+                          )}
+                        </Box>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500" mb={2}>Back Delivery Photo</Text>
+                          {images.back_delivery_photo ? (
+                            <Image
+                              src={images.back_delivery_photo}
+                              alt="Back Delivery Photo"
+                              borderRadius="md"
+                              boxSize="200px"
+                              objectFit="cover"
+                            />
+                          ) : (
+                            <Text>Not uploaded</Text>
+                          )}
+                        </Box>
+                        <Box>
+                          <Text fontSize="sm" color="gray.500" mb={2}>Delivery Photo</Text>
+                          {images.delivery_photo ? (
+                            <Image
+                              src={images.delivery_photo}
+                              alt="Delivery Photo"
+                              borderRadius="md"
+                              boxSize="200px"
+                              objectFit="cover"
+                            />
+                          ) : (
+                            <Text>Not uploaded</Text>
+                          )}
+                        </Box>
+                      </SimpleGrid>
+                    </Box>
+                  </VStack>
                 )}
               </VStack>
             )}
@@ -1736,7 +2248,7 @@ const CustomerDetails = () => {
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ duration: 0.3 }}
               >
-                {renderBookingStatus()}
+            {renderBookingStatus()}
                 {/* Employee Details Box */}
                 <MotionCard
                   initial={{ opacity: 0, y: 20 }}
@@ -1746,9 +2258,9 @@ const CustomerDetails = () => {
                   overflow="hidden"
                 >
                   <CardBody p={0}>
-                    <Box
-                      bg={cardBg}
-                      p={6}
+          <Box 
+            bg={cardBg} 
+            p={6} 
                       position="relative"
                       overflow="hidden"
                     >
@@ -1758,9 +2270,9 @@ const CustomerDetails = () => {
                           bg="whiteAlpha.200"
                           p={4}
                           borderRadius="lg"
-                          backdropFilter="blur(10px)"
-                          border="1px solid"
-                          borderColor="whiteAlpha.300"
+            backdropFilter="blur(10px)"
+            border="1px solid"
+            borderColor="whiteAlpha.300"
                           _hover={{
                             transform: 'translateY(-2px)',
                             boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
@@ -1843,8 +2355,8 @@ const CustomerDetails = () => {
                     }}
                   />
                 </Flex>
-                {renderServiceHistory()}
-                {renderServiceBooking()}
+            {renderServiceHistory()}
+            {renderServiceBooking()}
               </motion.div>
             </AnimatePresence>
           </Box>
@@ -1894,9 +2406,9 @@ const CustomerDetails = () => {
                 }}
               >
                 <VStack align="start" spacing={4}>
-                  <Text fontSize="lg" fontWeight="bold">{service.type}</Text>
-                  <Text>Date: {service.date}</Text>
-                  <Text>Status: {service.status}</Text>
+                    <Text fontSize="lg" fontWeight="bold">{service.type}</Text>
+                    <Text>Date: {service.date}</Text>
+                    <Text>Status: {service.status}</Text>
                 </VStack>
               </Box>
   
