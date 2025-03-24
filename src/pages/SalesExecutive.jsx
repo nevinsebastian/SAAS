@@ -171,19 +171,19 @@ const SalesExecutive = () => {
         }
         const response = await api.get(`/notifications/employee/${user.id}`);
         if (isSubscribed) {
-          setNotifications(response.data.notifications);
-          setUnreadCount(response.data.notifications.filter(n => !n.read_at).length);
+        setNotifications(response.data.notifications);
+        setUnreadCount(response.data.notifications.filter(n => !n.read_at).length);
         }
       } catch (error) {
         console.error('Error fetching notifications:', error);
         if (isSubscribed) {
-          toast({
-            title: 'Error',
-            description: 'Failed to fetch notifications',
-            status: 'error',
-            duration: 3000,
-            isClosable: true,
-          });
+        toast({
+          title: 'Error',
+          description: 'Failed to fetch notifications',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
         }
       }
     };
@@ -715,7 +715,7 @@ const SalesExecutive = () => {
                   }}
                 >
                   Next
-                </Button>
+        </Button>
               </HStack>
             </Flex>
           </Box>
@@ -867,7 +867,7 @@ const SalesExecutive = () => {
                     {generatedLink}
                   </Text>
                   <ExternalLinkIcon color="purple.500" />
-                </HStack>
+              </HStack>
               </Box>
             </VStack>
           </ModalBody>
@@ -1043,13 +1043,12 @@ const SalesExecutive = () => {
                 bottom={0}
                 left={0}
                 right={0}
+                bg={cardBg}
                 p={4}
-                bg="whiteAlpha.100"
-                backdropFilter="blur(10px)"
-                borderTop={{ base: "1px solid", md: "none" }}
-                borderColor="whiteAlpha.300"
-                boxShadow={{ base: "0 -4px 6px -1px rgba(0, 0, 0, 0.1)", md: "none" }}
+                boxShadow="0 -4px 6px -1px rgba(0, 0, 0, 0.1)"
                 zIndex={2}
+                borderTop="1px solid"
+                borderColor={borderColor}
               >
                 <Flex justify="center">
                   <HStack spacing={2}>
@@ -1061,13 +1060,6 @@ const SalesExecutive = () => {
                       variant="outline"
                       borderRadius="full"
                       px={4}
-                      bg="whiteAlpha.200"
-                      backdropFilter="blur(10px)"
-                      borderColor="whiteAlpha.300"
-                      _hover={{ 
-                        bg: "whiteAlpha.300",
-                        borderColor: "whiteAlpha.400"
-                      }}
                     >
                       Previous
                     </Button>
@@ -1082,13 +1074,6 @@ const SalesExecutive = () => {
                         minW="8"
                         h="8"
                         p={0}
-                        bg={currentPage === i + 1 ? "purple.500" : "whiteAlpha.200"}
-                        backdropFilter="blur(10px)"
-                        borderColor="whiteAlpha.300"
-                        _hover={{ 
-                          bg: currentPage === i + 1 ? "purple.600" : "whiteAlpha.300",
-                          borderColor: "whiteAlpha.400"
-                        }}
                       >
                         {i + 1}
                       </Button>
@@ -1101,13 +1086,6 @@ const SalesExecutive = () => {
                       variant="outline"
                       borderRadius="full"
                       px={4}
-                      bg="whiteAlpha.200"
-                      backdropFilter="blur(10px)"
-                      borderColor="whiteAlpha.300"
-                      _hover={{ 
-                        bg: "whiteAlpha.300",
-                        borderColor: "whiteAlpha.400"
-                      }}
                     >
                       Next
                     </Button>
