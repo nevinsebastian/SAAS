@@ -993,7 +993,6 @@ const CustomerDetails = () => {
               >
                 <VStack spacing={4} align="stretch">
                   <Flex justify="space-between" align="center">
-                    <Text fontSize="lg" fontWeight="bold">Verification Status</Text>
                     <Badge
                       colorScheme={verificationStatus.color}
                       px={3}
@@ -1591,7 +1590,20 @@ const CustomerDetails = () => {
     switch (activeTab) {
       case 'booking':
         return (
-          <>
+          <Box 
+            bg={cardBg} 
+            minH="100vh"
+            w="100%"
+            position="fixed"
+            top={0}
+            left={0}
+            right={0}
+            bottom={0}
+            overflowY="auto"
+            pt={{ base: '80px', md: '120px' }}
+            pb={{ base: '80px', md: '40px' }}
+            px={{ base: 4, md: 6 }}
+          >
             {renderBookingStatus()}
             {/* Employee Details Box */}
             <MotionCard
@@ -1616,27 +1628,30 @@ const CustomerDetails = () => {
                       borderRadius="lg"
                       backdropFilter="blur(10px)"
                     >
-                      <HStack spacing={4}>
-                        <Avatar size="lg" name={customer.sales_employee || 'John Doe'} />
-                        <VStack align="start" spacing={1} flex={1}>
-                          <Text fontSize="lg" fontWeight="bold">{customer.sales_employee || 'John Doe'}</Text>
-                          <Text color="gray.500">Sales Executive</Text>
-                          <Text color="gray.500">+91 98765 43210</Text>
-                          <HStack>
-                            <Text color="gray.500">Rating:</Text>
+                      <HStack justify="space-between" align="center" spacing={2}>
+                        <HStack spacing={2} flex={1} minW={0}>
+                          <Avatar size="md" name={customer.sales_employee || 'John Doe'} />
+                          <VStack align="start" spacing={0.5} flex={1} minW={0}>
+                            <Text fontSize="md" fontWeight="bold" noOfLines={1}>{customer.sales_employee || 'John Doe'}</Text>
+                            <Text fontSize="sm" color="gray.500" noOfLines={1}>Sales Executive</Text>
+                            <Text fontSize="sm" color="gray.500" noOfLines={1}>+91 98765 43210</Text>
                             <HStack spacing={1}>
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <Icon key={star} as={StarIcon} color="yellow.400" />
-                              ))}
+                              <Text fontSize="sm" color="gray.500">Rating:</Text>
+                              <HStack spacing={0.5}>
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Icon key={star} as={StarIcon} color="yellow.400" boxSize={3} />
+                                ))}
+                              </HStack>
                             </HStack>
-                          </HStack>
-                        </VStack>
+                          </VStack>
+                        </HStack>
                         <IconButton
                           icon={<ChatIcon />}
                           aria-label="Chat with employee"
                           colorScheme="purple"
                           onClick={() => setIsChatOpen(true)}
-                          size="lg"
+                          size="md"
+                          flexShrink={0}
                         />
                       </HStack>
                     </Box>
@@ -1644,7 +1659,7 @@ const CustomerDetails = () => {
                 </Box>
               </CardBody>
             </MotionCard>
-          </>
+          </Box>
         );
       case 'service':
         return (
@@ -1820,7 +1835,7 @@ const CustomerDetails = () => {
       <Box 
         maxW={{ base: '100%', md: '800px' }} 
         mx="auto" 
-        pt={{ base: '180px', md: '120px' }}
+        pt={{ base: '80px', md: '120px' }}
         pb={{ base: '80px', md: '40px' }}
         px={{ base: 4, md: 6 }}
       >
