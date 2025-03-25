@@ -205,6 +205,143 @@ const cardStyles = {
   },
 };
 
+// Add the AnimatedModal component after the modernColors definition
+const AnimatedModal = ({ isOpen, onClose, children }) => {
+  const cardBg = useColorModeValue('whiteAlpha.900', 'gray.800');
+  const modalGradient = useColorModeValue(
+    'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+    'linear-gradient(135deg, #818cf8 0%, #a78bfa 100%)'
+  );
+  
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <Box
+          as={motion.div}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          position="fixed"
+          inset={0}
+          zIndex={50}
+          pt="24"
+          backdropFilter="blur(8px)"
+          bg="rgba(0, 0, 0, 0.4)"
+          overflowY="hidden"
+          onClick={onClose}
+        >
+          <Box
+            as={motion.div}
+            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.95, opacity: 0, y: 20 }}
+            onClick={(e) => e.stopPropagation()}
+            w="full"
+            maxW="6xl"
+            mx="auto"
+            h="calc(100vh - 96px)"
+            display="flex"
+            flexDirection="column"
+            bg={cardBg}
+            borderRadius="xl"
+            overflow="hidden"
+            position="relative"
+          >
+            {/* Fixed Header */}
+            <Box
+              p={6}
+              borderBottom="1px solid"
+              borderColor="whiteAlpha.300"
+              bg={cardBg}
+              position="sticky"
+              top={0}
+              zIndex={2}
+            >
+              <Flex justify="space-between" align="center">
+                <Heading size="md" bgGradient={modalGradient} bgClip="text">
+                  Complete Customer Details
+                </Heading>
+                <IconButton
+                  icon={<CloseIcon />}
+                  onClick={onClose}
+                  variant="ghost"
+                  colorScheme="purple"
+                  size="lg"
+                  _hover={{
+                    transform: 'rotate(90deg)',
+                    transition: 'all 0.3s',
+                  }}
+                />
+              </Flex>
+            </Box>
+
+            {/* Scrollable Content */}
+            <Box
+              flex={1}
+              overflowY="auto"
+              css={{
+                '&::-webkit-scrollbar': {
+                  width: '4px',
+                },
+                '&::-webkit-scrollbar-track': {
+                  width: '6px',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  background: 'rgba(0, 0, 0, 0.2)',
+                  borderRadius: '24px',
+                },
+              }}
+              pb="80px" // Add padding to account for fixed footer
+            >
+              {children}
+            </Box>
+
+            {/* Fixed Footer */}
+            <Box
+              p={4}
+              borderTop="1px solid"
+              borderColor="whiteAlpha.300"
+              bg={cardBg}
+              position="fixed"
+              bottom="60px" // Position above bottom navbar
+              left="50%"
+              transform="translateX(-50%)"
+              width="100%"
+              maxW="6xl"
+              zIndex={2}
+              borderBottomRadius="xl"
+            >
+              <Flex justify="flex-end" gap={4}>
+                <Button
+                  leftIcon={<EditIcon />}
+                  colorScheme="purple"
+                  onClick={() => {}}
+                  bgGradient={modalGradient}
+                  _hover={{
+                    transform: 'translateY(-2px)',
+                    boxShadow: 'xl',
+                  }}
+                >
+                  Edit Details
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={onClose}
+                  _hover={{
+                    transform: 'translateY(-2px)',
+                  }}
+                >
+                  Close
+                </Button>
+              </Flex>
+            </Box>
+          </Box>
+        </Box>
+      )}
+    </AnimatePresence>
+  );
+};
+
 const CustomerDetails = () => {
   const { customerId } = useParams();
   const toast = useToast();
@@ -300,6 +437,9 @@ const CustomerDetails = () => {
   );
 
   const isMobile = useBreakpointValue({ base: true, md: false });
+
+  // Add state for modal control in the CustomerDetails component
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchCustomer = async () => {
@@ -1109,8 +1249,6 @@ const CustomerDetails = () => {
           overflow="hidden"
         >
           <VStack spacing={6} align="stretch">
-            <Heading size="md" color={textColor}>Complete Customer Details</Heading>
-            
             {/* Basic Information */}
             <Box
               bg="whiteAlpha.200"
@@ -1549,24 +1687,35 @@ const CustomerDetails = () => {
 
           <Flex justify="space-between" align="center" mb={6}>
             <VStack align="start" spacing={1}>
-              <Heading size="lg" bgGradient={accentGradient} bgClip="text">
-                Customer Details
-              </Heading>
+              <Button
+                onClick={() => setIsCustomerModalOpen(true)}
+                variant="ghost"
+                size="lg"
+                rightIcon={<ChevronRightIcon />}
+                _hover={{
+                  transform: 'translateX(4px)',
+                  transition: 'all 0.2s',
+                }}
+              >
+                <Heading size="lg" bgGradient={accentGradient} bgClip="text">
+                  Customer Details
+                </Heading>
+              </Button>
               <Text fontSize="sm" color="gray.500">
                 Created by {customer.sales_employee || 'John Doe'} on {new Date(customer.created_at).toLocaleDateString()}
               </Text>
             </VStack>
-            {customer.status !== 'Pending' && (
-              <IconButton
-                icon={isBookingDetailsOpen ? <ChevronDownIcon /> : <ChevronRightIcon />}
-                aria-label="Toggle booking details"
-                variant="ghost"
-                colorScheme="purple"
-                onClick={() => setIsBookingDetailsOpen(!isBookingDetailsOpen)}
-                size="lg"
-              />
-            )}
           </Flex>
+
+          {/* Add the AnimatedModal */}
+          <AnimatedModal 
+            isOpen={isCustomerModalOpen} 
+            onClose={() => setIsCustomerModalOpen(false)}
+          >
+            <Box p={6}>
+              {renderCustomerDetails()}
+            </Box>
+          </AnimatedModal>
 
           <Collapse in={isBookingDetailsOpen || customer.status === 'Pending'}>
             {customer.status === 'Pending' ? (
