@@ -214,131 +214,130 @@ const AnimatedModal = ({ isOpen, onClose, children }) => {
   );
   
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <Box
-          as={motion.div}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          position="fixed"
-          inset={0}
-          zIndex={50}
-          pt="24"
-          backdropFilter="blur(8px)"
-          bg="rgba(0, 0, 0, 0.4)"
-          overflowY="hidden"
-          onClick={onClose}
-        >
+    <Portal>
+      <AnimatePresence>
+        {isOpen && (
           <Box
             as={motion.div}
-            initial={{ scale: 0.95, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.95, opacity: 0, y: 20 }}
-            onClick={(e) => e.stopPropagation()}
-            w="full"
-            maxW="6xl"
-            mx="auto"
-            h="calc(100vh - 96px)"
-            display="flex"
-            flexDirection="column"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            position="fixed"
+            inset={0}
+            zIndex={99999}
             bg={cardBg}
-            borderRadius="xl"
-            overflow="hidden"
-            position="relative"
+            overflowY="hidden"
+            onClick={onClose}
           >
-            {/* Fixed Header */}
             <Box
-              p={6}
-              borderBottom="1px solid"
-              borderColor="whiteAlpha.300"
+              as={motion.div}
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              w="full"
+              h="100vh"
+              display="flex"
+              flexDirection="column"
+              overflow="hidden"
+              position="relative"
               bg={cardBg}
-              position="sticky"
-              top={0}
-              zIndex={2}
             >
-              <Flex justify="space-between" align="center">
-                <Heading size="md" bgGradient={modalGradient} bgClip="text">
-                  Complete Customer Details
-                </Heading>
-                <IconButton
-                  icon={<CloseIcon />}
-                  onClick={onClose}
-                  variant="ghost"
-                  colorScheme="purple"
-                  size="lg"
-                  _hover={{
-                    transform: 'rotate(90deg)',
-                    transition: 'all 0.3s',
-                  }}
-                />
-              </Flex>
-            </Box>
+              {/* Fixed Header */}
+              <Box
+                p={3}
+                borderBottom="1px solid"
+                borderColor="whiteAlpha.300"
+                bg={cardBg}
+                position="fixed"
+                top={0}
+                left={0}
+                right={0}
+                zIndex={999999}
+                boxShadow="sm"
+              >
+                <Flex justify="space-between" align="center">
+                  <Heading size="sm" bgGradient={modalGradient} bgClip="text">
+                    Complete Customer Details
+                  </Heading>
+                  <IconButton
+                    icon={<CloseIcon />}
+                    onClick={onClose}
+                    variant="ghost"
+                    colorScheme="purple"
+                    size="sm"
+                    _hover={{
+                      transform: 'rotate(90deg)',
+                      transition: 'all 0.3s',
+                    }}
+                  />
+                </Flex>
+              </Box>
 
-            {/* Scrollable Content */}
-            <Box
-              flex={1}
-              overflowY="auto"
-              css={{
-                '&::-webkit-scrollbar': {
-                  width: '4px',
-                },
-                '&::-webkit-scrollbar-track': {
-                  width: '6px',
-                },
-                '&::-webkit-scrollbar-thumb': {
-                  background: 'rgba(0, 0, 0, 0.2)',
-                  borderRadius: '24px',
-                },
-              }}
-              pb="80px" // Add padding to account for fixed footer
-            >
-              {children}
-            </Box>
+              {/* Scrollable Content */}
+              <Box
+                flex={1}
+                overflowY="auto"
+                css={{
+                  '&::-webkit-scrollbar': {
+                    width: '4px',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    width: '6px',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    background: 'rgba(0, 0, 0, 0.2)',
+                    borderRadius: '24px',
+                  },
+                }}
+                pt="48px" // Add padding to account for fixed header
+                pb="80px" // Add padding to account for fixed footer
+              >
+                {children}
+              </Box>
 
-            {/* Fixed Footer */}
-            <Box
-              p={4}
-              borderTop="1px solid"
-              borderColor="whiteAlpha.300"
-              bg={cardBg}
-              position="fixed"
-              bottom="60px" // Position above bottom navbar
-              left="50%"
-              transform="translateX(-50%)"
-              width="100%"
-              maxW="6xl"
-              zIndex={2}
-              borderBottomRadius="xl"
-            >
-              <Flex justify="flex-end" gap={4}>
-                <Button
-                  leftIcon={<EditIcon />}
-                  colorScheme="purple"
-                  onClick={() => {}}
-                  bgGradient={modalGradient}
-                  _hover={{
-                    transform: 'translateY(-2px)',
-                    boxShadow: 'xl',
-                  }}
-                >
-                  Edit Details
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={onClose}
-                  _hover={{
-                    transform: 'translateY(-2px)',
-                  }}
-                >
-                  Close
-                </Button>
-              </Flex>
+              {/* Fixed Footer */}
+              <Box
+                p={4}
+                borderTop="1px solid"
+                borderColor="whiteAlpha.300"
+                bg={cardBg}
+                position="fixed"
+                bottom={0}
+                left={0}
+                right={0}
+                zIndex={999999}
+                boxShadow="sm"
+              >
+                <Flex justify="flex-end" gap={4}>
+                  <Button
+                    leftIcon={<EditIcon />}
+                    colorScheme="purple"
+                    onClick={() => {}}
+                    bgGradient={modalGradient}
+                    _hover={{
+                      transform: 'translateY(-2px)',
+                      boxShadow: 'xl',
+                    }}
+                  >
+                    Edit Details
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={onClose}
+                    _hover={{
+                      transform: 'translateY(-2px)',
+                    }}
+                  >
+                    Close
+                  </Button>
+                </Flex>
+              </Box>
             </Box>
           </Box>
-        </Box>
-      )}
-    </AnimatePresence>
+        )}
+      </AnimatePresence>
+    </Portal>
   );
 };
 
