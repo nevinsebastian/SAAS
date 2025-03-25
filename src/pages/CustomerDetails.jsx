@@ -1314,59 +1314,64 @@ const CustomerDetails = () => {
               </SimpleGrid>
             </Box>
 
-            {/* Delivery Photos */}
-            <Box
-              bg="whiteAlpha.200"
-              p={4}
-              borderRadius="lg"
-              backdropFilter="blur(10px)"
-            >
-              <Text fontSize="sm" color="gray.500" mb={3}>Delivery Photos</Text>
-              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-                <Box>
-                  <Text fontSize="sm" color="gray.500" mb={2}>Front Delivery Photo</Text>
-                  {images.front_delivery_photo ? (
-                    <Image
-                      src={images.front_delivery_photo}
-                      alt="Front Delivery Photo"
-                      borderRadius="md"
-                      boxSize="200px"
-                      objectFit="cover"
-                    />
-                  ) : (
-                    <Text>Not uploaded</Text>
-                  )}
-                </Box>
-                <Box>
-                  <Text fontSize="sm" color="gray.500" mb={2}>Back Delivery Photo</Text>
-                  {images.back_delivery_photo ? (
-                    <Image
-                      src={images.back_delivery_photo}
-                      alt="Back Delivery Photo"
-                      borderRadius="md"
-                      boxSize="200px"
-                      objectFit="cover"
-                    />
-                  ) : (
-                    <Text>Not uploaded</Text>
-                  )}
-                </Box>
-                <Box>
-                  <Text fontSize="sm" color="gray.500" mb={2}>Delivery Photo</Text>
-                  {images.delivery_photo ? (
-                    <Image
-                      src={images.delivery_photo}
-                      alt="Delivery Photo"
-                      borderRadius="md"
-                      boxSize="200px"
-                      objectFit="cover"
-                    />
-                  ) : (
-                    <Text>Not uploaded</Text>
-                  )}
-                </Box>
-              </SimpleGrid>
-            </Box>
+            {/* Delivery Status */}
+        
+
+            {/* Delivery Photos - Only show if delivery_status is true */}
+            {customer.delivery_status && (
+              <Box
+                bg="whiteAlpha.200"
+                p={4}
+                borderRadius="lg"
+                backdropFilter="blur(10px)"
+              >
+                <Text fontSize="sm" color="gray.500" mb={3}>Delivery Photos</Text>
+                <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                  <Box>
+                    <Text fontSize="sm" color="gray.500" mb={2}>Front Delivery Photo</Text>
+                    {images.front_delivery_photo ? (
+                      <Image
+                        src={images.front_delivery_photo}
+                        alt="Front Delivery Photo"
+                        borderRadius="md"
+                        boxSize="200px"
+                        objectFit="cover"
+                      />
+                    ) : (
+                      <Text>Not uploaded</Text>
+                    )}
+                  </Box>
+                  <Box>
+                    <Text fontSize="sm" color="gray.500" mb={2}>Back Delivery Photo</Text>
+                    {images.back_delivery_photo ? (
+                      <Image
+                        src={images.back_delivery_photo}
+                        alt="Back Delivery Photo"
+                        borderRadius="md"
+                        boxSize="200px"
+                        objectFit="cover"
+                      />
+                    ) : (
+                      <Text>Not uploaded</Text>
+                    )}
+                  </Box>
+                  <Box>
+                    <Text fontSize="sm" color="gray.500" mb={2}>Delivery Photo</Text>
+                    {images.delivery_photo ? (
+                      <Image
+                        src={images.delivery_photo}
+                        alt="Delivery Photo"
+                        borderRadius="md"
+                        boxSize="200px"
+                        objectFit="cover"
+                      />
+                    ) : (
+                      <Text>Not uploaded</Text>
+                    )}
+                  </Box>
+                </SimpleGrid>
+              </Box>
+            )}
           </VStack>
         </Box>
       </CardBody>
@@ -2098,8 +2103,8 @@ const CustomerDetails = () => {
                         <Box>
                           <Text fontSize="sm" color="gray.500">Relation with Nominee</Text>
                           <Text fontSize="lg">{customer.nominee_relation || 'Not provided'}</Text>
-                    </Box>
-                  </SimpleGrid>
+                        </Box>
+                      </SimpleGrid>
                     </Box>
 
                     {/* Document Images */}
@@ -2159,59 +2164,63 @@ const CustomerDetails = () => {
                       </SimpleGrid>
                     </Box>
 
-                    {/* Delivery Photos */}
-                    <Box
-                      bg="whiteAlpha.200"
-                      p={4}
-                      borderRadius="lg"
-                      backdropFilter="blur(10px)"
-                    >
-                      <Text fontSize="sm" color="gray.500" mb={3}>Delivery Photos</Text>
-                      <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-                        <Box>
-                          <Text fontSize="sm" color="gray.500" mb={2}>Front Delivery Photo</Text>
-                          {images.front_delivery_photo ? (
-                            <Image
-                              src={images.front_delivery_photo}
-                              alt="Front Delivery Photo"
-                              borderRadius="md"
-                              boxSize="200px"
-                              objectFit="cover"
-                            />
-                          ) : (
-                            <Text>Not uploaded</Text>
-                          )}
-                        </Box>
-                        <Box>
-                          <Text fontSize="sm" color="gray.500" mb={2}>Back Delivery Photo</Text>
-                          {images.back_delivery_photo ? (
-                            <Image
-                              src={images.back_delivery_photo}
-                              alt="Back Delivery Photo"
-                              borderRadius="md"
-                              boxSize="200px"
-                              objectFit="cover"
-                            />
-                          ) : (
-                            <Text>Not uploaded</Text>
-                          )}
-                        </Box>
-                        <Box>
-                          <Text fontSize="sm" color="gray.500" mb={2}>Delivery Photo</Text>
-                          {images.delivery_photo ? (
-                            <Image
-                              src={images.delivery_photo}
-                              alt="Delivery Photo"
-                              borderRadius="md"
-                              boxSize="200px"
-                              objectFit="cover"
-                            />
-                          ) : (
-                            <Text>Not uploaded</Text>
-                          )}
-                        </Box>
-                      </SimpleGrid>
-                    </Box>
+                  
+
+                    {/* Delivery Photos - Only show if delivery_status is true */}
+                    {customer.delivery_status && (
+                      <Box
+                        bg="whiteAlpha.200"
+                        p={4}
+                        borderRadius="lg"
+                        backdropFilter="blur(10px)"
+                      >
+                        <Text fontSize="sm" color="gray.500" mb={3}>Delivery Photos</Text>
+                        <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                          <Box>
+                            <Text fontSize="sm" color="gray.500" mb={2}>Front Delivery Photo</Text>
+                            {images.front_delivery_photo ? (
+                              <Image
+                                src={images.front_delivery_photo}
+                                alt="Front Delivery Photo"
+                                borderRadius="md"
+                                boxSize="200px"
+                                objectFit="cover"
+                              />
+                            ) : (
+                              <Text>Not uploaded</Text>
+                            )}
+                          </Box>
+                          <Box>
+                            <Text fontSize="sm" color="gray.500" mb={2}>Back Delivery Photo</Text>
+                            {images.back_delivery_photo ? (
+                              <Image
+                                src={images.back_delivery_photo}
+                                alt="Back Delivery Photo"
+                                borderRadius="md"
+                                boxSize="200px"
+                                objectFit="cover"
+                              />
+                            ) : (
+                              <Text>Not uploaded</Text>
+                            )}
+                          </Box>
+                          <Box>
+                            <Text fontSize="sm" color="gray.500" mb={2}>Delivery Photo</Text>
+                            {images.delivery_photo ? (
+                              <Image
+                                src={images.delivery_photo}
+                                alt="Delivery Photo"
+                                borderRadius="md"
+                                boxSize="200px"
+                                objectFit="cover"
+                              />
+                            ) : (
+                              <Text>Not uploaded</Text>
+                            )}
+                          </Box>
+                        </SimpleGrid>
+                      </Box>
+                    )}
                   </VStack>
                 )}
               </VStack>
