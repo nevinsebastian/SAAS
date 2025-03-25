@@ -225,7 +225,8 @@ const AnimatedModal = ({ isOpen, onClose, children }) => {
             position="fixed"
             inset={0}
             zIndex={99999}
-            bg={cardBg}
+            bg="rgba(0, 0, 0, 0.7)"
+            backdropFilter="blur(8px)"
             overflowY="hidden"
             onClick={onClose}
           >
@@ -234,6 +235,7 @@ const AnimatedModal = ({ isOpen, onClose, children }) => {
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
               onClick={(e) => e.stopPropagation()}
               w="full"
               h="100vh"
@@ -242,6 +244,7 @@ const AnimatedModal = ({ isOpen, onClose, children }) => {
               overflow="hidden"
               position="relative"
               bg={cardBg}
+              boxShadow="0 25px 50px -12px rgba(0, 0, 0, 0.25)"
             >
               {/* Fixed Header */}
               <Box
@@ -254,12 +257,28 @@ const AnimatedModal = ({ isOpen, onClose, children }) => {
                 left={0}
                 right={0}
                 zIndex={999999}
-                boxShadow="sm"
+                boxShadow="0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+                backdropFilter="blur(8px)"
               >
                 <Flex justify="space-between" align="center">
-                  <Heading size="sm" bgGradient={modalGradient} bgClip="text">
-                    Complete Customer Details
-                  </Heading>
+                  <HStack spacing={2}>
+                    <Box
+                      p={1.5}
+                      borderRadius="lg"
+                      bg="whiteAlpha.200"
+                      backdropFilter="blur(8px)"
+                    >
+                      <Icon as={ViewIcon} boxSize={5} color="purple.500" />
+                    </Box>
+                    <VStack align="start" spacing={0}>
+                      <Heading size="sm" bgGradient={modalGradient} bgClip="text">
+                        Complete Customer Details
+                      </Heading>
+                      <Text fontSize="xs" color="gray.500">
+                        View and manage customer information
+                      </Text>
+                    </VStack>
+                  </HStack>
                   <IconButton
                     icon={<CloseIcon />}
                     onClick={onClose}
@@ -269,6 +288,7 @@ const AnimatedModal = ({ isOpen, onClose, children }) => {
                     _hover={{
                       transform: 'rotate(90deg)',
                       transition: 'all 0.3s',
+                      bg: 'whiteAlpha.200',
                     }}
                   />
                 </Flex>
@@ -284,21 +304,32 @@ const AnimatedModal = ({ isOpen, onClose, children }) => {
                   },
                   '&::-webkit-scrollbar-track': {
                     width: '6px',
+                    background: 'transparent',
                   },
                   '&::-webkit-scrollbar-thumb': {
                     background: 'rgba(0, 0, 0, 0.2)',
                     borderRadius: '24px',
                   },
+                  '&::-webkit-scrollbar-thumb:hover': {
+                    background: 'rgba(0, 0, 0, 0.3)',
+                  },
                 }}
-                pt="48px" // Add padding to account for fixed header
-                pb="80px" // Add padding to account for fixed footer
+                pt="60px"
+                pb="60px"
+                px={3}
               >
-                {children}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2, duration: 0.5 }}
+                >
+                  {children}
+                </motion.div>
               </Box>
 
               {/* Fixed Footer */}
               <Box
-                p={4}
+                p={3}
                 borderTop="1px solid"
                 borderColor="whiteAlpha.300"
                 bg={cardBg}
@@ -307,27 +338,33 @@ const AnimatedModal = ({ isOpen, onClose, children }) => {
                 left={0}
                 right={0}
                 zIndex={999999}
-                boxShadow="sm"
+                boxShadow="0 -4px 6px -1px rgba(0, 0, 0, 0.1)"
+                backdropFilter="blur(8px)"
               >
-                <Flex justify="flex-end" gap={4}>
+                <Flex justify="flex-end" gap={2}>
                   <Button
                     leftIcon={<EditIcon />}
                     colorScheme="purple"
                     onClick={() => {}}
                     bgGradient={modalGradient}
+                    size="sm"
                     _hover={{
                       transform: 'translateY(-2px)',
                       boxShadow: 'xl',
                     }}
+                    transition="all 0.2s"
                   >
                     Edit Details
                   </Button>
                   <Button
                     variant="ghost"
                     onClick={onClose}
+                    size="sm"
                     _hover={{
                       transform: 'translateY(-2px)',
+                      bg: 'whiteAlpha.200',
                     }}
+                    transition="all 0.2s"
                   >
                     Close
                   </Button>
@@ -1237,49 +1274,49 @@ const CustomerDetails = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      mb={6}
+      mb={4}
       overflow="hidden"
     >
       <CardBody p={0}>
         <Box
           bg={cardBg}
-          p={6}
+          p={3}
           position="relative"
           overflow="hidden"
         >
-          <VStack spacing={6} align="stretch">
+          <VStack spacing={3} align="stretch">
             {/* Basic Information */}
             <Box
               bg="whiteAlpha.200"
-              p={4}
+              p={3}
               borderRadius="lg"
               backdropFilter="blur(10px)"
             >
-              <Text fontSize="sm" color="gray.500" mb={3}>Basic Information</Text>
-              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+              <Text fontSize="sm" color="gray.500" mb={2}>Basic Information</Text>
+              <SimpleGrid columns={{ base: 1 }} spacing={2}>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Customer Name</Text>
-                  <Text fontSize="lg">{customer.customer_name}</Text>
+                  <Text fontSize="xs" color="gray.500">Customer Name</Text>
+                  <Text fontSize="md">{customer.customer_name}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Phone Number</Text>
-                  <Text fontSize="lg">{customer.phone_number}</Text>
+                  <Text fontSize="xs" color="gray.500">Phone Number</Text>
+                  <Text fontSize="md">{customer.phone_number}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Date of Birth</Text>
-                  <Text fontSize="lg">{customer.dob ? new Date(customer.dob).toLocaleDateString() : 'Not provided'}</Text>
+                  <Text fontSize="xs" color="gray.500">Date of Birth</Text>
+                  <Text fontSize="md">{customer.dob ? new Date(customer.dob).toLocaleDateString() : 'Not provided'}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Email</Text>
-                  <Text fontSize="lg">{customer.email || 'Not provided'}</Text>
+                  <Text fontSize="xs" color="gray.500">Email</Text>
+                  <Text fontSize="md">{customer.email || 'Not provided'}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Address</Text>
-                  <Text fontSize="lg">{customer.address || 'Not provided'}</Text>
+                  <Text fontSize="xs" color="gray.500">Address</Text>
+                  <Text fontSize="md">{customer.address || 'Not provided'}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Mobile 2</Text>
-                  <Text fontSize="lg">{customer.mobile_2 || 'Not provided'}</Text>
+                  <Text fontSize="xs" color="gray.500">Mobile 2</Text>
+                  <Text fontSize="md">{customer.mobile_2 || 'Not provided'}</Text>
                 </Box>
               </SimpleGrid>
             </Box>
@@ -1287,27 +1324,27 @@ const CustomerDetails = () => {
             {/* Vehicle Information */}
             <Box
               bg="whiteAlpha.200"
-              p={4}
+              p={3}
               borderRadius="lg"
               backdropFilter="blur(10px)"
             >
-              <Text fontSize="sm" color="gray.500" mb={3}>Vehicle Information</Text>
-              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+              <Text fontSize="sm" color="gray.500" mb={2}>Vehicle Information</Text>
+              <SimpleGrid columns={{ base: 1 }} spacing={2}>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Vehicle</Text>
-                  <Text fontSize="lg">{customer.vehicle}</Text>
+                  <Text fontSize="xs" color="gray.500">Vehicle</Text>
+                  <Text fontSize="md">{customer.vehicle}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Variant</Text>
-                  <Text fontSize="lg">{customer.variant || 'Not specified'}</Text>
+                  <Text fontSize="xs" color="gray.500">Variant</Text>
+                  <Text fontSize="md">{customer.variant || 'Not specified'}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Color</Text>
-                  <Text fontSize="lg">{customer.color || 'Not specified'}</Text>
+                  <Text fontSize="xs" color="gray.500">Color</Text>
+                  <Text fontSize="md">{customer.color || 'Not specified'}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Ex Showroom Price</Text>
-                  <Text fontSize="lg">₹{customer.ex_showroom?.toLocaleString() || 'Not specified'}</Text>
+                  <Text fontSize="xs" color="gray.500">Ex Showroom Price</Text>
+                  <Text fontSize="md">₹{customer.ex_showroom?.toLocaleString() || 'Not specified'}</Text>
                 </Box>
               </SimpleGrid>
             </Box>
@@ -1315,43 +1352,43 @@ const CustomerDetails = () => {
             {/* Payment Information */}
             <Box
               bg="whiteAlpha.200"
-              p={4}
+              p={3}
               borderRadius="lg"
               backdropFilter="blur(10px)"
             >
-              <Text fontSize="sm" color="gray.500" mb={3}>Payment Information</Text>
-              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+              <Text fontSize="sm" color="gray.500" mb={2}>Payment Information</Text>
+              <SimpleGrid columns={{ base: 1 }} spacing={2}>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Payment Mode</Text>
-                  <Text fontSize="lg">{customer.payment_mode || 'Not specified'}</Text>
+                  <Text fontSize="xs" color="gray.500">Payment Mode</Text>
+                  <Text fontSize="md">{customer.payment_mode || 'Not specified'}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Total Price</Text>
-                  <Text fontSize="lg">₹{customer.total_price?.toLocaleString() || '0'}</Text>
+                  <Text fontSize="xs" color="gray.500">Total Price</Text>
+                  <Text fontSize="md">₹{customer.total_price?.toLocaleString() || '0'}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Amount Paid</Text>
-                  <Text fontSize="lg">₹{customer.amount_paid?.toLocaleString() || '0'}</Text>
+                  <Text fontSize="xs" color="gray.500">Amount Paid</Text>
+                  <Text fontSize="md">₹{customer.amount_paid?.toLocaleString() || '0'}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Remaining Amount</Text>
-                  <Text fontSize="lg">₹{(customer.total_price - customer.amount_paid)?.toLocaleString() || '0'}</Text>
+                  <Text fontSize="xs" color="gray.500">Remaining Amount</Text>
+                  <Text fontSize="md">₹{(customer.total_price - customer.amount_paid)?.toLocaleString() || '0'}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Tax</Text>
-                  <Text fontSize="lg">₹{customer.tax?.toLocaleString() || 'Not specified'}</Text>
+                  <Text fontSize="xs" color="gray.500">Tax</Text>
+                  <Text fontSize="md">₹{customer.tax?.toLocaleString() || 'Not specified'}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Insurance</Text>
-                  <Text fontSize="lg">₹{customer.insurance?.toLocaleString() || 'Not specified'}</Text>
+                  <Text fontSize="xs" color="gray.500">Insurance</Text>
+                  <Text fontSize="md">₹{customer.insurance?.toLocaleString() || 'Not specified'}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Booking Fee</Text>
-                  <Text fontSize="lg">₹{customer.booking_fee?.toLocaleString() || 'Not specified'}</Text>
+                  <Text fontSize="xs" color="gray.500">Booking Fee</Text>
+                  <Text fontSize="md">₹{customer.booking_fee?.toLocaleString() || 'Not specified'}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Accessories</Text>
-                  <Text fontSize="lg">₹{customer.accessories?.toLocaleString() || 'Not specified'}</Text>
+                  <Text fontSize="xs" color="gray.500">Accessories</Text>
+                  <Text fontSize="md">₹{customer.accessories?.toLocaleString() || 'Not specified'}</Text>
                 </Box>
               </SimpleGrid>
             </Box>
@@ -1360,27 +1397,27 @@ const CustomerDetails = () => {
             {customer.payment_mode === 'Finance' && (
               <Box
                 bg="whiteAlpha.200"
-                p={4}
+                p={3}
                 borderRadius="lg"
                 backdropFilter="blur(10px)"
               >
-                <Text fontSize="sm" color="gray.500" mb={3}>Finance Information</Text>
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                <Text fontSize="sm" color="gray.500" mb={2}>Finance Information</Text>
+                <SimpleGrid columns={{ base: 1 }} spacing={2}>
                   <Box>
-                    <Text fontSize="sm" color="gray.500">Finance Company</Text>
-                    <Text fontSize="lg">{customer.finance_company || 'Not specified'}</Text>
+                    <Text fontSize="xs" color="gray.500">Finance Company</Text>
+                    <Text fontSize="md">{customer.finance_company || 'Not specified'}</Text>
                   </Box>
                   <Box>
-                    <Text fontSize="sm" color="gray.500">Finance Amount</Text>
-                    <Text fontSize="lg">₹{customer.finance_amount?.toLocaleString() || 'Not specified'}</Text>
+                    <Text fontSize="xs" color="gray.500">Finance Amount</Text>
+                    <Text fontSize="md">₹{customer.finance_amount?.toLocaleString() || 'Not specified'}</Text>
                   </Box>
                   <Box>
-                    <Text fontSize="sm" color="gray.500">EMI</Text>
-                    <Text fontSize="lg">₹{customer.emi?.toLocaleString() || 'Not specified'}</Text>
+                    <Text fontSize="xs" color="gray.500">EMI</Text>
+                    <Text fontSize="md">₹{customer.emi?.toLocaleString() || 'Not specified'}</Text>
                   </Box>
                   <Box>
-                    <Text fontSize="sm" color="gray.500">Tenure (months)</Text>
-                    <Text fontSize="lg">{customer.tenure || 'Not specified'}</Text>
+                    <Text fontSize="xs" color="gray.500">Tenure (months)</Text>
+                    <Text fontSize="md">{customer.tenure || 'Not specified'}</Text>
                   </Box>
                 </SimpleGrid>
               </Box>
@@ -1389,19 +1426,19 @@ const CustomerDetails = () => {
             {/* Nominee Information */}
             <Box
               bg="whiteAlpha.200"
-              p={4}
+              p={3}
               borderRadius="lg"
               backdropFilter="blur(10px)"
             >
-              <Text fontSize="sm" color="gray.500" mb={3}>Nominee Information</Text>
-              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+              <Text fontSize="sm" color="gray.500" mb={2}>Nominee Information</Text>
+              <SimpleGrid columns={{ base: 1 }} spacing={2}>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Nominee Name</Text>
-                  <Text fontSize="lg">{customer.nominee || 'Not provided'}</Text>
+                  <Text fontSize="xs" color="gray.500">Nominee Name</Text>
+                  <Text fontSize="md">{customer.nominee || 'Not provided'}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Relation with Nominee</Text>
-                  <Text fontSize="lg">{customer.nominee_relation || 'Not provided'}</Text>
+                  <Text fontSize="xs" color="gray.500">Relation with Nominee</Text>
+                  <Text fontSize="md">{customer.nominee_relation || 'Not provided'}</Text>
                 </Box>
               </SimpleGrid>
             </Box>
@@ -1409,113 +1446,116 @@ const CustomerDetails = () => {
             {/* Document Images */}
             <Box
               bg="whiteAlpha.200"
-              p={4}
+              p={3}
               borderRadius="lg"
               backdropFilter="blur(10px)"
             >
-              <Text fontSize="sm" color="gray.500" mb={3}>Document Images</Text>
-              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+              <Text fontSize="sm" color="gray.500" mb={2}>Document Images</Text>
+              <SimpleGrid columns={{ base: 1 }} spacing={3}>
                 <Box>
-                  <Text fontSize="sm" color="gray.500" mb={2}>Aadhar Front</Text>
+                  <Text fontSize="xs" color="gray.500" mb={1}>Aadhar Front</Text>
                   {images.aadhar_front ? (
                     <Image
                       src={images.aadhar_front}
                       alt="Aadhar Front"
                       borderRadius="md"
-                      boxSize="200px"
+                      w="full"
+                      h="150px"
                       objectFit="cover"
                       fallback={<Text>Error loading image</Text>}
                     />
                   ) : (
-                    <Text>Not uploaded</Text>
+                    <Text fontSize="sm">Not uploaded</Text>
                   )}
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500" mb={2}>Aadhar Back</Text>
+                  <Text fontSize="xs" color="gray.500" mb={1}>Aadhar Back</Text>
                   {images.aadhar_back ? (
                     <Image
                       src={images.aadhar_back}
                       alt="Aadhar Back"
                       borderRadius="md"
-                      boxSize="200px"
+                      w="full"
+                      h="150px"
                       objectFit="cover"
                       fallback={<Text>Error loading image</Text>}
                     />
                   ) : (
-                    <Text>Not uploaded</Text>
+                    <Text fontSize="sm">Not uploaded</Text>
                   )}
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500" mb={2}>Passport Photo</Text>
+                  <Text fontSize="xs" color="gray.500" mb={1}>Passport Photo</Text>
                   {images.passport_photo ? (
                     <Image
                       src={images.passport_photo}
                       alt="Passport Photo"
                       borderRadius="md"
-                      boxSize="200px"
+                      w="full"
+                      h="150px"
                       objectFit="cover"
                       fallback={<Text>Error loading image</Text>}
                     />
                   ) : (
-                    <Text>Not uploaded</Text>
+                    <Text fontSize="sm">Not uploaded</Text>
                   )}
                 </Box>
               </SimpleGrid>
             </Box>
 
-            {/* Delivery Status */}
-        
-
             {/* Delivery Photos - Only show if delivery_status is true */}
             {customer.delivery_status && (
               <Box
                 bg="whiteAlpha.200"
-                p={4}
+                p={3}
                 borderRadius="lg"
                 backdropFilter="blur(10px)"
               >
-                <Text fontSize="sm" color="gray.500" mb={3}>Delivery Photos</Text>
-                <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                <Text fontSize="sm" color="gray.500" mb={2}>Delivery Photos</Text>
+                <SimpleGrid columns={{ base: 1 }} spacing={3}>
                   <Box>
-                    <Text fontSize="sm" color="gray.500" mb={2}>Front Delivery Photo</Text>
+                    <Text fontSize="xs" color="gray.500" mb={1}>Front Delivery Photo</Text>
                     {images.front_delivery_photo ? (
                       <Image
                         src={images.front_delivery_photo}
                         alt="Front Delivery Photo"
                         borderRadius="md"
-                        boxSize="200px"
+                        w="full"
+                        h="150px"
                         objectFit="cover"
                       />
                     ) : (
-                      <Text>Not uploaded</Text>
+                      <Text fontSize="sm">Not uploaded</Text>
                     )}
                   </Box>
                   <Box>
-                    <Text fontSize="sm" color="gray.500" mb={2}>Back Delivery Photo</Text>
+                    <Text fontSize="xs" color="gray.500" mb={1}>Back Delivery Photo</Text>
                     {images.back_delivery_photo ? (
                       <Image
                         src={images.back_delivery_photo}
                         alt="Back Delivery Photo"
                         borderRadius="md"
-                        boxSize="200px"
+                        w="full"
+                        h="150px"
                         objectFit="cover"
                       />
                     ) : (
-                      <Text>Not uploaded</Text>
+                      <Text fontSize="sm">Not uploaded</Text>
                     )}
                   </Box>
                   <Box>
-                    <Text fontSize="sm" color="gray.500" mb={2}>Delivery Photo</Text>
+                    <Text fontSize="xs" color="gray.500" mb={1}>Delivery Photo</Text>
                     {images.delivery_photo ? (
                       <Image
                         src={images.delivery_photo}
                         alt="Delivery Photo"
                         borderRadius="md"
-                        boxSize="200px"
+                        w="full"
+                        h="150px"
                         objectFit="cover"
                       />
                     ) : (
-                      <Text>Not uploaded</Text>
+                      <Text fontSize="sm">Not uploaded</Text>
                     )}
                   </Box>
                 </SimpleGrid>
