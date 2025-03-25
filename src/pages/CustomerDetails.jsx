@@ -213,6 +213,7 @@ const CustomerDetails = () => {
   const [headerVisible, setHeaderVisible] = useState(true);
   const { isOpen: isServiceModalOpen, onOpen: onServiceModalOpen, onClose: onServiceModalClose } = useDisclosure();
   const [customer, setCustomer] = useState(null);
+  const [employeeDetails, setEmployeeDetails] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     dob: '',
@@ -307,6 +308,17 @@ const CustomerDetails = () => {
         setCustomer(response.data.customer);
         console.log('Full customer data:', response.data.customer);
         
+        // Fetch employee details if created_by exists
+        if (response.data.customer.created_by) {
+          try {
+            const employeeResponse = await axios.get(`http://172.20.10.8:3000/public/employees/${response.data.customer.created_by}`);
+            setEmployeeDetails(employeeResponse.data.employee);
+            console.log('Employee details:', employeeResponse.data.employee);
+          } catch (error) {
+            console.error('Error fetching employee details:', error);
+          }
+        }
+
         // Set form data from customer response
         setFormData(prev => ({
           ...prev,
@@ -2289,16 +2301,27 @@ const CustomerDetails = () => {
                         >
                           <HStack justify="space-between" align="center" spacing={2}>
                             <HStack spacing={2} flex={1} minW={0}>
-                              <Avatar size="md" name={customer.sales_employee || 'John Doe'} />
+                              <Avatar size="md" name={employeeDetails?.name || 'Loading...'} />
                               <VStack align="start" spacing={0.5} flex={1} minW={0}>
-                                <Text fontSize="md" fontWeight="bold" noOfLines={1}>{customer.sales_employee || 'John Doe'}</Text>
-                                <Text fontSize="sm" color="gray.500" noOfLines={1}>Sales Executive</Text>
-                                <Text fontSize="sm" color="gray.500" noOfLines={1}>+91 98765 43210</Text>
+                                <Text fontSize="md" fontWeight="bold" noOfLines={1}>
+                                  {employeeDetails?.name || 'Loading...'}
+                                </Text>
+                                <Text fontSize="sm" color="gray.500" noOfLines={1}>
+                                  {employeeDetails?.designation || 'Loading...'}
+                                </Text>
+                                <Text fontSize="sm" color="gray.500" noOfLines={1}>
+                                  {employeeDetails?.phone || 'Loading...'}
+                                </Text>
                                 <HStack spacing={1}>
                                   <Text fontSize="sm" color="gray.500">Rating:</Text>
                                   <HStack spacing={0.5}>
                                     {[1, 2, 3, 4, 5].map((star) => (
-                                      <Icon key={star} as={StarIcon} color="yellow.400" boxSize={3} />
+                                      <Icon 
+                                        key={star} 
+                                        as={StarIcon} 
+                                        color={star <= (employeeDetails?.rating || 0) ? "yellow.400" : "gray.300"} 
+                                        boxSize={3} 
+                                      />
                                     ))}
                                   </HStack>
                                 </HStack>
