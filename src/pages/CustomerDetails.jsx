@@ -386,11 +386,11 @@ const AnimatedModal = ({ isOpen, onClose, children }) => {
 const MultiStepLoader = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const steps = [
-    "Collecting booking details...",
-    "Gathering vehicle information...",
-    "Loading customer documents...",
-    "Preparing service history...",
-    "Almost there..."
+    { text: "Collecting booking details...", icon: CalendarIcon },
+    { text: "Gathering vehicle information...", icon: ViewIcon },
+    { text: "Loading customer documents...", icon: InfoIcon },
+    { text: "Preparing service history...", icon: TimeIcon },
+    { text: "Almost there...", icon: CheckIcon }
   ];
 
   useEffect(() => {
@@ -415,70 +415,70 @@ const MultiStepLoader = () => {
       <VStack spacing={8} align="center">
         <Box
           position="relative"
-          w="200px"
-          h="200px"
+          w="300px"
           display="flex"
-          alignItems="center"
-          justifyContent="center"
+          flexDirection="column"
+          gap={4}
         >
-          <Box
-            position="absolute"
-            w="full"
-            h="full"
-            border="4px solid"
-            borderColor="purple.500"
-            borderRadius="full"
-            animation={`${spin} 2s linear infinite`}
-          />
-          <Box
-            position="absolute"
-            w="full"
-            h="full"
-            border="4px solid"
-            borderColor="purple.300"
-            borderRadius="full"
-            animation={`${spin} 2s linear infinite reverse`}
-          />
-          <Box
-            position="absolute"
-            w="full"
-            h="full"
-            border="4px solid"
-            borderColor="purple.200"
-            borderRadius="full"
-            animation={`${spin} 2s linear infinite`}
-          />
-          <Icon
-            as={ViewIcon}
-            boxSize={12}
-            color="purple.500"
-            animation={`${pulse} 2s ease-in-out infinite`}
-          />
-        </Box>
-        <VStack spacing={2}>
-          <Text
-            fontSize="xl"
-            fontWeight="bold"
-            color="white"
-            textAlign="center"
-            animation={`${textFadeIn} 0.5s ease-in-out`}
-          >
-            {steps[currentStep]}
-          </Text>
-          <HStack spacing={2}>
-            {steps.map((_, index) => (
+          {/* Steps container */}
+          <Box position="relative" zIndex={1}>
+            {steps.map((step, index) => (
               <Box
                 key={index}
-                w="2"
-                h="2"
-                borderRadius="full"
-                bg={index === currentStep ? "purple.500" : "whiteAlpha.500"}
-                transition="all 0.3s"
-                animation={index === currentStep ? `${pulse} 1s ease-in-out infinite` : "none"}
-              />
+                position="relative"
+                display="flex"
+                alignItems="center"
+                gap={4}
+                opacity={index <= currentStep ? 1 : 0.5}
+                transition="all 0.3s ease-in-out"
+                mb={index < steps.length - 1 ? "40px" : "0"}
+              >
+                {/* Connecting line - only show between completed steps */}
+                {index < steps.length - 1 && index < currentStep && (
+                  <Box
+                    position="absolute"
+                    left="20px"
+                    top="40px"
+                    bottom="-40px"
+                    w="2px"
+                    bgGradient="linear(to bottom, purple.500, purple.300)"
+                    zIndex={0}
+                  />
+                )}
+                
+                <Box
+                  position="relative"
+                  w="40px"
+                  h="40px"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  borderRadius="full"
+                  bg={index <= currentStep ? "purple.500" : "gray.500"}
+                  transition="all 0.3s ease-in-out"
+                  border="2px solid"
+                  borderColor={index <= currentStep ? "purple.500" : "gray.500"}
+                  zIndex={1}
+                >
+                  {index < currentStep ? (
+                    <Icon as={CheckIcon} boxSize={5} color="white" />
+                  ) : (
+                    <Icon as={step.icon} boxSize={5} color="white" />
+                  )}
+                </Box>
+                <Text
+                  color="white"
+                  fontSize="md"
+                  fontWeight="medium"
+                  opacity={index <= currentStep ? 1 : 0.5}
+                  transition="all 0.3s ease-in-out"
+                >
+                  {step.text}
+                </Text>
+              </Box>
             ))}
-          </HStack>
-        </VStack>
+          </Box>
+        </Box>
       </VStack>
     </Box>
   );
