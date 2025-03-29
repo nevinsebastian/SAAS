@@ -161,6 +161,11 @@ const gradientBorder = keyframes`
   100% { background-position: 0% 50%; }
 `;
 
+const textFadeIn = keyframes`
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
 // Modern Color Schemes
 const modernColors = {
   primary: {
@@ -378,6 +383,113 @@ const AnimatedModal = ({ isOpen, onClose, children }) => {
   );
 };
 
+const MultiStepLoader = () => {
+  const [currentStep, setCurrentStep] = useState(0);
+  const steps = [
+    "Collecting booking details...",
+    "Gathering vehicle information...",
+    "Loading customer documents...",
+    "Preparing service history...",
+    "Almost there..."
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentStep((prev) => (prev + 1) % steps.length);
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <Box
+      position="fixed"
+      inset={0}
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      bg="rgba(0, 0, 0, 0.7)"
+      backdropFilter="blur(8px)"
+      zIndex={9999}
+    >
+      <VStack spacing={8} align="center">
+        <Box
+          position="relative"
+          w="200px"
+          h="200px"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <Box
+            position="absolute"
+            w="full"
+            h="full"
+            border="4px solid"
+            borderColor="purple.500"
+            borderRadius="full"
+            animation={`${spin} 2s linear infinite`}
+          />
+          <Box
+            position="absolute"
+            w="full"
+            h="full"
+            border="4px solid"
+            borderColor="purple.300"
+            borderRadius="full"
+            animation={`${spin} 2s linear infinite reverse`}
+          />
+          <Box
+            position="absolute"
+            w="full"
+            h="full"
+            border="4px solid"
+            borderColor="purple.200"
+            borderRadius="full"
+            animation={`${spin} 2s linear infinite`}
+          />
+          <Icon
+            as={ViewIcon}
+            boxSize={12}
+            color="purple.500"
+            animation={`${pulse} 2s ease-in-out infinite`}
+          />
+        </Box>
+        <VStack spacing={2}>
+          <Text
+            fontSize="xl"
+            fontWeight="bold"
+            color="white"
+            textAlign="center"
+            animation={`${textFadeIn} 0.5s ease-in-out`}
+          >
+            {steps[currentStep]}
+          </Text>
+          <HStack spacing={2}>
+            {steps.map((_, index) => (
+              <Box
+                key={index}
+                w="2"
+                h="2"
+                borderRadius="full"
+                bg={index === currentStep ? "purple.500" : "whiteAlpha.500"}
+                transition="all 0.3s"
+                animation={index === currentStep ? `${pulse} 1s ease-in-out infinite` : "none"}
+              />
+            ))}
+          </HStack>
+        </VStack>
+      </VStack>
+    </Box>
+  );
+};
+
+// Add spin animation to your existing keyframes
+const spin = keyframes`
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+`;
+
 const CustomerDetails = () => {
   const { customerId } = useParams();
   const toast = useToast();
@@ -460,6 +572,7 @@ const CustomerDetails = () => {
   const [newMessage, setNewMessage] = useState('');
   const [selectedService, setSelectedService] = useState(null);
   const blobUrlsRef = useRef({});
+  const [isLoading, setIsLoading] = useState(true);
 
   const bgGradient = useColorModeValue(
     'linear-gradient(135deg, #1a365d 0%, #2d3748 100%)',
@@ -480,6 +593,7 @@ const CustomerDetails = () => {
   useEffect(() => {
     const fetchCustomer = async () => {
       try {
+        setIsLoading(true);
         const response = await axios.get(`http://172.20.10.8:3000/public/customers/${customerId}`);
         setCustomer(response.data.customer);
         console.log('Full customer data:', response.data.customer);
@@ -518,7 +632,7 @@ const CustomerDetails = () => {
           passport_photo: response.data.customer.passport_photo_base64 ? `data:image/jpeg;base64,${response.data.customer.passport_photo_base64}` : null,
           front_delivery_photo: response.data.customer.front_delivery_photo_base64 ? `data:image/jpeg;base64,${response.data.customer.front_delivery_photo_base64}` : null,
           back_delivery_photo: response.data.customer.back_delivery_photo_base64 ? `data:image/jpeg;base64,${response.data.customer.back_delivery_photo_base64}` : null,
-          delivery_photo: response.data.customer.delivery_photo_base64 ? `data:image/jpeg;base64,${response.data.customer.delivery_photo_base64}` : null,
+          delivery_photo: response.data.customer.delivery_photo_base64 ? `data:image/jpeg;base64,${response.data.customer.back_delivery_photo_base64}` : null,
         };
 
         setImages(newImages);
@@ -533,6 +647,11 @@ const CustomerDetails = () => {
           duration: 3000,
           isClosable: true,
         });
+      } finally {
+        // Add a small delay to show the loading animation
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 3000);
       }
     };
     fetchCustomer();
@@ -633,7 +752,13 @@ const CustomerDetails = () => {
     }
   };
 
-  if (!customer) return <Text>Loading...</Text>;
+  if (isLoading) {
+    return <MultiStepLoader />;
+  }
+
+  if (!customer) {
+    return <Text>No customer data available</Text>;
+  }
 
   const remainingAmount = (customer.total_price || 0) - (customer.amount_paid || 0);
 
