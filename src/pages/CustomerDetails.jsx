@@ -1592,6 +1592,41 @@ const CustomerDetails = () => {
             </VStack>
           </Box>
 
+          {/* Nominee Information */}
+          <Box
+            bg="whiteAlpha.200"
+            p={4}
+            borderRadius="lg"
+            backdropFilter="blur(10px)"
+            border="1px solid"
+            borderColor="whiteAlpha.300"
+            _hover={{
+              transform: 'translateY(-2px)',
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            }}
+          >
+            <HStack mb={3}>
+              <Icon as={UserIcon} color="purple.500" />
+              <Text fontSize="sm" color="gray.500" fontWeight="medium">Nominee Information</Text>
+            </HStack>
+            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+              <Box>
+                <HStack>
+                  <Icon as={UserIcon} color="gray.500" />
+                  <Text fontSize="sm" color="gray.500">Nominee Name</Text>
+                </HStack>
+                <Text fontSize="lg" fontWeight="medium" mt={1}>{customer.nominee || 'Not provided'}</Text>
+              </Box>
+              <Box>
+                <HStack>
+                  <Icon as={ViewIcon} color="gray.500" />
+                  <Text fontSize="sm" color="gray.500">Relation with Nominee</Text>
+                </HStack>
+                <Text fontSize="lg" fontWeight="medium" mt={1}>{customer.nominee_relation || 'Not provided'}</Text>
+              </Box>
+            </SimpleGrid>
+          </Box>
+
           {/* Vehicle Information */}
           <Box
             bg="whiteAlpha.200"
@@ -2561,32 +2596,86 @@ const CustomerDetails = () => {
                       </SimpleGrid>
                     </Box>
 
+                    {/* Nominee Information */}
+                    <Box
+                      bg="whiteAlpha.200"
+                      p={4}
+                      borderRadius="lg"
+                      backdropFilter="blur(10px)"
+                      border="1px solid"
+                      borderColor="whiteAlpha.300"
+                      _hover={{
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                      }}
+                    >
+                      <HStack mb={3}>
+                        <Icon as={UserIcon} color="purple.500" />
+                        <Text fontSize="sm" color="gray.500" fontWeight="medium">Nominee Information</Text>
+                      </HStack>
+                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                        <Box>
+                          <HStack>
+                            <Icon as={UserIcon} color="gray.500" />
+                            <Text fontSize="sm" color="gray.500">Nominee Name</Text>
+                          </HStack>
+                          <Text fontSize="lg" fontWeight="medium" mt={1}>{customer.nominee || 'Not provided'}</Text>
+                        </Box>
+                        <Box>
+                          <HStack>
+                            <Icon as={ViewIcon} color="gray.500" />
+                            <Text fontSize="sm" color="gray.500">Relation with Nominee</Text>
+                          </HStack>
+                          <Text fontSize="lg" fontWeight="medium" mt={1}>{customer.nominee_relation || 'Not provided'}</Text>
+                        </Box>
+                      </SimpleGrid>
+                    </Box>
+
                     {/* Vehicle Information */}
                     <Box
                       bg="whiteAlpha.200"
                       p={4}
                       borderRadius="lg"
                       backdropFilter="blur(10px)"
+                      border="1px solid"
+                      borderColor="whiteAlpha.300"
                     >
-                      <Text fontSize="sm" color="gray.500" mb={3}>Vehicle Information</Text>
-                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                        <Box>
-                          <Text fontSize="sm" color="gray.500">Vehicle</Text>
-                          <Text fontSize="lg">{customer.vehicle}</Text>
-                        </Box>
-                        <Box>
-                          <Text fontSize="sm" color="gray.500">Variant</Text>
-                          <Text fontSize="lg">{customer.variant || 'Not specified'}</Text>
-                        </Box>
-                        <Box>
-                          <Text fontSize="sm" color="gray.500">Color</Text>
-                          <Text fontSize="lg">{customer.color || 'Not specified'}</Text>
-                        </Box>
-                        <Box>
-                          <Text fontSize="sm" color="gray.500">Ex Showroom Price</Text>
-                          <Text fontSize="lg">₹{customer.ex_showroom?.toLocaleString() || 'Not specified'}</Text>
-                        </Box>
-                      </SimpleGrid>
+                      <VStack align="start" spacing={4}>
+                        <HStack>
+                          <Icon as={ViewIcon} color="purple.500" />
+                          <Heading size="sm">Vehicle Information</Heading>
+                        </HStack>
+                        <SimpleGrid columns={{ base: 1 }} spacing={4} w="full">
+                          <Box>
+                            <HStack>
+                              <Icon as={CarIcon} color="gray.500" />
+                              <Text fontSize="sm" color="gray.500">Vehicle</Text>
+                            </HStack>
+                            <Text fontSize="md" fontWeight="medium">{customer.vehicle}</Text>
+                          </Box>
+                          <Box>
+                            <HStack>
+                              <Icon as={SettingsIcon} color="gray.500" />
+                              <Text fontSize="sm" color="gray.500">Variant</Text>
+                            </HStack>
+                            <Text fontSize="md" fontWeight="medium">{customer.variant || 'Not specified'}</Text>
+                          </Box>
+                          <Box>
+                            <HStack>
+                              <Icon as={PaletteIcon} color="gray.500" />
+                              <Text fontSize="sm" color="gray.500">Color</Text>
+                            </HStack>
+                            <Text fontSize="md" fontWeight="medium">{customer.color || 'Not specified'}</Text>
+                          </Box>
+                          <Box>
+                            <HStack>
+                              <Icon as={TagIcon} color="gray.500" />
+                              <Text fontSize="sm" color="gray.500">Ex Showroom Price</Text>
+                            </HStack>
+                            <Text fontSize="md" fontWeight="medium">₹{customer.ex_showroom?.toLocaleString() || 'Not specified'}</Text>
+                          </Box>
+                        </SimpleGrid>
+                      </VStack>
                     </Box>
 
                     {/* Payment Information */}
@@ -2658,141 +2747,6 @@ const CustomerDetails = () => {
                           <Box>
                             <Text fontSize="sm" color="gray.500">Tenure (months)</Text>
                             <Text fontSize="lg">{customer.tenure || 'Not specified'}</Text>
-                          </Box>
-                        </SimpleGrid>
-                      </Box>
-                    )}
-
-                    {/* Nominee Information */}
-                    <Box
-                      bg="whiteAlpha.200"
-                      p={4}
-                      borderRadius="lg"
-                      backdropFilter="blur(10px)"
-                    >
-                      <Text fontSize="sm" color="gray.500" mb={3}>Nominee Information</Text>
-                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                        <Box>
-                          <Text fontSize="sm" color="gray.500">Nominee Name</Text>
-                          <Text fontSize="lg">{customer.nominee || 'Not provided'}</Text>
-                        </Box>
-                        <Box>
-                          <Text fontSize="sm" color="gray.500">Relation with Nominee</Text>
-                          <Text fontSize="lg">{customer.nominee_relation || 'Not provided'}</Text>
-                        </Box>
-                      </SimpleGrid>
-                    </Box>
-
-                    {/* Document Images */}
-                    <Box
-                      bg="whiteAlpha.200"
-                      p={4}
-                      borderRadius="lg"
-                      backdropFilter="blur(10px)"
-                    >
-                      <Text fontSize="sm" color="gray.500" mb={3}>Document Images</Text>
-                      <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-                        <Box>
-                          <Text fontSize="sm" color="gray.500" mb={2}>Aadhar Front</Text>
-                          {images.aadhar_front ? (
-                            <Image
-                              src={images.aadhar_front}
-                              alt="Aadhar Front"
-                              borderRadius="md"
-                              boxSize="200px"
-                              objectFit="cover"
-                              fallback={<Text>Error loading image</Text>}
-                            />
-                          ) : (
-                            <Text>Not uploaded</Text>
-                          )}
-                        </Box>
-                        <Box>
-                          <Text fontSize="sm" color="gray.500" mb={2}>Aadhar Back</Text>
-                          {images.aadhar_back ? (
-                            <Image
-                              src={images.aadhar_back}
-                              alt="Aadhar Back"
-                              borderRadius="md"
-                              boxSize="200px"
-                              objectFit="cover"
-                              fallback={<Text>Error loading image</Text>}
-                            />
-                          ) : (
-                            <Text>Not uploaded</Text>
-                          )}
-                        </Box>
-                        <Box>
-                          <Text fontSize="sm" color="gray.500" mb={2}>Passport Photo</Text>
-                          {images.passport_photo ? (
-                            <Image
-                              src={images.passport_photo}
-                              alt="Passport Photo"
-                              borderRadius="md"
-                              boxSize="200px"
-                              objectFit="cover"
-                              fallback={<Text>Error loading image</Text>}
-                            />
-                          ) : (
-                            <Text>Not uploaded</Text>
-                          )}
-                        </Box>
-                      </SimpleGrid>
-                    </Box>
-
-                  
-
-                    {/* Delivery Photos - Only show if delivery_status is true */}
-                    {customer.delivery_status && (
-                      <Box
-                        bg="whiteAlpha.200"
-                        p={4}
-                        borderRadius="lg"
-                        backdropFilter="blur(10px)"
-                      >
-                        <Text fontSize="sm" color="gray.500" mb={3}>Delivery Photos</Text>
-                        <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-                          <Box>
-                            <Text fontSize="sm" color="gray.500" mb={2}>Front Delivery Photo</Text>
-                            {images.front_delivery_photo ? (
-                              <Image
-                                src={images.front_delivery_photo}
-                                alt="Front Delivery Photo"
-                                borderRadius="md"
-                                boxSize="200px"
-                                objectFit="cover"
-                              />
-                            ) : (
-                              <Text>Not uploaded</Text>
-                            )}
-                          </Box>
-                          <Box>
-                            <Text fontSize="sm" color="gray.500" mb={2}>Back Delivery Photo</Text>
-                            {images.back_delivery_photo ? (
-                              <Image
-                                src={images.back_delivery_photo}
-                                alt="Back Delivery Photo"
-                                borderRadius="md"
-                                boxSize="200px"
-                                objectFit="cover"
-                              />
-                            ) : (
-                              <Text>Not uploaded</Text>
-                            )}
-                          </Box>
-                          <Box>
-                            <Text fontSize="sm" color="gray.500" mb={2}>Delivery Photo</Text>
-                            {images.delivery_photo ? (
-                              <Image
-                                src={images.delivery_photo}
-                                alt="Delivery Photo"
-                                borderRadius="md"
-                                boxSize="200px"
-                                objectFit="cover"
-                              />
-                            ) : (
-                              <Text>Not uploaded</Text>
-                            )}
                           </Box>
                         </SimpleGrid>
                       </Box>
