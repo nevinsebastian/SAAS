@@ -74,14 +74,14 @@ import {
   CalendarIcon,
   PhoneIcon,
   EmailIcon,
-  LocationIcon,
+  ViewIcon,
   SettingsIcon,
   ChevronRightIcon,
   ChevronDownIcon,
   EditIcon,
   BellIcon,
   ChatIcon,
-  ViewIcon,
+  ViewIcon as ViewIconAlias,
   CloseIcon,
   AddIcon,
   ChevronLeftIcon,
@@ -99,14 +99,13 @@ import {
   EmailIcon as EmailIconAlias,
   CalendarIcon as CalendarIconAlias,
   TimeIcon as TimeIconAlias,
-
   SettingsIcon as SettingsIconAlias,
   ChevronRightIcon as ChevronRightIconAlias,
   ChevronDownIcon as ChevronDownIconAlias,
   EditIcon as EditIconAlias,
   BellIcon as BellIconAlias,
   ChatIcon as ChatIconAlias,
-  ViewIcon as ViewIconAlias,
+  ViewIcon as ViewIconAlias2,
   CloseIcon as CloseIconAlias,
   AddIcon as AddIconAlias,
   ChevronLeftIcon as ChevronLeftIconAlias2,
@@ -120,6 +119,23 @@ import {
   TriangleDownIcon as TriangleDownIconAlias,
   ExternalLinkIcon as ExternalLinkIconAlias,
 } from '@chakra-ui/icons';
+import {
+  UserIcon,
+  LocationIcon,
+  CarIcon,
+  PaletteIcon,
+  TagIcon,
+  CreditCardIcon,
+  CalculatorIcon,
+  ShieldIcon,
+  TicketIcon,
+  WrenchIcon,
+  BankIcon,
+  MoneyIcon,
+  ClockIcon,
+  DocumentIcon,
+  CameraIcon,
+} from '../utils/icons';
 import axios from 'axios';
 
 // Modern UI Components
@@ -168,31 +184,21 @@ const textFadeIn = keyframes`
 
 // Modern Color Schemes
 const modernColors = {
-  primary: {
-    50: '#f0f9ff',
-    100: '#e0f2fe',
-    200: '#bae6fd',
-    300: '#7dd3fc',
-    400: '#38bdf8',
-    500: '#0ea5e9',
-    600: '#0284c7',
-    700: '#0369a1',
-    800: '#075985',
-    900: '#0c4a6e',
-  },
-  secondary: {
-    50: '#fdf4ff',
-    100: '#fae8ff',
-    200: '#f5d0fe',
-    300: '#f0abfc',
-    400: '#e879f9',
-    500: '#d946ef',
-    600: '#c026d3',
-    700: '#a21caf',
-    800: '#86198f',
-    900: '#701a75',
-  },
+  primary: '#6366f1',
+  secondary: '#8b5cf6',
+  accent: '#ec4899',
+  success: '#10b981',
+  warning: '#f59e0b',
+  error: '#ef4444',
+  background: '#f9fafb',
+  surface: '#ffffff',
+  text: '#1f2937',
+  textLight: '#6b7280',
+  border: '#e5e7eb',
+  shadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
 };
+
+const accentGradient = 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)';
 
 // Modern Card Styles
 const cardStyles = {
@@ -212,196 +218,206 @@ const cardStyles = {
 
 // Add the AnimatedModal component after the modernColors definition
 const AnimatedModal = ({ isOpen, onClose, children }) => {
+  const modalRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startY, setStartY] = useState(0);
+  const [currentY, setCurrentY] = useState(0);
+  const [isEditMode, setIsEditMode] = useState(false);
   const cardBg = useColorModeValue('whiteAlpha.900', 'gray.800');
-  const modalGradient = useColorModeValue(
-    'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-    'linear-gradient(135deg, #818cf8 0%, #a78bfa 100%)'
-  );
-  
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      setCurrentY(0);
+      // Hide main screen's header and bottom navbar
+      const header = document.querySelector('[data-header]');
+      const bottomNav = document.querySelector('[data-bottom-nav]');
+      if (header) header.style.display = 'none';
+      if (bottomNav) bottomNav.style.display = 'none';
+    } else {
+      document.body.style.overflow = 'unset';
+      // Show main screen's header and bottom navbar
+      const header = document.querySelector('[data-header]');
+      const bottomNav = document.querySelector('[data-bottom-nav]');
+      if (header) header.style.display = 'block';
+      if (bottomNav) bottomNav.style.display = 'block';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+      // Ensure header and bottom nav are shown when component unmounts
+      const header = document.querySelector('[data-header]');
+      const bottomNav = document.querySelector('[data-bottom-nav]');
+      if (header) header.style.display = 'block';
+      if (bottomNav) bottomNav.style.display = 'block';
+    };
+  }, [isOpen]);
+
+  const handleTouchStart = (e) => {
+    setIsDragging(true);
+    setStartY(e.touches[0].clientY);
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isDragging) return;
+    const currentY = e.touches[0].clientY;
+    setCurrentY(currentY - startY);
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    if (currentY > 100) {
+      onClose();
+    } else {
+      setCurrentY(0);
+    }
+  };
+
+  if (!isOpen) return null;
+
   return (
-    <Portal>
-      <AnimatePresence>
-        {isOpen && (
-          <Box
-            as={motion.div}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            position="fixed"
-            inset={0}
-            zIndex={99999}
-            bg="rgba(0, 0, 0, 0.7)"
-            backdropFilter="blur(8px)"
-            overflowY="hidden"
+    <Box
+      position="fixed"
+      top={0}
+      left={0}
+      right={0}
+      bottom={0}
+      bg="rgba(0, 0, 0, 0.7)"
+      backdropFilter="blur(8px)"
+      zIndex={9999}
+      overflow="hidden"
+    >
+      <Box
+        ref={modalRef}
+        position="fixed"
+        top={0}
+        left={0}
+        right={0}
+        bottom={0}
+        bg={cardBg}
+        transform={`translateY(${currentY}px)`}
+        transition={isDragging ? 'none' : 'transform 0.3s ease-out'}
+        overflow="hidden"
+        display="flex"
+        flexDirection="column"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Header */}
+        <Flex
+          p={4}
+          borderBottom="1px"
+          borderColor="whiteAlpha.200"
+          alignItems="center"
+          justifyContent="space-between"
+          bg="whiteAlpha.200"
+          backdropFilter="blur(10px)"
+          position="sticky"
+          top={0}
+          zIndex={10000}
+        >
+          <Heading size="md" bgGradient={accentGradient} bgClip="text">
+            Customer Details
+          </Heading>
+          <IconButton
+            icon={<CloseIcon />}
+            variant="ghost"
             onClick={onClose}
-          >
-            <Box
-              as={motion.div}
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              onClick={(e) => e.stopPropagation()}
-              w="full"
-              h="100vh"
-              display="flex"
-              flexDirection="column"
-              overflow="hidden"
-              position="relative"
-              bg={cardBg}
-              boxShadow="0 25px 50px -12px rgba(0, 0, 0, 0.25)"
-            >
-              {/* Fixed Header */}
-              <Box
-                p={4}
-                borderBottom="1px solid"
-                borderColor="whiteAlpha.300"
-                bg={cardBg}
-                position="fixed"
-                top={0}
-                left={0}
-                right={0}
-                zIndex={999999}
-                boxShadow="0 4px 6px -1px rgba(0, 0, 0, 0.1)"
-                backdropFilter="blur(8px)"
-              >
-                <Flex justify="space-between" align="center">
-                  <HStack spacing={3}>
-                    <Box
-                      p={2}
-                      borderRadius="lg"
-                      bg="whiteAlpha.200"
-                      backdropFilter="blur(8px)"
-                    >
-                      <Icon as={ViewIcon} boxSize={6} color="purple.500" />
-                    </Box>
-                    <VStack align="start" spacing={0}>
-                      <Heading size="md" bgGradient={modalGradient} bgClip="text">
-                        Complete Customer Details
-                      </Heading>
-                      <Text fontSize="sm" color="gray.500">
-                        Comprehensive view of customer information and documents
-                      </Text>
-                    </VStack>
-                  </HStack>
-                  <HStack spacing={2}>
-                    <IconButton
-                      icon={<EditIcon />}
-                      aria-label="Edit details"
-                      variant="ghost"
-                      colorScheme="purple"
-                      size="sm"
-                      _hover={{
-                        transform: 'scale(1.1)',
-                        transition: 'all 0.2s',
-                        bg: 'whiteAlpha.200',
-                      }}
-                    />
-                    <IconButton
-                      icon={<CloseIcon />}
-                      onClick={onClose}
-                      variant="ghost"
-                      colorScheme="purple"
-                      size="sm"
-                      _hover={{
-                        transform: 'rotate(90deg)',
-                        transition: 'all 0.3s',
-                        bg: 'whiteAlpha.200',
-                      }}
-                    />
-                  </HStack>
-                </Flex>
-              </Box>
+            aria-label="Close"
+            size="sm"
+            colorScheme="purple"
+            _hover={{
+              transform: 'rotate(90deg)',
+              transition: 'all 0.3s',
+            }}
+          />
+        </Flex>
 
-              {/* Scrollable Content */}
-              <Box
-                flex={1}
-                overflowY="auto"
-                css={{
-                  '&::-webkit-scrollbar': {
-                    width: '4px',
-                  },
-                  '&::-webkit-scrollbar-track': {
-                    width: '6px',
-                    background: 'transparent',
-                  },
-                  '&::-webkit-scrollbar-thumb': {
-                    background: 'rgba(0, 0, 0, 0.2)',
-                    borderRadius: '24px',
-                  },
-                  '&::-webkit-scrollbar-thumb:hover': {
-                    background: 'rgba(0, 0, 0, 0.3)',
-                  },
+        {/* Content */}
+        <Box 
+          flex="1" 
+          overflowY="auto" 
+          p={4}
+          css={{
+            '&::-webkit-scrollbar': {
+              width: '4px',
+            },
+            '&::-webkit-scrollbar-track': {
+              width: '6px',
+              background: 'rgba(0, 0, 0, 0.1)',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: 'rgba(0, 0, 0, 0.2)',
+              borderRadius: '24px',
+            },
+            '&::-webkit-scrollbar-thumb:hover': {
+              background: 'rgba(0, 0, 0, 0.3)',
+            },
+          }}
+        >
+          {children}
+        </Box>
+
+        {/* Footer */}
+        <Flex
+          p={4}
+          borderTop="1px"
+          borderColor="whiteAlpha.200"
+          justifyContent="space-between"
+          bg="whiteAlpha.200"
+          backdropFilter="blur(10px)"
+          position="sticky"
+          bottom={0}
+          zIndex={10000}
+        >
+          {isEditMode ? (
+            <>
+              <Button
+                variant="outline"
+                colorScheme="red"
+                onClick={() => setIsEditMode(false)}
+                size="sm"
+                _hover={{
+                  transform: 'translateY(-2px)',
+                  boxShadow: 'lg',
                 }}
-                pt="80px"
-                pb="60px"
-                px={4}
               >
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2, duration: 0.5 }}
-                >
-                  {children}
-                </motion.div>
-              </Box>
-
-              {/* Fixed Footer */}
-              <Box
-                p={4}
-                borderTop="1px solid"
-                borderColor="whiteAlpha.300"
-                bg={cardBg}
-                position="fixed"
-                bottom={0}
-                left={0}
-                right={0}
-                zIndex={999999}
-                boxShadow="0 -4px 6px -1px rgba(0, 0, 0, 0.1)"
-                backdropFilter="blur(8px)"
+                Cancel
+              </Button>
+              <Button
+                colorScheme="purple"
+                onClick={() => {
+                  // Handle submit
+                  setIsEditMode(false);
+                }}
+                size="sm"
+                bgGradient={accentGradient}
+                _hover={{
+                  transform: 'translateY(-2px)',
+                  boxShadow: 'lg',
+                }}
               >
-                <Flex justify="space-between" align="center">
-                  <HStack spacing={2}>
-                    <Icon as={InfoIcon} color="purple.500" />
-                    <Text fontSize="sm" color="gray.500">
-                      Last updated: {new Date().toLocaleString()}
-                    </Text>
-                  </HStack>
-                  <HStack spacing={2}>
-                    <Button
-                      leftIcon={<ViewIcon />}
-                      colorScheme="purple"
-                      onClick={() => {}}
-                      bgGradient={modalGradient}
-                      size="sm"
-                      _hover={{
-                        transform: 'translateY(-2px)',
-                        boxShadow: 'xl',
-                      }}
-                      transition="all 0.2s"
-                    >
-                      View History
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      onClick={onClose}
-                      size="sm"
-                      _hover={{
-                        transform: 'translateY(-2px)',
-                        bg: 'whiteAlpha.200',
-                      }}
-                      transition="all 0.2s"
-                    >
-                      Close
-                    </Button>
-                  </HStack>
-                </Flex>
-              </Box>
-            </Box>
-          </Box>
-        )}
-      </AnimatePresence>
-    </Portal>
+                Submit
+              </Button>
+            </>
+          ) : (
+            <Button
+              colorScheme="purple"
+              onClick={() => setIsEditMode(true)}
+              size="sm"
+              width="100%"
+              bgGradient={accentGradient}
+              _hover={{
+                transform: 'translateY(-2px)',
+                boxShadow: 'lg',
+              }}
+            >
+              Edit Details
+            </Button>
+          )}
+        </Flex>
+      </Box>
+    </Box>
   );
 };
 
@@ -602,10 +618,6 @@ const CustomerDetails = () => {
   );
   const cardBg = useColorModeValue('whiteAlpha.900', 'gray.800');
   const textColor = useColorModeValue('gray.800', 'white');
-  const accentGradient = useColorModeValue(
-    'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-    'linear-gradient(135deg, #818cf8 0%, #a78bfa 100%)'
-  );
 
   const isMobile = useBreakpointValue({ base: true, md: false });
 
@@ -887,6 +899,7 @@ const CustomerDetails = () => {
 
   const renderBottomNav = () => (
     <Box
+      data-bottom-nav
       position="fixed"
       bottom={0}
       left={0}
@@ -1339,6 +1352,7 @@ const CustomerDetails = () => {
 
   const renderHeader = () => (
     <Box 
+      data-header
       bg={`rgba(17, 24, 39, ${headerOpacity})`}
       position="fixed"
       top={0}
@@ -1455,7 +1469,7 @@ const CustomerDetails = () => {
               {new Date(customer.created_at).toLocaleDateString()}
             </Text>
             <Text fontSize="sm" color="gray.500">
-              Created by {customer.sales_employee || 'John Doe'}
+              Created by {customer.created_by_name || 'Unknown'}
             </Text>
           </VStack>
         </Box>
@@ -1531,29 +1545,47 @@ const CustomerDetails = () => {
               </HStack>
               <SimpleGrid columns={{ base: 1 }} spacing={4} w="full">
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Customer Name</Text>
+                  <HStack>
+                    <Icon as={UserIcon} color="gray.500" />
+                    <Text fontSize="sm" color="gray.500">Customer Name</Text>
+                  </HStack>
                   <Text fontSize="md" fontWeight="medium">{customer.customer_name}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Phone Number</Text>
+                  <HStack>
+                    <Icon as={PhoneIcon} color="gray.500" />
+                    <Text fontSize="sm" color="gray.500">Phone Number</Text>
+                  </HStack>
                   <Text fontSize="md" fontWeight="medium">{customer.phone_number}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Date of Birth</Text>
+                  <HStack>
+                    <Icon as={CalendarIcon} color="gray.500" />
+                    <Text fontSize="sm" color="gray.500">Date of Birth</Text>
+                  </HStack>
                   <Text fontSize="md" fontWeight="medium">
                     {customer.dob ? new Date(customer.dob).toLocaleDateString() : 'Not provided'}
                   </Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Email</Text>
+                  <HStack>
+                    <Icon as={EmailIcon} color="gray.500" />
+                    <Text fontSize="sm" color="gray.500">Email</Text>
+                  </HStack>
                   <Text fontSize="md" fontWeight="medium">{customer.email || 'Not provided'}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Address</Text>
+                  <HStack>
+                    <Icon as={LocationIcon} color="gray.500" />
+                    <Text fontSize="sm" color="gray.500">Address</Text>
+                  </HStack>
                   <Text fontSize="md" fontWeight="medium">{customer.address || 'Not provided'}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Mobile 2</Text>
+                  <HStack>
+                    <Icon as={PhoneIcon} color="gray.500" />
+                    <Text fontSize="sm" color="gray.500">Mobile 2</Text>
+                  </HStack>
                   <Text fontSize="md" fontWeight="medium">{customer.mobile_2 || 'Not provided'}</Text>
                 </Box>
               </SimpleGrid>
@@ -1576,19 +1608,31 @@ const CustomerDetails = () => {
               </HStack>
               <SimpleGrid columns={{ base: 1 }} spacing={4} w="full">
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Vehicle</Text>
+                  <HStack>
+                    <Icon as={CarIcon} color="gray.500" />
+                    <Text fontSize="sm" color="gray.500">Vehicle</Text>
+                  </HStack>
                   <Text fontSize="md" fontWeight="medium">{customer.vehicle}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Variant</Text>
+                  <HStack>
+                    <Icon as={SettingsIcon} color="gray.500" />
+                    <Text fontSize="sm" color="gray.500">Variant</Text>
+                  </HStack>
                   <Text fontSize="md" fontWeight="medium">{customer.variant || 'Not specified'}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Color</Text>
+                  <HStack>
+                    <Icon as={PaletteIcon} color="gray.500" />
+                    <Text fontSize="sm" color="gray.500">Color</Text>
+                  </HStack>
                   <Text fontSize="md" fontWeight="medium">{customer.color || 'Not specified'}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Ex Showroom Price</Text>
+                  <HStack>
+                    <Icon as={TagIcon} color="gray.500" />
+                    <Text fontSize="sm" color="gray.500">Ex Showroom Price</Text>
+                  </HStack>
                   <Text fontSize="md" fontWeight="medium">₹{customer.ex_showroom?.toLocaleString() || 'Not specified'}</Text>
                 </Box>
               </SimpleGrid>
@@ -1614,35 +1658,59 @@ const CustomerDetails = () => {
               </HStack>
               <SimpleGrid columns={{ base: 1 }} spacing={4} w="full">
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Payment Mode</Text>
+                  <HStack>
+                    <Icon as={CreditCardIcon} color="gray.500" />
+                    <Text fontSize="sm" color="gray.500">Payment Mode</Text>
+                  </HStack>
                   <Text fontSize="md" fontWeight="medium">{customer.payment_mode || 'Not specified'}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Total Price</Text>
+                  <HStack>
+                    <Icon as={TagIcon} color="gray.500" />
+                    <Text fontSize="sm" color="gray.500">Total Price</Text>
+                  </HStack>
                   <Text fontSize="md" fontWeight="medium">₹{customer.total_price?.toLocaleString() || '0'}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Amount Paid</Text>
+                  <HStack>
+                    <Icon as={CheckCircleIcon} color="gray.500" />
+                    <Text fontSize="sm" color="gray.500">Amount Paid</Text>
+                  </HStack>
                   <Text fontSize="md" fontWeight="medium">₹{customer.amount_paid?.toLocaleString() || '0'}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Remaining Amount</Text>
-                  <Text fontSize="md" fontWeight="medium">₹{(customer.total_price - customer.amount_paid)?.toLocaleString() || '0'}</Text>
+                  <HStack>
+                    <Icon as={WarningIcon} color="gray.500" />
+                    <Text fontSize="sm" color="gray.500">Remaining Amount</Text>
+                  </HStack>
+                  <Text fontSize="md" fontWeight="medium">₹{(parseFloat(customer.total_price) - parseFloat(customer.amount_paid))?.toLocaleString() || '0'}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Tax</Text>
+                  <HStack>
+                    <Icon as={CalculatorIcon} color="gray.500" />
+                    <Text fontSize="sm" color="gray.500">Tax</Text>
+                  </HStack>
                   <Text fontSize="md" fontWeight="medium">₹{customer.tax?.toLocaleString() || 'Not specified'}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Insurance</Text>
+                  <HStack>
+                    <Icon as={ShieldIcon} color="gray.500" />
+                    <Text fontSize="sm" color="gray.500">Insurance</Text>
+                  </HStack>
                   <Text fontSize="md" fontWeight="medium">₹{customer.insurance?.toLocaleString() || 'Not specified'}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Booking Fee</Text>
+                  <HStack>
+                    <Icon as={TicketIcon} color="gray.500" />
+                    <Text fontSize="sm" color="gray.500">Booking Fee</Text>
+                  </HStack>
                   <Text fontSize="md" fontWeight="medium">₹{customer.booking_fee?.toLocaleString() || 'Not specified'}</Text>
                 </Box>
                 <Box>
-                  <Text fontSize="sm" color="gray.500">Accessories</Text>
+                  <HStack>
+                    <Icon as={WrenchIcon} color="gray.500" />
+                    <Text fontSize="sm" color="gray.500">Accessories</Text>
+                  </HStack>
                   <Text fontSize="md" fontWeight="medium">₹{customer.accessories?.toLocaleString() || 'Not specified'}</Text>
                 </Box>
               </SimpleGrid>
@@ -1666,19 +1734,31 @@ const CustomerDetails = () => {
                 </HStack>
                 <SimpleGrid columns={{ base: 1 }} spacing={4} w="full">
                   <Box>
-                    <Text fontSize="sm" color="gray.500">Finance Company</Text>
+                    <HStack>
+                      <Icon as={BankIcon} color="gray.500" />
+                      <Text fontSize="sm" color="gray.500">Finance Company</Text>
+                    </HStack>
                     <Text fontSize="md" fontWeight="medium">{customer.finance_company || 'Not specified'}</Text>
                   </Box>
                   <Box>
-                    <Text fontSize="sm" color="gray.500">Finance Amount</Text>
+                    <HStack>
+                      <Icon as={MoneyIcon} color="gray.500" />
+                      <Text fontSize="sm" color="gray.500">Finance Amount</Text>
+                    </HStack>
                     <Text fontSize="md" fontWeight="medium">₹{customer.finance_amount?.toLocaleString() || 'Not specified'}</Text>
                   </Box>
                   <Box>
-                    <Text fontSize="sm" color="gray.500">EMI</Text>
+                    <HStack>
+                      <Icon as={CalendarIcon} color="gray.500" />
+                      <Text fontSize="sm" color="gray.500">EMI</Text>
+                    </HStack>
                     <Text fontSize="md" fontWeight="medium">₹{customer.emi?.toLocaleString() || 'Not specified'}</Text>
                   </Box>
                   <Box>
-                    <Text fontSize="sm" color="gray.500">Tenure (months)</Text>
+                    <HStack>
+                      <Icon as={ClockIcon} color="gray.500" />
+                      <Text fontSize="sm" color="gray.500">Tenure (months)</Text>
+                    </HStack>
                     <Text fontSize="md" fontWeight="medium">{customer.tenure || 'Not specified'}</Text>
                   </Box>
                 </SimpleGrid>
@@ -1704,7 +1784,10 @@ const CustomerDetails = () => {
           </HStack>
           <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} w="full">
             <Box>
-              <Text fontSize="sm" color="gray.500" mb={2}>Aadhar Front</Text>
+              <HStack>
+                <Icon as={DocumentIcon} color="gray.500" />
+                <Text fontSize="sm" color="gray.500">Aadhar Front</Text>
+              </HStack>
               {images.aadhar_front ? (
                 <Image
                   src={images.aadhar_front}
@@ -1724,7 +1807,10 @@ const CustomerDetails = () => {
               )}
             </Box>
             <Box>
-              <Text fontSize="sm" color="gray.500" mb={2}>Aadhar Back</Text>
+              <HStack>
+                <Icon as={DocumentIcon} color="gray.500" />
+                <Text fontSize="sm" color="gray.500">Aadhar Back</Text>
+              </HStack>
               {images.aadhar_back ? (
                 <Image
                   src={images.aadhar_back}
@@ -1744,7 +1830,10 @@ const CustomerDetails = () => {
               )}
             </Box>
             <Box>
-              <Text fontSize="sm" color="gray.500" mb={2}>Passport Photo</Text>
+              <HStack>
+                <Icon as={CameraIcon} color="gray.500" />
+                <Text fontSize="sm" color="gray.500">Passport Photo</Text>
+              </HStack>
               {images.passport_photo ? (
                 <Image
                   src={images.passport_photo}
@@ -1784,7 +1873,10 @@ const CustomerDetails = () => {
             </HStack>
             <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} w="full">
               <Box>
-                <Text fontSize="sm" color="gray.500" mb={2}>Front Delivery Photo</Text>
+                <HStack>
+                  <Icon as={CameraIcon} color="gray.500" />
+                  <Text fontSize="sm" color="gray.500">Front Delivery Photo</Text>
+                </HStack>
                 {images.front_delivery_photo ? (
                   <Image
                     src={images.front_delivery_photo}
@@ -1803,7 +1895,10 @@ const CustomerDetails = () => {
                 )}
               </Box>
               <Box>
-                <Text fontSize="sm" color="gray.500" mb={2}>Back Delivery Photo</Text>
+                <HStack>
+                  <Icon as={CameraIcon} color="gray.500" />
+                  <Text fontSize="sm" color="gray.500">Back Delivery Photo</Text>
+                </HStack>
                 {images.back_delivery_photo ? (
                   <Image
                     src={images.back_delivery_photo}
@@ -1822,7 +1917,10 @@ const CustomerDetails = () => {
                 )}
               </Box>
               <Box>
-                <Text fontSize="sm" color="gray.500" mb={2}>Delivery Photo</Text>
+                <HStack>
+                  <Icon as={CameraIcon} color="gray.500" />
+                  <Text fontSize="sm" color="gray.500">Delivery Photo</Text>
+                </HStack>
                 {images.delivery_photo ? (
                   <Image
                     src={images.delivery_photo}
