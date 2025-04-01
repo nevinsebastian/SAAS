@@ -738,13 +738,27 @@ const CustomerDetails = () => {
     setError('');
 
     const formDataToSend = new FormData();
-    Object.keys(formData).forEach(key => formData[key] && formDataToSend.append(key, formData[key]));
     
-    // Handle file uploads
-    const fileInput = e.target.querySelector('input[type="file"]');
-    if (fileInput && fileInput.files[0]) {
-      formDataToSend.append(fileInput.name, fileInput.files[0]);
-    }
+    // Format date to yyyy-MM-dd before sending
+    const formattedData = {
+      ...formData,
+      dob: formData.dob ? new Date(formData.dob).toISOString().split('T')[0] : formData.dob
+    };
+
+    // Add all form fields to FormData
+    Object.keys(formattedData).forEach(key => {
+      if (formattedData[key]) {
+        formDataToSend.append(key, formattedData[key]);
+      }
+    });
+    
+    // Handle all file inputs
+    const fileInputs = e.target.querySelectorAll('input[type="file"]');
+    fileInputs.forEach(input => {
+      if (input.files[0]) {
+        formDataToSend.append(input.name, input.files[0]);
+      }
+    });
 
     try {
       const response = await axios.put(`http://172.20.10.8:3000/customers/${customerId}`, formDataToSend, {
