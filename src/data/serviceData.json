@@ -1,0 +1,408 @@
+{
+  "bookings": [
+    {
+      "id": 1,
+      "customer_name": "John Doe",
+      "customer_phone": "+91 98765 43210",
+      "vehicle": "Honda City",
+      "vehicle_number": "KA 01 AB 1234",
+      "booking_date": "2024-04-02T10:00:00",
+      "status": "pending",
+      "total_kilometer": 5000,
+      "service_type": "General Service",
+      "notes": "Regular maintenance required",
+      "assigned_to": null,
+      "current_kilometer": null,
+      "estimated_cost": 3500,
+      "remarks": [],
+      "job_card": {
+        "tasks": [
+          { "id": 1, "description": "Oil Change", "completed": false },
+          { "id": 2, "description": "Brake Check", "completed": false },
+          { "id": 3, "description": "Tire Rotation", "completed": false }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "customer_name": "Sarah Wilson",
+      "customer_phone": "+91 98765 43211",
+      "vehicle": "BMW X7",
+      "vehicle_number": "KA 02 CD 5678",
+      "booking_date": "2024-04-02T11:30:00",
+      "status": "in_progress",
+      "total_kilometer": 15000,
+      "service_type": "Premium Service",
+      "notes": "Complete car detailing and maintenance",
+      "assigned_to": "Service Employee 2",
+      "current_kilometer": 15200,
+      "estimated_cost": 12000,
+      "remarks": [
+        { "id": 1, "heading": "Initial Check", "description": "All systems diagnostic completed" }
+      ],
+      "job_card": {
+        "tasks": [
+          { "id": 1, "description": "Engine Diagnostics", "completed": true },
+          { "id": 2, "description": "Interior Detailing", "completed": false },
+          { "id": 3, "description": "Exterior Polish", "completed": false }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "customer_name": "Rajesh Kumar",
+      "customer_phone": "+91 98765 43212",
+      "vehicle": "Mercedes-Benz E-Class",
+      "vehicle_number": "KA 03 EF 9012",
+      "booking_date": "2024-04-02T13:00:00",
+      "status": "completed",
+      "total_kilometer": 25000,
+      "service_type": "Brake Service",
+      "notes": "Brake pad replacement and disc check",
+      "assigned_to": "Service Employee 1",
+      "current_kilometer": 25100,
+      "estimated_cost": 8000,
+      "remarks": [
+        { "id": 1, "heading": "Brake Inspection", "description": "Front brake pads replaced" },
+        { "id": 2, "heading": "Disc Check", "description": "Brake discs in good condition" }
+      ],
+      "job_card": {
+        "tasks": [
+          { "id": 1, "description": "Replace Brake Pads", "completed": true },
+          { "id": 2, "description": "Check Brake Fluid", "completed": true },
+          { "id": 3, "description": "Inspect Brake Lines", "completed": true }
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "customer_name": "Priya Sharma",
+      "customer_phone": "+91 98765 43213",
+      "vehicle": "Audi Q5",
+      "vehicle_number": "KA 04 GH 3456",
+      "booking_date": "2024-04-02T14:30:00",
+      "status": "pending",
+      "total_kilometer": 18000,
+      "service_type": "AC Service",
+      "notes": "AC not cooling properly",
+      "assigned_to": null,
+      "current_kilometer": null,
+      "estimated_cost": 5000,
+      "remarks": [],
+      "job_card": {
+        "tasks": [
+          { "id": 1, "description": "AC Gas Refill", "completed": false },
+          { "id": 2, "description": "Clean AC Filter", "completed": false },
+          { "id": 3, "description": "Check Compressor", "completed": false }
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "customer_name": "Michael Chen",
+      "customer_phone": "+91 98765 43214",
+      "vehicle": "Toyota Camry",
+      "vehicle_number": "KA 05 IJ 7890",
+      "booking_date": "2024-04-02T15:00:00",
+      "status": "in_progress",
+      "total_kilometer": 30000,
+      "service_type": "Engine Repair",
+      "notes": "Engine misfiring issue",
+      "assigned_to": "Service Employee 3",
+      "current_kilometer": 30100,
+      "estimated_cost": 15000,
+      "remarks": [
+        { "id": 1, "heading": "Diagnostic Report", "description": "Faulty spark plugs identified" }
+      ],
+      "job_card": {
+        "tasks": [
+          { "id": 1, "description": "Replace Spark Plugs", "completed": true },
+          { "id": 2, "description": "Check Fuel Injection", "completed": false },
+          { "id": 3, "description": "Engine Timing Check", "completed": false }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "customer_name": "Amit Patel",
+      "customer_phone": "+91 98765 43215",
+      "vehicle": "Volkswagen Polo",
+      "vehicle_number": "KA 06 KL 1234",
+      "booking_date": "2024-04-02T16:00:00",
+      "status": "completed",
+      "total_kilometer": 12000,
+      "service_type": "Wheel Alignment",
+      "notes": "Regular wheel alignment and balancing",
+      "assigned_to": "Service Employee 2",
+      "current_kilometer": 12100,
+      "estimated_cost": 2000,
+      "remarks": [
+        { "id": 1, "heading": "Alignment Complete", "description": "All wheels aligned to specification" }
+      ],
+      "job_card": {
+        "tasks": [
+          { "id": 1, "description": "Wheel Alignment", "completed": true },
+          { "id": 2, "description": "Tire Balancing", "completed": true },
+          { "id": 3, "description": "Tire Pressure Check", "completed": true }
+        ]
+      }
+    },
+    {
+      "id": 7,
+      "customer_name": "Lisa Wong",
+      "customer_phone": "+91 98765 43216",
+      "vehicle": "Hyundai Creta",
+      "vehicle_number": "KA 07 MN 5678",
+      "booking_date": "2024-04-02T16:30:00",
+      "status": "pending",
+      "total_kilometer": 20000,
+      "service_type": "Battery Replacement",
+      "notes": "Battery draining quickly",
+      "assigned_to": null,
+      "current_kilometer": null,
+      "estimated_cost": 4500,
+      "remarks": [],
+      "job_card": {
+        "tasks": [
+          { "id": 1, "description": "Battery Test", "completed": false },
+          { "id": 2, "description": "Alternator Check", "completed": false },
+          { "id": 3, "description": "Replace Battery", "completed": false }
+        ]
+      }
+    },
+    {
+      "id": 8,
+      "customer_name": "David Smith",
+      "customer_phone": "+91 98765 43217",
+      "vehicle": "Ford Endeavour",
+      "vehicle_number": "KA 08 OP 9012",
+      "booking_date": "2024-04-02T17:00:00",
+      "status": "in_progress",
+      "total_kilometer": 35000,
+      "service_type": "Suspension Work",
+      "notes": "Rough ride and noise from suspension",
+      "assigned_to": "Service Employee 1",
+      "current_kilometer": 35200,
+      "estimated_cost": 9000,
+      "remarks": [
+        { "id": 1, "heading": "Initial Assessment", "description": "Worn out shock absorbers" }
+      ],
+      "job_card": {
+        "tasks": [
+          { "id": 1, "description": "Replace Shock Absorbers", "completed": true },
+          { "id": 2, "description": "Check Suspension Bushings", "completed": false },
+          { "id": 3, "description": "Align Suspension", "completed": false }
+        ]
+      }
+    },
+    {
+      "id": 9,
+      "customer_name": "Emma Johnson",
+      "customer_phone": "+91 98765 43218",
+      "vehicle": "Kia Seltos",
+      "vehicle_number": "KA 09 QR 3456",
+      "booking_date": "2024-04-02T17:30:00",
+      "status": "pending",
+      "total_kilometer": 8000,
+      "service_type": "Oil Change",
+      "notes": "Regular oil change service",
+      "assigned_to": null,
+      "current_kilometer": null,
+      "estimated_cost": 2500,
+      "remarks": [],
+      "job_card": {
+        "tasks": [
+          { "id": 1, "description": "Oil Change", "completed": false },
+          { "id": 2, "description": "Oil Filter Replacement", "completed": false },
+          { "id": 3, "description": "Check Fluid Levels", "completed": false }
+        ]
+      }
+    },
+    {
+      "id": 10,
+      "customer_name": "Ravi Verma",
+      "customer_phone": "+91 98765 43219",
+      "vehicle": "Tata Harrier",
+      "vehicle_number": "KA 10 ST 7890",
+      "booking_date": "2024-04-02T18:00:00",
+      "status": "completed",
+      "total_kilometer": 22000,
+      "service_type": "Clutch Repair",
+      "notes": "Clutch slipping issues",
+      "assigned_to": "Service Employee 3",
+      "current_kilometer": 22100,
+      "estimated_cost": 11000,
+      "remarks": [
+        { "id": 1, "heading": "Repair Complete", "description": "New clutch plate installed" }
+      ],
+      "job_card": {
+        "tasks": [
+          { "id": 1, "description": "Replace Clutch Plate", "completed": true },
+          { "id": 2, "description": "Check Flywheel", "completed": true },
+          { "id": 3, "description": "Adjust Clutch", "completed": true }
+        ]
+      }
+    },
+    {
+      "id": 11,
+      "customer_name": "Sophie Turner",
+      "customer_phone": "+91 98765 43220",
+      "vehicle": "Jeep Compass",
+      "vehicle_number": "KA 11 UV 1234",
+      "booking_date": "2024-04-03T10:00:00",
+      "status": "in_progress",
+      "total_kilometer": 28000,
+      "service_type": "Transmission Service",
+      "notes": "Gear shifting issues",
+      "assigned_to": "Service Employee 2",
+      "current_kilometer": 28200,
+      "estimated_cost": 13000,
+      "remarks": [
+        { "id": 1, "heading": "Inspection", "description": "Transmission fluid leak detected" }
+      ],
+      "job_card": {
+        "tasks": [
+          { "id": 1, "description": "Transmission Fluid Change", "completed": true },
+          { "id": 2, "description": "Check Gear Box", "completed": false },
+          { "id": 3, "description": "Seal Replacement", "completed": false }
+        ]
+      }
+    },
+    {
+      "id": 12,
+      "customer_name": "Karthik Raj",
+      "customer_phone": "+91 98765 43221",
+      "vehicle": "Mahindra XUV700",
+      "vehicle_number": "KA 12 WX 5678",
+      "booking_date": "2024-04-03T11:00:00",
+      "status": "pending",
+      "total_kilometer": 5000,
+      "service_type": "First Service",
+      "notes": "First scheduled maintenance",
+      "assigned_to": null,
+      "current_kilometer": null,
+      "estimated_cost": 3000,
+      "remarks": [],
+      "job_card": {
+        "tasks": [
+          { "id": 1, "description": "General Inspection", "completed": false },
+          { "id": 2, "description": "Oil Change", "completed": false },
+          { "id": 3, "description": "Software Update", "completed": false }
+        ]
+      }
+    },
+    {
+      "id": 13,
+      "customer_name": "Neha Gupta",
+      "customer_phone": "+91 98765 43222",
+      "vehicle": "MG Hector",
+      "vehicle_number": "KA 13 YZ 9012",
+      "booking_date": "2024-04-03T12:00:00",
+      "status": "completed",
+      "total_kilometer": 40000,
+      "service_type": "Major Service",
+      "notes": "Complete vehicle overhaul",
+      "assigned_to": "Service Employee 1",
+      "current_kilometer": 40100,
+      "estimated_cost": 18000,
+      "remarks": [
+        { "id": 1, "heading": "Service Complete", "description": "All major components checked and serviced" }
+      ],
+      "job_card": {
+        "tasks": [
+          { "id": 1, "description": "Engine Service", "completed": true },
+          { "id": 2, "description": "Brake Service", "completed": true },
+          { "id": 3, "description": "Suspension Check", "completed": true },
+          { "id": 4, "description": "Electrical Systems Check", "completed": true }
+        ]
+      }
+    },
+    {
+      "id": 14,
+      "customer_name": "Tom Anderson",
+      "customer_phone": "+91 98765 43223",
+      "vehicle": "Skoda Kushaq",
+      "vehicle_number": "KA 14 AB 3456",
+      "booking_date": "2024-04-03T13:00:00",
+      "status": "in_progress",
+      "total_kilometer": 15000,
+      "service_type": "Paint Work",
+      "notes": "Front bumper paint damage",
+      "assigned_to": "Service Employee 3",
+      "current_kilometer": 15200,
+      "estimated_cost": 8000,
+      "remarks": [
+        { "id": 1, "heading": "Paint Work", "description": "Color matching completed" }
+      ],
+      "job_card": {
+        "tasks": [
+          { "id": 1, "description": "Surface Preparation", "completed": true },
+          { "id": 2, "description": "Paint Application", "completed": false },
+          { "id": 3, "description": "Clear Coat", "completed": false }
+        ]
+      }
+    },
+    {
+      "id": 15,
+      "customer_name": "Arjun Mehta",
+      "customer_phone": "+91 98765 43224",
+      "vehicle": "Renault Kiger",
+      "vehicle_number": "KA 15 CD 7890",
+      "booking_date": "2024-04-03T14:00:00",
+      "status": "pending",
+      "total_kilometer": 10000,
+      "service_type": "Insurance Repair",
+      "notes": "Accident damage repair",
+      "assigned_to": null,
+      "current_kilometer": null,
+      "estimated_cost": 25000,
+      "remarks": [],
+      "job_card": {
+        "tasks": [
+          { "id": 1, "description": "Panel Beating", "completed": false },
+          { "id": 2, "description": "Parts Replacement", "completed": false },
+          { "id": 3, "description": "Paint Work", "completed": false }
+        ]
+      }
+    }
+  ],
+  "service_types": [
+    "General Service",
+    "Premium Service",
+    "Brake Service",
+    "AC Service",
+    "Engine Repair",
+    "Wheel Alignment",
+    "Battery Replacement",
+    "Suspension Work",
+    "Oil Change",
+    "Clutch Repair",
+    "Transmission Service",
+    "First Service",
+    "Major Service",
+    "Paint Work",
+    "Insurance Repair"
+  ],
+  "vehicle_brands": [
+    "Honda",
+    "BMW",
+    "Mercedes-Benz",
+    "Audi",
+    "Toyota",
+    "Volkswagen",
+    "Hyundai",
+    "Ford",
+    "Kia",
+    "Tata",
+    "Jeep",
+    "Mahindra",
+    "MG",
+    "Skoda",
+    "Renault"
+  ],
+  "status_types": [
+    "pending",
+    "in_progress",
+    "completed"
+  ]
+} 

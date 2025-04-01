@@ -73,192 +73,10 @@ import {
   BellIcon,
   ChevronRightIcon,
 } from '@chakra-ui/icons';
-
-// Dummy data
-const dummyBookings = [
-  {
-    id: 1,
-    customer_name: 'John Doe',
-    customer_phone: '+91 98765 43210',
-    vehicle: 'Honda City',
-    booking_date: '2024-04-02T10:00:00',
-    status: 'pending',
-    total_kilometer: 5000,
-    service_type: 'General Service',
-    notes: 'Regular maintenance required',
-    assigned_to: null,
-    current_kilometer: null,
-    remarks: [],
-    job_card: {
-      tasks: [
-        { id: 1, description: 'Oil Change', completed: false },
-        { id: 2, description: 'Brake Check', completed: false },
-        { id: 3, description: 'Tire Rotation', completed: false },
-      ]
-    }
-  },
-  {
-    id: 2,
-    customer_name: 'Jane Smith',
-    customer_phone: '+91 98765 43211',
-    vehicle: 'Maruti Swift',
-    booking_date: '2024-04-02T11:00:00',
-    status: 'in_progress',
-    total_kilometer: 3000,
-    service_type: 'Oil Change',
-    notes: 'Oil change and filter replacement',
-    assigned_to: 'Service Employee 1',
-    current_kilometer: 3200,
-    remarks: [
-      { id: 1, heading: 'Initial Inspection', description: 'Vehicle condition checked' }
-    ],
-    job_card: {
-      tasks: [
-        { id: 1, description: 'Oil Filter Change', completed: true },
-        { id: 2, description: 'Oil Level Check', completed: true },
-      ]
-    }
-  },
-  {
-    id: 3,
-    customer_name: 'Rajesh Kumar',
-    customer_phone: '+91 98765 43212',
-    vehicle: 'BMW X5',
-    booking_date: '2024-04-02T12:00:00',
-    status: 'pending',
-    total_kilometer: 15000,
-    service_type: 'Repaint',
-    notes: 'Full body repaint required due to scratches',
-    assigned_to: null,
-    current_kilometer: null,
-    remarks: [],
-    job_card: {
-      tasks: [
-        { id: 1, description: 'Body Inspection', completed: false },
-        { id: 2, description: 'Paint Matching', completed: false },
-        { id: 3, description: 'Surface Preparation', completed: false },
-      ]
-    }
-  },
-  {
-    id: 4,
-    customer_name: 'Priya Sharma',
-    customer_phone: '+91 98765 43213',
-    vehicle: 'Mercedes-Benz C-Class',
-    booking_date: '2024-04-02T13:00:00',
-    status: 'in_progress',
-    total_kilometer: 8000,
-    service_type: 'Maintenance',
-    notes: 'Regular maintenance and brake pad replacement',
-    assigned_to: 'Service Employee 2',
-    current_kilometer: 8200,
-    remarks: [
-      { id: 1, heading: 'Brake Inspection', description: 'Brake pads need replacement' }
-    ],
-    job_card: {
-      tasks: [
-        { id: 1, description: 'Brake Pad Replacement', completed: true },
-        { id: 2, description: 'Brake Fluid Check', completed: true },
-        { id: 3, description: 'Wheel Alignment', completed: false },
-      ]
-    }
-  },
-  {
-    id: 5,
-    customer_name: 'Amit Patel',
-    customer_phone: '+91 98765 43214',
-    vehicle: 'Toyota Fortuner',
-    booking_date: '2024-04-02T14:00:00',
-    status: 'completed',
-    total_kilometer: 25000,
-    service_type: 'General Service',
-    notes: 'Complete vehicle service and inspection',
-    assigned_to: 'Service Employee 1',
-    current_kilometer: 25100,
-    remarks: [
-      { id: 1, heading: 'Service Complete', description: 'All checks performed and issues resolved' }
-    ],
-    job_card: {
-      tasks: [
-        { id: 1, description: 'Engine Oil Change', completed: true },
-        { id: 2, description: 'Air Filter Replacement', completed: true },
-        { id: 3, description: 'Battery Check', completed: true },
-        { id: 4, description: 'Tire Pressure Check', completed: true },
-      ]
-    }
-  },
-  {
-    id: 6,
-    customer_name: 'Neha Gupta',
-    customer_phone: '+91 98765 43215',
-    vehicle: 'Hyundai Verna',
-    booking_date: '2024-04-02T15:00:00',
-    status: 'pending',
-    total_kilometer: 12000,
-    service_type: 'Oil Change',
-    notes: 'Synthetic oil change required',
-    assigned_to: null,
-    current_kilometer: null,
-    remarks: [],
-    job_card: {
-      tasks: [
-        { id: 1, description: 'Oil Drain', completed: false },
-        { id: 2, description: 'Filter Replacement', completed: false },
-        { id: 3, description: 'Oil Level Check', completed: false },
-      ]
-    }
-  },
-  {
-    id: 7,
-    customer_name: 'Vikram Singh',
-    customer_phone: '+91 98765 43216',
-    vehicle: 'Audi Q5',
-    booking_date: '2024-04-02T16:00:00',
-    status: 'in_progress',
-    total_kilometer: 18000,
-    service_type: 'Repaint',
-    notes: 'Front bumper repaint due to accident',
-    assigned_to: 'Service Employee 3',
-    current_kilometer: null,
-    remarks: [
-      { id: 1, heading: 'Damage Assessment', description: 'Front bumper damage assessed' }
-    ],
-    job_card: {
-      tasks: [
-        { id: 1, description: 'Bumper Removal', completed: true },
-        { id: 2, description: 'Surface Preparation', completed: true },
-        { id: 3, description: 'Paint Application', completed: false },
-        { id: 4, description: 'Clear Coat', completed: false },
-      ]
-    }
-  },
-  {
-    id: 8,
-    customer_name: 'Pooja Reddy',
-    customer_phone: '+91 98765 43217',
-    vehicle: 'Volkswagen Polo',
-    booking_date: '2024-04-02T17:00:00',
-    status: 'completed',
-    total_kilometer: 9000,
-    service_type: 'Maintenance',
-    notes: 'Regular maintenance and AC service',
-    assigned_to: 'Service Employee 2',
-    current_kilometer: 9100,
-    remarks: [
-      { id: 1, heading: 'AC Service Complete', description: 'AC system cleaned and recharged' }
-    ],
-    job_card: {
-      tasks: [
-        { id: 1, description: 'AC Filter Cleaning', completed: true },
-        { id: 2, description: 'AC Gas Recharge', completed: true },
-        { id: 3, description: 'Belt Inspection', completed: true },
-      ]
-    }
-  }
-];
+import serviceData from '../data/serviceData.json';
 
 const ServiceDashboard = () => {
-    const [bookings, setBookings] = useState(dummyBookings);
+    const [bookings, setBookings] = useState(serviceData.bookings);
     const [selectedBooking, setSelectedBooking] = useState(null);
     const { isOpen: isStatusModalOpen, onOpen: onStatusModalOpen, onClose } = useDisclosure();
     const { isOpen: isJobCardModalOpen, onOpen: onJobCardModalOpen, onClose: onJobCardModalClose } = useDisclosure();
@@ -295,13 +113,26 @@ const ServiceDashboard = () => {
     const bottomNavBorderColor = useColorModeValue('gray.200', 'gray.700');
     const searchBg = useColorModeValue('white', 'gray.700');
     const searchBorderColor = useColorModeValue('gray.200', 'gray.600');
+    const cardBg = useColorModeValue('white', 'gray.800');
+    const textColor = useColorModeValue('gray.700', 'gray.200');
+    const borderColor = useColorModeValue('gray.200', 'gray.700');
+    const hoverBg = useColorModeValue('gray.100', 'gray.700');
+    const accentGradient = useColorModeValue(
+        'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+        'linear-gradient(135deg, #818cf8 0%, #a78bfa 100%)'
+    );
 
     // Filter bookings based on current filters and search query
     const filteredBookings = bookings.filter(booking => {
-        const matchesSearch = 
-            booking.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            booking.vehicle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            booking.service_type.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesSearch = searchType === 'all' 
+            ? (booking.customer_name.toLowerCase().includes(searchValue.toLowerCase()) ||
+               booking.vehicle.toLowerCase().includes(searchValue.toLowerCase()) ||
+               booking.vehicle_number.toLowerCase().includes(searchValue.toLowerCase()))
+            : searchType === 'vehicle'
+            ? booking.vehicle.toLowerCase().includes(searchValue.toLowerCase())
+            : searchType === 'registration'
+            ? booking.vehicle_number.toLowerCase().includes(searchValue.toLowerCase())
+            : booking.customer_name.toLowerCase().includes(searchValue.toLowerCase());
 
         const matchesServiceType = !filters.serviceType || booking.service_type === filters.serviceType;
         const matchesVehicleType = !filters.vehicleType || booking.vehicle.includes(filters.vehicleType);
@@ -408,78 +239,117 @@ const ServiceDashboard = () => {
     };
 
     const renderHeader = () => (
-        <Box
-            position="fixed"
-            top={0}
-            left={0}
-            right={0}
-            zIndex={1000}
+        <Flex 
+            justify="space-between" 
+            align="center" 
             bg={headerBg}
             backdropFilter="blur(10px)"
             borderBottom="1px solid"
             borderColor={headerBorderColor}
             px={4}
             py={3}
+            position="fixed"
+            top={0}
+            left={0}
+            right={0}
+            zIndex={1000}
+            height="60px"
         >
-            <Flex justify="space-between" align="center">
-                <Text fontSize="2xl" fontWeight="bold" color="blue.500">
+            <HStack spacing={3}>
+                <Text 
+                    fontSize={{ base: "xl", md: "2xl" }} 
+                    fontWeight="bold" 
+                    bgGradient={accentGradient}
+                    bgClip="text"
+                >
                     Service
                 </Text>
-                <HStack spacing={4}>
-                    <Menu isOpen={isNotificationsOpen} onOpen={onNotificationsOpen} onClose={onNotificationsClose}>
-                        <MenuButton
-                            as={IconButton}
-                            icon={<BellIcon />}
-                            variant="ghost"
-                            aria-label="Notifications"
-                            position="relative"
-                        >
-                            {notifications.length > 0 && (
-                                <Badge
-                                    position="absolute"
-                                    top="-1"
-                                    right="-1"
-                                    colorScheme="red"
-                                    borderRadius="full"
-                                >
-                                    {notifications.length}
-                                </Badge>
-                            )}
-                        </MenuButton>
-                        <MenuList>
-                            {notifications.map((notification) => (
-                                <MenuItem key={notification.id}>
-                                    <VStack align="start" spacing={1}>
-                                        <Text>{notification.message}</Text>
-                                        <Text fontSize="xs" color="gray.500">{notification.time}</Text>
-                                    </VStack>
-                                </MenuItem>
-                            ))}
-                        </MenuList>
-                    </Menu>
-                    <Menu isOpen={isProfileOpen} onOpen={onProfileOpen} onClose={onProfileClose}>
-                        <MenuButton
-                            as={Avatar}
-                            name="John Doe"
-                            size="sm"
-                            cursor="pointer"
-                        />
-                        <MenuList>
-                            <MenuItem icon={<SettingsIcon />}>Settings</MenuItem>
-                            <MenuItem icon={<ViewIcon />}>Profile</MenuItem>
-                            <Divider />
-                            <MenuItem color="red.500" icon={<DeleteIcon />}>Logout</MenuItem>
-                        </MenuList>
-                    </Menu>
-                </HStack>
-            </Flex>
-        </Box>
+            </HStack>
+            <HStack spacing={2}>
+                <Menu isOpen={isNotificationsOpen} onOpen={onNotificationsOpen} onClose={onNotificationsClose}>
+                    <MenuButton
+                        as={IconButton}
+                        icon={<BellIcon />}
+                        variant="ghost"
+                        aria-label="Notifications"
+                        position="relative"
+                        size={{ base: "sm", md: "md" }}
+                        _hover={{ 
+                            bg: 'whiteAlpha.200',
+                            transform: 'scale(1.1)'
+                        }}
+                        transition="all 0.2s"
+                    >
+                        {notifications.length > 0 && (
+                            <Badge 
+                                colorScheme="red" 
+                                borderRadius="full" 
+                                position="absolute" 
+                                top="-1" 
+                                right="-1"
+                                boxShadow="lg"
+                            >
+                                {notifications.length}
+                            </Badge>
+                        )}
+                    </MenuButton>
+                    <MenuList 
+                        maxH="400px" 
+                        overflowY="auto" 
+                        bg={cardBg} 
+                        borderColor={borderColor}
+                        boxShadow="xl"
+                        borderRadius="xl"
+                    >
+                        {notifications.map((notification) => (
+                            <MenuItem
+                                key={notification.id}
+                                bg={notification.read_at ? cardBg : 'blue.50'}
+                                _hover={{ 
+                                    bg: hoverBg,
+                                    transform: 'translateX(5px)'
+                                }}
+                                transition="all 0.2s"
+                            >
+                                <VStack align="start" spacing={1} width="100%">
+                                    <Text fontWeight="bold" fontSize="sm">{notification.message}</Text>
+                                    <Text fontSize="xs" color="gray.500">{notification.time}</Text>
+                                </VStack>
+                            </MenuItem>
+                        ))}
+                    </MenuList>
+                </Menu>
+                <Menu isOpen={isProfileOpen} onOpen={onProfileOpen} onClose={onProfileClose}>
+                    <MenuButton
+                        as={Avatar}
+                        name="John Doe"
+                        size={{ base: "sm", md: "md" }}
+                        cursor="pointer"
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="center"
+                        bg="blue.500"
+                        color="white"
+                        _hover={{ 
+                            transform: 'scale(1.1)',
+                            boxShadow: 'lg'
+                        }}
+                        transition="all 0.2s"
+                    >
+                        J
+                    </MenuButton>
+                    <MenuList>
+                        <MenuItem color="red.500" icon={<DeleteIcon />}>Logout</MenuItem>
+                    </MenuList>
+                </Menu>
+            </HStack>
+        </Flex>
     );
 
     const renderSearchBar = () => (
         <Box
-            position="fixed"
-            top="72px"
+            position="sticky"
+            top="10px"
             left={0}
             right={0}
             zIndex={999}
@@ -489,38 +359,54 @@ const ServiceDashboard = () => {
             px={4}
             py={3}
             shadow="sm"
+            backdropFilter="blur(10px)"
         >
-            <HStack spacing={2}>
-                <Select
-                    size="sm"
-                    width="150px"
-                    value={searchType}
-                    onChange={(e) => setSearchType(e.target.value)}
-                >
-                    <option value="all">All Fields</option>
-                    <option value="vehicle">Vehicle</option>
-                    <option value="registration">Registration</option>
-                    <option value="customer">Customer Name</option>
-                </Select>
-                <InputGroup size="sm">
-                    <InputLeftElement pointerEvents="none">
-                        <SearchIcon color="gray.400" />
-                    </InputLeftElement>
-                    <Input
-                        placeholder={`Search by ${searchType === 'all' ? 'any field' : searchType}...`}
-                        value={searchValue}
-                        onChange={(e) => setSearchValue(e.target.value)}
-                    />
-                    <IconButton
-                        icon={<SettingsIcon />}
-                        aria-label="Filter"
-                        onClick={onFilterModalOpen}
-                        variant="ghost"
+            <VStack spacing={3} width="100%">
+                <HStack spacing={2} width="100%">
+                    <Select
                         size="sm"
-                        ml={2}
-                    />
-                </InputGroup>
-            </HStack>
+                        width={{ base: "120px", md: "150px" }}
+                        value={searchType}
+                        onChange={(e) => setSearchType(e.target.value)}
+                        bg={cardBg}
+                        borderColor={borderColor}
+                        _hover={{ borderColor: 'blue.300' }}
+                        _focus={{ borderColor: 'blue.500' }}
+                    >
+                        <option value="all">All Fields</option>
+                        <option value="vehicle">Vehicle</option>
+                        <option value="registration">Registration</option>
+                        <option value="customer">Customer Name</option>
+                    </Select>
+                    <InputGroup size="sm">
+                        <InputLeftElement pointerEvents="none">
+                            <SearchIcon color="gray.400" />
+                        </InputLeftElement>
+                        <Input
+                            placeholder={`Search by ${searchType === 'all' ? 'any field' : searchType}...`}
+                            value={searchValue}
+                            onChange={(e) => setSearchValue(e.target.value)}
+                            bg={cardBg}
+                            borderColor={borderColor}
+                            _hover={{ borderColor: 'blue.300' }}
+                            _focus={{ borderColor: 'blue.500' }}
+                        />
+                        <IconButton
+                            icon={<SettingsIcon />}
+                            aria-label="Filter"
+                            onClick={onFilterModalOpen}
+                            variant="ghost"
+                            size="sm"
+                            ml={2}
+                            _hover={{ 
+                                bg: 'blue.50',
+                                transform: 'scale(1.1)'
+                            }}
+                            transition="all 0.2s"
+                        />
+                    </InputGroup>
+                </HStack>
+            </VStack>
         </Box>
     );
 
@@ -539,10 +425,9 @@ const ServiceDashboard = () => {
                                 onChange={(e) => setFilters({ ...filters, serviceType: e.target.value })}
                             >
                                 <option value="">All Services</option>
-                                <option value="General Service">General Service</option>
-                                <option value="Oil Change">Oil Change</option>
-                                <option value="Repaint">Repaint</option>
-                                <option value="Maintenance">Maintenance</option>
+                                {serviceData.service_types.map((type) => (
+                                    <option key={type} value={type}>{type}</option>
+                                ))}
                             </Select>
                         </Box>
                         <Box>
@@ -552,10 +437,9 @@ const ServiceDashboard = () => {
                                 onChange={(e) => setFilters({ ...filters, vehicleType: e.target.value })}
                             >
                                 <option value="">All Vehicles</option>
-                                <option value="Honda">Honda</option>
-                                <option value="Maruti">Maruti</option>
-                                <option value="BMW">BMW</option>
-                                <option value="Benz">Benz</option>
+                                {serviceData.vehicle_brands.map((brand) => (
+                                    <option key={brand} value={brand}>{brand}</option>
+                                ))}
                             </Select>
                         </Box>
                         {activeTab === 1 && (
@@ -565,9 +449,11 @@ const ServiceDashboard = () => {
                                     value={filters.status}
                                     onChange={(e) => setFilters({ ...filters, status: e.target.value })}
                                 >
-                                    <option value="pending">Pending</option>
-                                    <option value="in_progress">In Progress</option>
-                                    <option value="completed">Completed</option>
+                                    {serviceData.status_types.map((status) => (
+                                        <option key={status} value={status}>
+                                            {status.charAt(0).toUpperCase() + status.slice(1)}
+                                        </option>
+                                    ))}
                                 </Select>
                             </Box>
                         )}
@@ -613,68 +499,88 @@ const ServiceDashboard = () => {
     );
 
     return (
-        <Box>
+        <Box minH="100vh" bg={useColorModeValue('gray.50', 'gray.900')}>
             {renderHeader()}
-            {renderSearchBar()}
-            {renderFilterModal()}
             
             <Box
-                pt={32}
-                pb={20}
+                pt="60px"
+                pb="60px"
                 px={4}
+                maxW="100%"
+                overflowX="hidden"
             >
-                <Grid templateColumns={{ base: "repeat(1, 1fr)", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }} gap={4}>
-                    {filteredBookings.map((booking) => (
-                        <GridItem key={booking.id}>
-                            <Card 
-                                cursor="pointer"
-                                onClick={() => {
-                                    setSelectedBooking(booking);
-                                    setStatus(booking.status);
-                                    setCurrentKilometer(booking.current_kilometer || '');
-                                    setRemarks(booking.remarks || []);
-                                    setTasks(booking.job_card?.tasks || []);
-                                    onStatusModalOpen();
-                                }}
-                                _hover={{ shadow: 'lg' }}
-                            >
-                                <CardBody>
-                                    <VStack align="start" spacing={2}>
-                                        <HStack justify="space-between" width="100%">
-                                            <Text fontWeight="bold">
-                                                {booking.customer_name}
+                {renderSearchBar()}
+                {renderFilterModal()}
+                
+                <Box
+                    mt={4}
+                    mb={8}
+                >
+                    <Grid 
+                        templateColumns={{ 
+                            base: "repeat(1, 1fr)", 
+                            md: "repeat(2, 1fr)", 
+                            lg: "repeat(3, 1fr)" 
+                        }} 
+                        gap={4}
+                        px={{ base: 0, md: 4 }}
+                    >
+                        {filteredBookings.map((booking) => (
+                            <GridItem key={booking.id}>
+                                <Card 
+                                    cursor="pointer"
+                                    onClick={() => {
+                                        setSelectedBooking(booking);
+                                        setStatus(booking.status);
+                                        setCurrentKilometer(booking.current_kilometer || '');
+                                        setRemarks(booking.remarks || []);
+                                        setTasks(booking.job_card?.tasks || []);
+                                        onStatusModalOpen();
+                                    }}
+                                    _hover={{ shadow: 'lg' }}
+                                    transition="all 0.2s"
+                                >
+                                    <CardBody>
+                                        <VStack align="start" spacing={2}>
+                                            <HStack justify="space-between" width="100%">
+                                                <Text fontWeight="bold" fontSize={{ base: "sm", md: "md" }}>
+                                                    {booking.customer_name}
+                                                </Text>
+                                                <Badge 
+                                                    colorScheme={getStatusColor(booking.status)}
+                                                    fontSize={{ base: "xs", md: "sm" }}
+                                                >
+                                                    {booking.status}
+                                                </Badge>
+                                            </HStack>
+                                            <Text color="gray.500" fontSize={{ base: "sm", md: "md" }}>
+                                                {booking.vehicle}
                                             </Text>
-                                            <Badge colorScheme={getStatusColor(booking.status)}>
-                                                {booking.status}
-                                            </Badge>
-                                        </HStack>
-                                        <Text color="gray.500">
-                                            {booking.vehicle}
-                                        </Text>
-                                        <Text fontSize="sm">
-                                            {format(new Date(booking.booking_date), 'PPp')}
-                                        </Text>
-                                        <Text fontSize="sm">
-                                            Service Type: {booking.service_type}
-                                        </Text>
-                                        {!booking.assigned_to && activeTab === 0 && (
-                                            <Button
-                                                size="sm"
-                                                colorScheme="blue"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleAssignService(booking.id);
-                                                }}
-                                            >
-                                                Take Up Service
-                                            </Button>
-                                        )}
-                                    </VStack>
-                                </CardBody>
-                            </Card>
-                        </GridItem>
-                    ))}
-                </Grid>
+                                            <Text fontSize={{ base: "xs", md: "sm" }}>
+                                                {format(new Date(booking.booking_date), 'PPp')}
+                                            </Text>
+                                            <Text fontSize={{ base: "xs", md: "sm" }}>
+                                                Service Type: {booking.service_type}
+                                            </Text>
+                                            {!booking.assigned_to && activeTab === 0 && (
+                                                <Button
+                                                    size={{ base: "xs", md: "sm" }}
+                                                    colorScheme="blue"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleAssignService(booking.id);
+                                                    }}
+                                                >
+                                                    Take Up Service
+                                                </Button>
+                                            )}
+                                        </VStack>
+                                    </CardBody>
+                                </Card>
+                            </GridItem>
+                        ))}
+                    </Grid>
+                </Box>
             </Box>
 
             {renderBottomNav()}
