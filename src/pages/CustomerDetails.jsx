@@ -1990,26 +1990,24 @@ const CustomerDetails = () => {
             </VStack>
           </Box>
 
-          <Flex justify="space-between" align="center" mb={6}>
-            <VStack align="start" spacing={1}>
-              <Button
-                onClick={() => setIsCustomerModalOpen(true)}
-                variant="ghost"
-                size="lg"
-                rightIcon={<ChevronRightIcon />}
-                _hover={{
-                  transform: 'translateX(4px)',
-                  transition: 'all 0.2s',
-                }}
-              >
-                <Heading size="lg" bgGradient={accentGradient} bgClip="text">
-                  Customer Details
-                </Heading>
-              </Button>
-              <Text fontSize="sm" color="gray.500">
-                Created by {customer.sales_employee || 'John Doe'} on {new Date(customer.created_at).toLocaleDateString()}
-              </Text>
-            </VStack>
+          <Flex direction="column" align="center" mb={6}>
+            <Button
+              onClick={() => setIsCustomerModalOpen(true)}
+              variant="ghost"
+              size="lg"
+              rightIcon={<ChevronRightIcon />}
+              _hover={{
+                transform: 'translateX(4px)',
+                transition: 'all 0.2s',
+              }}
+            >
+              <Heading size="lg" bgGradient={accentGradient} bgClip="text">
+                Customer Details
+              </Heading>
+            </Button>
+            <Text fontSize="sm" color="gray.500" mt={2}>
+              Created on {new Date(customer.created_at).toLocaleDateString()}
+            </Text>
           </Flex>
 
           {/* Add the AnimatedModal */}
