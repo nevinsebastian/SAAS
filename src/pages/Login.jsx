@@ -150,7 +150,7 @@ export default function Login({ setUserRole }) {
       case 'sales': navigate('/sales-executive'); break;
       case 'accounts': navigate('/accounts'); break;
       case 'rto': navigate('/rto'); break;
-      // Add more roles if needed (e.g., manager, stock_person)
+      case 'service': navigate('/service'); break;
       default: setError('Unknown role.');
     }
   };

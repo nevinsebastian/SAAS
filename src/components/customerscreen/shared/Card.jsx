@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Text, VStack, HStack, IconButton, useColorModeValue } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
 
-const MotionBox = motion(Box);
+const MotionBox = motion.create(Box);
 
 export const Card = ({ 
   children, 

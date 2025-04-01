@@ -7,8 +7,9 @@ import Admin from './pages/Admin';
 import CustomerDetails from './pages/CustomerDetails'; // Import updated component
 import CustomerManagement from './pages/CustomerManagement'; // New import
 import Accounts from './pages/Accounts';
-
 import RtoDashboard from './pages/RtoDashboard';
+import ServiceDashboard from './pages/ServiceDashboard';
+import ServiceEmployeeManagement from './pages/ServiceEmployeeManagement';
 
 // Chakra UI Theme (unchanged)
 const chakraTheme = extendTheme({
@@ -79,6 +80,8 @@ const App = () => {
           <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><Admin /></ProtectedRoute>} />
           <Route path="/accounts" element={<ProtectedRoute allowedRoles={['accounts']}><Accounts /></ProtectedRoute>} />
           <Route path="/rto" element={<ProtectedRoute allowedRoles={['rto']}><RtoDashboard /></ProtectedRoute>} />
+          <Route path="/service" element={<ProtectedRoute allowedRoles={['service']}><ServiceDashboard /></ProtectedRoute>} />
+          <Route path="/admin/service-employees" element={<ProtectedRoute allowedRoles={['admin']}><ServiceEmployeeManagement /></ProtectedRoute>} />
           <Route path="/customer-details/:customerId" element={<CustomerDetails />} /> {/* Public route */}
         </Routes>
       </ChakraProvider>

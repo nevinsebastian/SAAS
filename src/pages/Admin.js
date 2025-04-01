@@ -948,6 +948,7 @@ const Admin = () => {
                   <option value="accounts">Accounts</option>
                   <option value="rto">RTO</option>
                   <option value="admin">Admin</option>
+                  <option value="service">Service</option>
                 </Select>
               </FormControl>
               <FormControl>
@@ -1478,6 +1479,7 @@ const Admin = () => {
                     <option value="accounts">Accounts</option>
                     <option value="rto">RTO</option>
                     <option value="admin">Admin</option>
+                    <option value="service">Service</option>
                   </Select>
                 </FormControl>
                 <FormControl isRequired>
