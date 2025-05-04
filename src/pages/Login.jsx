@@ -105,7 +105,7 @@ export default function Login({ setUserRole }) {
     e.preventDefault();
     setIsLoading(true);
     setError('');
-
+  
     try {
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
@@ -115,26 +115,34 @@ export default function Login({ setUserRole }) {
         body: JSON.stringify({ email, password }),
         credentials: 'include',
       });
-
-      const { token } = await response.json();
-
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed. Please try again.');
+      }
+  
+      if (!data.token) {
+        throw new Error('No token received from server');
+      }
+  
       // Save token to localStorage
-      localStorage.setItem('token', token);
-
-      // Decode role from token (optional, or fetch from response if backend sends it)
-      const decodedToken = JSON.parse(atob(token.split('.')[1]));
+      localStorage.setItem('token', data.token);
+  
+      // Decode role from token
+      const decodedToken = JSON.parse(atob(data.token.split('.')[1]));
       const role = decodedToken.role;
-
+  
       // Store user data in localStorage
       localStorage.setItem('user', JSON.stringify({
         id: decodedToken.id,
         email: decodedToken.email,
         role: decodedToken.role
       }));
-
+  
       // Set role in parent component
       setUserRole(role);
-
+  
       // Navigate based on role
       navigateToRole(role);
     } catch (err) {
