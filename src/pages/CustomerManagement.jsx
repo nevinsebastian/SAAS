@@ -40,7 +40,7 @@ import {
   ArrowForwardIcon,
   CopyIcon,
 } from '@chakra-ui/icons';
-import axios from 'axios';
+import { customerApi } from '../api';
 
 // Define animations
 const fadeIn = keyframes`
@@ -115,18 +115,15 @@ const CustomerManagement = () => {
   useEffect(() => {
     const fetchCustomer = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`http://172.20.10.8:3000/customers/${customerId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        console.log('Customer data:', response.data.customer);
-        setCustomer(response.data.customer);
+        const response = await customerApi.getCustomerById(customerId);
+        console.log('Customer data:', response.customer);
+        setCustomer(response.customer);
         setPriceData({
-          ex_showroom: response.data.customer.ex_showroom || '',
-          tax: response.data.customer.tax || '',
-          insurance: response.data.customer.insurance || '',
-          booking_fee: response.data.customer.booking_fee || '',
-          accessories: response.data.customer.accessories || '',
+          ex_showroom: response.customer.ex_showroom || '',
+          tax: response.customer.tax || '',
+          insurance: response.customer.insurance || '',
+          booking_fee: response.customer.booking_fee || '',
+          accessories: response.customer.accessories || '',
           amount_paid: '',
         });
 
@@ -137,11 +134,8 @@ const CustomerManagement = () => {
         const imagePromises = imageTypes.map(async (type) => {
           try {
             console.log(`Fetching ${type} for customer ${customerId}`);
-            const imgResponse = await axios.get(`http://172.20.10.8:3000/customers/${customerId}/${type}`, {
-              headers: { Authorization: `Bearer ${token}` },
-              responseType: 'blob',
-            });
-            const imageUrl = URL.createObjectURL(imgResponse.data);
+            const imageBlob = await customerApi.getCustomerImage(customerId, type);
+            const imageUrl = URL.createObjectURL(imageBlob);
             console.log(`${type} URL:`, imageUrl);
             return { [type]: imageUrl };
           } catch (err) {
@@ -182,13 +176,8 @@ const CustomerManagement = () => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.put(
-        `http://172.20.10.8:3000/customers/${customerId}`,
-        priceData,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setCustomer(response.data.customer);
+      const response = await customerApi.updateCustomer(customerId, priceData);
+      setCustomer(response.customer);
       toast({
         title: 'Success',
         description: 'Price details updated successfully!',
@@ -200,7 +189,7 @@ const CustomerManagement = () => {
       console.error('Failed to update price details:', err);
       toast({
         title: 'Error',
-        description: err.response?.data?.error || 'Failed to update price details',
+        description: 'Failed to update price details',
         status: 'error',
         duration: 3000,
         isClosable: true,
@@ -212,17 +201,10 @@ const CustomerManagement = () => {
 
   const handlePaymentSubmit = async (e) => {
     e.preventDefault();
-    if (!priceData.amount_paid) return;
-
+    setIsSubmitting(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.put(
-        `http://172.20.10.8:3000/customers/${customerId}/payments`,
-        { amount: priceData.amount_paid },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setCustomer(response.data.customer);
-      setPriceData(prev => ({ ...prev, amount_paid: '' }));
+      const response = await customerApi.updateCustomerPayment(customerId, parseFloat(priceData.amount_paid));
+      setCustomer(response.customer);
       toast({
         title: 'Success',
         description: 'Payment updated successfully!',
@@ -234,23 +216,20 @@ const CustomerManagement = () => {
       console.error('Failed to update payment:', err);
       toast({
         title: 'Error',
-        description: err.response?.data?.error || 'Failed to update payment',
+        description: 'Failed to update payment',
         status: 'error',
         duration: 3000,
         isClosable: true,
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleVerify = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.put(
-        `http://172.20.10.8:3000/customers/${customerId}/verify`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setCustomer(response.data.customer);
+      const response = await customerApi.verifyCustomer(customerId);
+      setCustomer(response.customer);
       toast({
         title: 'Success',
         description: 'Customer verified successfully!',
@@ -262,7 +241,7 @@ const CustomerManagement = () => {
       console.error('Failed to verify customer:', err);
       toast({
         title: 'Error',
-        description: err.response?.data?.error || 'Failed to verify customer',
+        description: 'Failed to verify customer',
         status: 'error',
         duration: 3000,
         isClosable: true,
@@ -272,10 +251,7 @@ const CustomerManagement = () => {
 
   const handleDelete = async () => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`http://172.20.10.8:3000/customers/${customerId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await customerApi.deleteCustomer(customerId);
       toast({
         title: 'Success',
         description: 'Customer deleted successfully!',
@@ -288,13 +264,11 @@ const CustomerManagement = () => {
       console.error('Failed to delete customer:', err);
       toast({
         title: 'Error',
-        description: err.response?.data?.error || 'Failed to delete customer',
+        description: 'Failed to delete customer',
         status: 'error',
         duration: 3000,
         isClosable: true,
       });
-    } finally {
-      setIsDeleteModalOpen(false);
     }
   };
 
@@ -305,26 +279,10 @@ const CustomerManagement = () => {
   const handleDeliveredSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-
-    const formData = new FormData();
-    if (deliveryPhotos.front_delivery_photo) formData.append('front_delivery_photo', deliveryPhotos.front_delivery_photo);
-    if (deliveryPhotos.back_delivery_photo) formData.append('back_delivery_photo', deliveryPhotos.back_delivery_photo);
-    if (deliveryPhotos.delivery_photo) formData.append('delivery_photo', deliveryPhotos.delivery_photo);
-
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.put(
-        `http://172.20.10.8:3000/customers/${customerId}/delivered`,
-        formData,
-        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } }
-      );
-      setCustomer(response.data.customer);
-      setImages(prev => ({
-        ...prev,
-        front_delivery_photo: deliveryPhotos.front_delivery_photo ? URL.createObjectURL(deliveryPhotos.front_delivery_photo) : prev.front_delivery_photo,
-        back_delivery_photo: deliveryPhotos.back_delivery_photo ? URL.createObjectURL(deliveryPhotos.back_delivery_photo) : prev.back_delivery_photo,
-        delivery_photo: deliveryPhotos.delivery_photo ? URL.createObjectURL(deliveryPhotos.delivery_photo) : prev.delivery_photo,
-      }));
+      const response = await customerApi.markCustomerAsDelivered(customerId, deliveryPhotos);
+      setCustomer(response.customer);
+      setIsDeliveryModalOpen(false);
       toast({
         title: 'Success',
         description: 'Customer marked as delivered successfully!',
@@ -332,12 +290,11 @@ const CustomerManagement = () => {
         duration: 3000,
         isClosable: true,
       });
-      setIsDeliveryModalOpen(false);
     } catch (err) {
       console.error('Failed to mark customer as delivered:', err);
       toast({
         title: 'Error',
-        description: err.response?.data?.error || 'Failed to mark customer as delivered',
+        description: 'Failed to mark customer as delivered',
         status: 'error',
         duration: 3000,
         isClosable: true,

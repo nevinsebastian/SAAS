@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { API_URL } from '../config';
+import { authApi } from '../api';
 import {
   Box,
   Button,
@@ -94,7 +93,7 @@ const GradientButton = styled(Button)(({ theme }) => ({
 }));
 
 export default function Login({ setUserRole }) {
-  const [email, setEmail] = useState(''); // Changed from username to email
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -107,20 +106,9 @@ export default function Login({ setUserRole }) {
     setError('');
   
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-        credentials: 'include',
-      });
-  
-      const data = await response.json();
-  
-      if (!response.ok) {
-        throw new Error(data.error || 'Login failed. Please try again.');
-      }
+      console.log('Starting login process...'); // Debug log
+      const data = await authApi.login(email, password);
+      console.log('Login successful:', data); // Debug log
   
       if (!data.token) {
         throw new Error('No token received from server');
@@ -146,7 +134,22 @@ export default function Login({ setUserRole }) {
       // Navigate based on role
       navigateToRole(role);
     } catch (err) {
-      setError(err.message || 'Login failed. Please try again.');
+      console.error('Login error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status
+      });
+      
+      // Show more specific error message
+      if (err.response?.status === 401) {
+        setError('Invalid email or password. Please check your credentials and try again.');
+      } else if (err.response?.status === 404) {
+        setError('Login service not found. Please contact support.');
+      } else if (err.response?.status === 500) {
+        setError('Server error. Please try again later.');
+      } else {
+        setError(err.response?.data?.error || err.message || 'Login failed. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -225,7 +228,7 @@ export default function Login({ setUserRole }) {
                   margin="normal"
                   required
                   fullWidth
-                  label="Email" // Changed from Username to Email
+                  label="Email"
                   type="email"
                   autoComplete="email"
                   value={email}
@@ -272,7 +275,7 @@ export default function Login({ setUserRole }) {
                   margin="normal"
                   required
                   fullWidth
-                  label="Email" // Changed from Username to Email
+                  label="Email"
                   type="email"
                   autoComplete="email"
                   value={email}

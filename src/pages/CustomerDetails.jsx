@@ -136,7 +136,7 @@ import {
   DocumentIcon,
   CameraIcon,
 } from '../utils/icons';
-import axios from 'axios';
+import { customerApi } from '../api';
 
 // Modern UI Components
 const MotionBox = motion.create(Box);
@@ -628,16 +628,16 @@ const CustomerDetails = () => {
     const fetchCustomer = async () => {
       try {
         setIsLoading(true);
-        const response = await axios.get(`http://172.20.10.8:3000/public/customers/${customerId}`);
-        setCustomer(response.data.customer);
-        console.log('Full customer data:', response.data.customer);
+        const response = await customerApi.getCustomerById(customerId);
+        setCustomer(response.customer);
+        console.log('Full customer data:', response.customer);
         
         // Fetch employee details if created_by exists
-        if (response.data.customer.created_by) {
+        if (response.customer.created_by) {
           try {
-            const employeeResponse = await axios.get(`http://172.20.10.8:3000/public/employees/${response.data.customer.created_by}`);
-            setEmployeeDetails(employeeResponse.data.employee);
-            console.log('Employee details:', employeeResponse.data.employee);
+            const employeeResponse = await customerApi.getEmployeeById(response.customer.created_by);
+            setEmployeeDetails(employeeResponse.employee);
+            console.log('Employee details:', employeeResponse.employee);
           } catch (error) {
             console.error('Error fetching employee details:', error);
           }
@@ -646,27 +646,27 @@ const CustomerDetails = () => {
         // Set form data from customer response
         setFormData(prev => ({
           ...prev,
-          name: response.data.customer.customer_name,
-          mobile_1: response.data.customer.mobile_1 || response.data.customer.phone_number,
-          dob: response.data.customer.dob || '',
-          address: response.data.customer.address || '',
-          mobile_2: response.data.customer.mobile_2 || '',
-          email: response.data.customer.email || '',
-          nominee: response.data.customer.nominee || '',
-          nominee_relation: response.data.customer.nominee_relation || '',
-          payment_mode: response.data.customer.payment_mode || '',
-          finance_company: response.data.customer.finance_company || '',
-          finance_amount: response.data.customer.finance_amount || '',
+          name: response.customer.customer_name,
+          mobile_1: response.customer.mobile_1 || response.customer.phone_number,
+          dob: response.customer.dob || '',
+          address: response.customer.address || '',
+          mobile_2: response.customer.mobile_2 || '',
+          email: response.customer.email || '',
+          nominee: response.customer.nominee || '',
+          nominee_relation: response.customer.nominee_relation || '',
+          payment_mode: response.customer.payment_mode || '',
+          finance_company: response.customer.finance_company || '',
+          finance_amount: response.customer.finance_amount || '',
         }));
 
         // Set images from the response
         const newImages = {
-          aadhar_front: response.data.customer.aadhar_front_base64 ? `data:image/jpeg;base64,${response.data.customer.aadhar_front_base64}` : null,
-          aadhar_back: response.data.customer.aadhar_back_base64 ? `data:image/jpeg;base64,${response.data.customer.aadhar_back_base64}` : null,
-          passport_photo: response.data.customer.passport_photo_base64 ? `data:image/jpeg;base64,${response.data.customer.passport_photo_base64}` : null,
-          front_delivery_photo: response.data.customer.front_delivery_photo_base64 ? `data:image/jpeg;base64,${response.data.customer.front_delivery_photo_base64}` : null,
-          back_delivery_photo: response.data.customer.back_delivery_photo_base64 ? `data:image/jpeg;base64,${response.data.customer.back_delivery_photo_base64}` : null,
-          delivery_photo: response.data.customer.delivery_photo_base64 ? `data:image/jpeg;base64,${response.data.customer.back_delivery_photo_base64}` : null,
+          aadhar_front: response.customer.aadhar_front_base64 ? `data:image/jpeg;base64,${response.customer.aadhar_front_base64}` : null,
+          aadhar_back: response.customer.aadhar_back_base64 ? `data:image/jpeg;base64,${response.customer.aadhar_back_base64}` : null,
+          passport_photo: response.customer.passport_photo_base64 ? `data:image/jpeg;base64,${response.customer.passport_photo_base64}` : null,
+          front_delivery_photo: response.customer.front_delivery_photo_base64 ? `data:image/jpeg;base64,${response.customer.front_delivery_photo_base64}` : null,
+          back_delivery_photo: response.customer.back_delivery_photo_base64 ? `data:image/jpeg;base64,${response.customer.back_delivery_photo_base64}` : null,
+          delivery_photo: response.customer.delivery_photo_base64 ? `data:image/jpeg;base64,${response.customer.back_delivery_photo_base64}` : null,
         };
 
         setImages(newImages);
@@ -773,15 +773,11 @@ const CustomerDetails = () => {
     });
 
     try {
-      const response = await axios.put(`http://172.20.10.8:3000/customers/${customerId}`, formDataToSend, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      setCustomer(response.data.customer);
+      const response = await customerApi.updateCustomer(customerId, formDataToSend);
+      setCustomer(response.customer);
       toast({
         title: 'Success',
-        description: response.data.customer.status === 'Submitted' ? 'Details fully submitted!' : 'Details updated successfully!',
+        description: response.customer.status === 'Submitted' ? 'Details fully submitted!' : 'Details updated successfully!',
         status: 'success',
         duration: 3000,
         isClosable: true,

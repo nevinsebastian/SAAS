@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import api from '../api';
+import { customerApi, notificationApi } from '../api';
 import { keyframes } from '@emotion/react';
 import {
   Box,
@@ -134,13 +134,13 @@ const SalesExecutive = () => {
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
-        const response = await api.get('/customers');
-        const fetchedCustomers = response.data.customers.map(c => ({
+        const response = await customerApi.getCustomers();
+        const fetchedCustomers = response.customers.map(c => ({
           id: c.id,
           name: c.customer_name,
           phone: c.phone_number,
           vehicle: c.vehicle,
-          status: c.status, // Use backend status
+          status: c.status,
           date: new Date(c.created_at).toISOString().split('T')[0],
         }));
         setCustomers(fetchedCustomers);
@@ -169,21 +169,21 @@ const SalesExecutive = () => {
           console.error('User data not found');
           return;
         }
-        const response = await api.get(`/notifications/employee/${user.id}`);
+        const response = await notificationApi.getEmployeeNotifications(user.id);
         if (isSubscribed) {
-        setNotifications(response.data.notifications);
-        setUnreadCount(response.data.notifications.filter(n => !n.read_at).length);
+          setNotifications(response.notifications);
+          setUnreadCount(response.notifications.filter(n => !n.read_at).length);
         }
       } catch (error) {
         console.error('Error fetching notifications:', error);
         if (isSubscribed) {
-        toast({
-          title: 'Error',
-          description: 'Failed to fetch notifications',
-          status: 'error',
-          duration: 3000,
-          isClosable: true,
-        });
+          toast({
+            title: 'Error',
+            description: 'Failed to fetch notifications',
+            status: 'error',
+            duration: 3000,
+            isClosable: true,
+          });
         }
       }
     };
@@ -206,7 +206,7 @@ const SalesExecutive = () => {
 
   const markNotificationAsRead = async (notificationId) => {
     try {
-      await api.put(`/notifications/${notificationId}/read`);
+      await notificationApi.markNotificationAsRead(notificationId);
       setNotifications(prev =>
         prev.map(n =>
           n.id === notificationId ? { ...n, read_at: new Date().toISOString() } : n
@@ -307,7 +307,7 @@ const SalesExecutive = () => {
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
     try {
-      const response = await api.post('/customers', {
+      const response = await customerApi.createCustomer({
         customer_name: formData.customer_name,
         phone_number: formData.phone_number,
         vehicle: formData.vehicle,
@@ -317,17 +317,17 @@ const SalesExecutive = () => {
       });
 
       const newCustomer = {
-        id: response.data.customer.id,
-        name: response.data.customer.customer_name,
-        phone: response.data.customer.phone_number,
-        vehicle: response.data.customer.vehicle,
-        status: response.data.customer.status,
-        date: new Date(response.data.customer.created_at).toISOString().split('T')[0],
+        id: response.customer.id,
+        name: response.customer.customer_name,
+        phone: response.customer.phone_number,
+        vehicle: response.customer.vehicle,
+        status: response.customer.status,
+        date: new Date(response.customer.created_at).toISOString().split('T')[0],
       };
 
       setCustomers(prev => [...prev, newCustomer]);
       setFilteredCustomers(prev => [...prev, newCustomer]);
-      setGeneratedLink(response.data.uniqueLink);
+      setGeneratedLink(response.uniqueLink);
       setFormData({ customer_name: '', phone_number: '', vehicle: '', variant: '', color: '', price: '' });
       setCurrentStep(0);
 
@@ -353,14 +353,14 @@ const SalesExecutive = () => {
 
   const handleVerifyCustomer = async (customerId) => {
     try {
-      const response = await api.put(`/customers/${customerId}`, { status: 'Verified' });
+      const response = await customerApi.verifyCustomer(customerId);
       const updatedCustomer = {
-        id: response.data.customer.id,
-        name: response.data.customer.customer_name,
-        phone: response.data.customer.phone_number,
-        vehicle: response.data.customer.vehicle,
-        status: response.data.customer.status,
-        date: new Date(response.data.customer.created_at).toISOString().split('T')[0],
+        id: response.customer.id,
+        name: response.customer.customer_name,
+        phone: response.customer.phone_number,
+        vehicle: response.customer.vehicle,
+        status: response.customer.status,
+        date: new Date(response.customer.created_at).toISOString().split('T')[0],
       };
 
       setCustomers(prev =>
@@ -715,7 +715,7 @@ const SalesExecutive = () => {
                   }}
                 >
                   Next
-        </Button>
+                </Button>
               </HStack>
             </Flex>
           </Box>
@@ -867,7 +867,7 @@ const SalesExecutive = () => {
                     {generatedLink}
                   </Text>
                   <ExternalLinkIcon color="purple.500" />
-              </HStack>
+                </HStack>
               </Box>
             </VStack>
           </ModalBody>
