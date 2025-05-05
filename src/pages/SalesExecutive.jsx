@@ -327,7 +327,7 @@ const SalesExecutive = () => {
 
       setCustomers(prev => [...prev, newCustomer]);
       setFilteredCustomers(prev => [...prev, newCustomer]);
-      setGeneratedLink(response.uniqueLink);
+      setGeneratedLink(`https://tvs-dev-server.netlify.app/customer-details/${response.customer.id}`);
       setFormData({ customer_name: '', phone_number: '', vehicle: '', variant: '', color: '', price: '' });
       setCurrentStep(0);
 
