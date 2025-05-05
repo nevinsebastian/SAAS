@@ -121,7 +121,7 @@ const ServiceSection = () => {
   };
 
   return (
-    <Box maxW="1200px" mx="auto" p={4}>
+    <Box maxW="1200px" mx="auto" p={4} mb="80px">
       {/* Header with Notification Icon */}
       <Flex justify="space-between" align="center" mb={6}>
         <Heading size="lg" bgGradient={bgGradient} bgClip="text">
@@ -287,6 +287,7 @@ const ServiceSection = () => {
               onClick={handleServiceBooking}
               _hover={{ transform: 'translateY(-2px)', boxShadow: 'xl' }}
               transition="all 0.2s"
+              mb="60px"
             >
               Confirm Booking
             </Button>

@@ -538,12 +538,12 @@ const SalesExecutive = () => {
 
       {/* Main Content */}
       <Box maxW="1200px" mx="auto">
-        <VStack spacing={3} mb={4}>
+        <VStack spacing={3} mb={4} position="sticky" top="80px" zIndex={5} bg={bgGradient} pt={2}>
           <InputGroup>
             <InputLeftElement pointerEvents="none"><SearchIcon color="gray.400" /></InputLeftElement>
             <Input placeholder="Search customers..." value={searchQuery} onChange={handleSearch} variant="filled" borderRadius="md" bg={cardBg} />
           </InputGroup>
-          <HStack spacing={2} overflowX="auto" w="full" justify="center">
+          <HStack spacing={2} overflowX="auto" w="full" justify="center" pb={2}>
             {['All', 'Pending', 'Submitted', 'Verified'].map(status => (
               <Button key={status} size="sm" variant={filteredCustomers.some(c => c.status === status) || (status === 'All' && filteredCustomers.length > 0) ? 'solid' : 'outline'} colorScheme="purple" onClick={() => handleFilter(status)} flexShrink={0}>
                 {status}
@@ -722,33 +722,16 @@ const SalesExecutive = () => {
         )}
       </Box>
 
-      {/* Sidebar Drawer */}
-      <Drawer isOpen={isMenuOpen} placement="left" onClose={onMenuClose}>
-        <DrawerOverlay />
-        <DrawerContent>
-          <DrawerCloseButton />
-          <DrawerHeader>Menu</DrawerHeader>
-          <DrawerBody>
-            <VStack align="stretch" spacing={4}>
-              <Button leftIcon={<ArrowBackIcon />} colorScheme="purple" variant={isHomeActive ? 'solid' : 'outline'} onClick={() => { onMenuClose(); onAnalyticsClose(); onNotificationsClose(); onMessagesClose(); }}>Home</Button>
-              <Button leftIcon={<SettingsIcon />} colorScheme="purple" variant={isAnalyticsOpen ? 'solid' : 'outline'} onClick={() => { onMenuClose(); onAnalyticsOpen(); }}>Analytics</Button>
-              <Button leftIcon={<BellIcon />} colorScheme="purple" variant={isNotificationsOpen ? 'solid' : 'outline'} onClick={() => { onMenuClose(); onNotificationsOpen(); }}>Notifications</Button>
-              <Button leftIcon={<ChatIcon />} colorScheme="purple" variant={isMessagesOpen ? 'solid' : 'outline'} onClick={() => { onMenuClose(); onMessagesOpen(); }}>Messages</Button>
-            </VStack>
-          </DrawerBody>
-        </DrawerContent>
-      </Drawer>
-
       {/* Replace the Add Customer Drawer with Modal */}
       <Modal isOpen={isDrawerOpen} onClose={handleCancel} size="sm" isCentered>
         <ModalOverlay bg="rgba(0, 0, 0, 0.4)" backdropFilter="blur(4px)" />
-        <ModalContent bg={cardBg} borderRadius="xl">
+        <ModalContent bg={cardBg} borderRadius="xl" maxH={{ base: "90vh", md: "80vh" }} overflowY="auto">
           <ModalHeader color={textColor} fontSize="xl" fontWeight="bold" textAlign="center" pb={0}>
             Add New Customer
           </ModalHeader>
           <ModalCloseButton onClick={handleCancel} />
           <ModalBody pb={6}>
-            <VStack spacing={8} w="full">
+            <VStack spacing={6} w="full">
               {/* Progress Dots */}
               <HStack spacing={3} justify="center" mt={2}>
                 {formSteps.map((_, index) => (
@@ -801,11 +784,11 @@ const SalesExecutive = () => {
                 color="whiteAlpha.900"
                 borderRadius="xl"
                 fontSize="md"
-                h="56px"
+                h="48px"
               />
             </VStack>
           </ModalBody>
-          <ModalFooter pb={6} px={6}>
+          <ModalFooter pb={6} px={6} position="sticky" bottom={0} bg={cardBg}>
             <HStack spacing={3} w="full">
               <Button 
                 variant="ghost" 

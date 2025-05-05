@@ -370,51 +370,7 @@ const AnimatedModal = ({ isOpen, onClose, children }) => {
           bottom={0}
           zIndex={10000}
         >
-          {isEditMode ? (
-            <>
-              <Button
-                variant="outline"
-                colorScheme="red"
-                onClick={() => setIsEditMode(false)}
-                size="sm"
-                _hover={{
-                  transform: 'translateY(-2px)',
-                  boxShadow: 'lg',
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                colorScheme="purple"
-                onClick={() => {
-                  // Handle submit
-                  setIsEditMode(false);
-                }}
-                size="sm"
-                bgGradient={accentGradient}
-                _hover={{
-                  transform: 'translateY(-2px)',
-                  boxShadow: 'lg',
-                }}
-              >
-                Submit
-              </Button>
-            </>
-          ) : (
-            <Button
-              colorScheme="purple"
-              onClick={() => setIsEditMode(true)}
-              size="sm"
-              width="100%"
-              bgGradient={accentGradient}
-              _hover={{
-                transform: 'translateY(-2px)',
-                boxShadow: 'lg',
-              }}
-            >
-              Edit Details
-            </Button>
-          )}
+          
         </Flex>
       </Box>
     </Box>
@@ -1187,7 +1143,7 @@ const CustomerDetails = () => {
           position="relative"
           overflow="hidden"
         >
-          <VStack spacing={6} align="stretch">
+          <VStack spacing={6} align="stretch" mb="100px">
             <Heading size="md" color={textColor}>Book New Service</Heading>
             <FormControl>
               <FormLabel>Service Type</FormLabel>
@@ -1244,7 +1200,8 @@ const CustomerDetails = () => {
               bgGradient={accentGradient}
               _hover={{ 
                 transform: 'translateY(-2px)',
-                boxShadow: 'xl'
+                boxShadow: 'xl',
+                mb: "60px"
               }}
               transition="all 0.2s"
             >
@@ -1462,10 +1419,10 @@ const CustomerDetails = () => {
               <Text fontSize="sm" color="gray.500">Registration Date</Text>
             </HStack>
             <Text fontSize="xl" fontWeight="bold">
-              {new Date(customer.created_at).toLocaleDateString()}
+              {customer?.created_at ? new Date(customer.created_at).toLocaleDateString() : 'N/A'}
             </Text>
             <Text fontSize="sm" color="gray.500">
-              Created by {customer.created_by_name || 'Unknown'}
+              Created by {customer?.created_by_name || 'Unknown'}
             </Text>
           </VStack>
         </Box>
@@ -1487,10 +1444,10 @@ const CustomerDetails = () => {
               <Text fontSize="sm" color="gray.500">Vehicle Status</Text>
             </HStack>
             <Text fontSize="xl" fontWeight="bold">
-              {customer.delivery_status ? 'Delivered' : 'Pending'}
+              {customer?.delivery_status ? 'Delivered' : 'Pending'}
             </Text>
             <Text fontSize="sm" color="gray.500">
-              {customer.delivery_status ? 'Vehicle delivered successfully' : 'Awaiting delivery'}
+              {customer?.delivery_status ? 'Vehicle delivered successfully' : 'Awaiting delivery'}
             </Text>
           </VStack>
         </Box>
@@ -1531,61 +1488,61 @@ const CustomerDetails = () => {
               p={4}
               borderRadius="lg"
               backdropFilter="blur(10px)"
-            border="1px solid"
-            borderColor="whiteAlpha.300"
-          >
-            <VStack align="start" spacing={4}>
-              <HStack>
-                <Icon as={InfoIcon} color="purple.500" />
-                <Heading size="sm">Basic Information</Heading>
-              </HStack>
-              <SimpleGrid columns={{ base: 1 }} spacing={4} w="full">
-                <Box>
-                  <HStack>
-                    <Icon as={UserIcon} color="gray.500" />
-                  <Text fontSize="sm" color="gray.500">Customer Name</Text>
-                  </HStack>
-                  <Text fontSize="md" fontWeight="medium">{customer.customer_name}</Text>
-                </Box>
-                <Box>
-                  <HStack>
-                    <Icon as={PhoneIcon} color="gray.500" />
-                  <Text fontSize="sm" color="gray.500">Phone Number</Text>
-                  </HStack>
-                  <Text fontSize="md" fontWeight="medium">{customer.phone_number}</Text>
-                </Box>
-                <Box>
-                  <HStack>
-                    <Icon as={CalendarIcon} color="gray.500" />
-                  <Text fontSize="sm" color="gray.500">Date of Birth</Text>
-                  </HStack>
-                  <Text fontSize="md" fontWeight="medium">
-                    {customer.dob ? new Date(customer.dob).toLocaleDateString() : 'Not provided'}
-                  </Text>
-                </Box>
-                <Box>
-                  <HStack>
-                    <Icon as={EmailIcon} color="gray.500" />
-                  <Text fontSize="sm" color="gray.500">Email</Text>
-                  </HStack>
-                  <Text fontSize="md" fontWeight="medium">{customer.email || 'Not provided'}</Text>
-                </Box>
-                <Box>
-                  <HStack>
-                    <Icon as={LocationIcon} color="gray.500" />
-                  <Text fontSize="sm" color="gray.500">Address</Text>
-                  </HStack>
-                  <Text fontSize="md" fontWeight="medium">{customer.address || 'Not provided'}</Text>
-                </Box>
-                <Box>
-                  <HStack>
-                    <Icon as={PhoneIcon} color="gray.500" />
-                  <Text fontSize="sm" color="gray.500">Mobile 2</Text>
-                  </HStack>
-                  <Text fontSize="md" fontWeight="medium">{customer.mobile_2 || 'Not provided'}</Text>
-                </Box>
-              </SimpleGrid>
-            </VStack>
+              border="1px solid"
+              borderColor="whiteAlpha.300"
+            >
+              <VStack align="start" spacing={4}>
+                <HStack>
+                  <Icon as={InfoIcon} color="purple.500" />
+                  <Heading size="sm">Basic Information</Heading>
+                </HStack>
+                <SimpleGrid columns={{ base: 1 }} spacing={4} w="full">
+                  <Box>
+                    <HStack>
+                      <Icon as={UserIcon} color="gray.500" />
+                    <Text fontSize="sm" color="gray.500">Customer Name</Text>
+                    </HStack>
+                    <Text fontSize="md" fontWeight="medium">{customer?.customer_name || 'N/A'}</Text>
+                  </Box>
+                  <Box>
+                    <HStack>
+                      <Icon as={PhoneIcon} color="gray.500" />
+                    <Text fontSize="sm" color="gray.500">Phone Number</Text>
+                    </HStack>
+                    <Text fontSize="md" fontWeight="medium">{customer?.phone_number || 'N/A'}</Text>
+                  </Box>
+                  <Box>
+                    <HStack>
+                      <Icon as={CalendarIcon} color="gray.500" />
+                    <Text fontSize="sm" color="gray.500">Date of Birth</Text>
+                    </HStack>
+                    <Text fontSize="md" fontWeight="medium">
+                      {customer?.dob ? new Date(customer.dob).toLocaleDateString() : 'Not provided'}
+                    </Text>
+                  </Box>
+                  <Box>
+                    <HStack>
+                      <Icon as={EmailIcon} color="gray.500" />
+                    <Text fontSize="sm" color="gray.500">Email</Text>
+                    </HStack>
+                    <Text fontSize="md" fontWeight="medium">{customer?.email || 'Not provided'}</Text>
+                  </Box>
+                  <Box>
+                    <HStack>
+                      <Icon as={LocationIcon} color="gray.500" />
+                    <Text fontSize="sm" color="gray.500">Address</Text>
+                    </HStack>
+                    <Text fontSize="md" fontWeight="medium">{customer?.address || 'Not provided'}</Text>
+                  </Box>
+                  <Box>
+                    <HStack>
+                      <Icon as={PhoneIcon} color="gray.500" />
+                    <Text fontSize="sm" color="gray.500">Mobile 2</Text>
+                    </HStack>
+                    <Text fontSize="md" fontWeight="medium">{customer?.mobile_2 || 'Not provided'}</Text>
+                  </Box>
+                </SimpleGrid>
+              </VStack>
             </Box>
 
           {/* Nominee Information */}
@@ -1611,14 +1568,14 @@ const CustomerDetails = () => {
                   <Icon as={UserIcon} color="gray.500" />
                   <Text fontSize="sm" color="gray.500">Nominee Name</Text>
                 </HStack>
-                <Text fontSize="lg" fontWeight="medium" mt={1}>{customer.nominee || 'Not provided'}</Text>
+                <Text fontSize="lg" fontWeight="medium" mt={1}>{customer?.nominee || 'Not provided'}</Text>
               </Box>
               <Box>
                 <HStack>
                   <Icon as={ViewIcon} color="gray.500" />
                   <Text fontSize="sm" color="gray.500">Relation with Nominee</Text>
                 </HStack>
-                <Text fontSize="lg" fontWeight="medium" mt={1}>{customer.nominee_relation || 'Not provided'}</Text>
+                <Text fontSize="lg" fontWeight="medium" mt={1}>{customer?.nominee_relation || 'Not provided'}</Text>
               </Box>
             </SimpleGrid>
           </Box>
@@ -1643,28 +1600,28 @@ const CustomerDetails = () => {
                     <Icon as={CarIcon} color="gray.500" />
                   <Text fontSize="sm" color="gray.500">Vehicle</Text>
                   </HStack>
-                  <Text fontSize="md" fontWeight="medium">{customer.vehicle}</Text>
+                  <Text fontSize="md" fontWeight="medium">{customer?.vehicle || 'N/A'}</Text>
                 </Box>
                 <Box>
                   <HStack>
                     <Icon as={SettingsIcon} color="gray.500" />
                   <Text fontSize="sm" color="gray.500">Variant</Text>
                   </HStack>
-                  <Text fontSize="md" fontWeight="medium">{customer.variant || 'Not specified'}</Text>
+                  <Text fontSize="md" fontWeight="medium">{customer?.variant || 'Not specified'}</Text>
                 </Box>
                 <Box>
                   <HStack>
                     <Icon as={PaletteIcon} color="gray.500" />
                   <Text fontSize="sm" color="gray.500">Color</Text>
                   </HStack>
-                  <Text fontSize="md" fontWeight="medium">{customer.color || 'Not specified'}</Text>
+                  <Text fontSize="md" fontWeight="medium">{customer?.color || 'Not specified'}</Text>
                 </Box>
                 <Box>
                   <HStack>
                     <Icon as={TagIcon} color="gray.500" />
                   <Text fontSize="sm" color="gray.500">Ex Showroom Price</Text>
                   </HStack>
-                  <Text fontSize="md" fontWeight="medium">₹{customer.ex_showroom?.toLocaleString() || 'Not specified'}</Text>
+                  <Text fontSize="md" fontWeight="medium">₹{customer?.ex_showroom?.toLocaleString() || 'Not specified'}</Text>
                 </Box>
               </SimpleGrid>
             </VStack>
@@ -1693,63 +1650,35 @@ const CustomerDetails = () => {
                     <Icon as={CreditCardIcon} color="gray.500" />
                   <Text fontSize="sm" color="gray.500">Payment Mode</Text>
                   </HStack>
-                  <Text fontSize="md" fontWeight="medium">{customer.payment_mode || 'Not specified'}</Text>
+                  <Text fontSize="md" fontWeight="medium">{customer?.payment_mode || 'Not specified'}</Text>
                 </Box>
                 <Box>
                   <HStack>
                     <Icon as={TagIcon} color="gray.500" />
                   <Text fontSize="sm" color="gray.500">Total Price</Text>
                   </HStack>
-                  <Text fontSize="md" fontWeight="medium">₹{customer.total_price?.toLocaleString() || '0'}</Text>
+                  <Text fontSize="md" fontWeight="medium">₹{customer?.total_price?.toLocaleString() || '0'}</Text>
                 </Box>
                 <Box>
                   <HStack>
                     <Icon as={CheckCircleIcon} color="gray.500" />
                   <Text fontSize="sm" color="gray.500">Amount Paid</Text>
                   </HStack>
-                  <Text fontSize="md" fontWeight="medium">₹{customer.amount_paid?.toLocaleString() || '0'}</Text>
+                  <Text fontSize="md" fontWeight="medium">₹{customer?.amount_paid?.toLocaleString() || '0'}</Text>
                 </Box>
                 <Box>
                   <HStack>
                     <Icon as={WarningIcon} color="gray.500" />
                   <Text fontSize="sm" color="gray.500">Remaining Amount</Text>
                   </HStack>
-                  <Text fontSize="md" fontWeight="medium">₹{(parseFloat(customer.total_price) - parseFloat(customer.amount_paid))?.toLocaleString() || '0'}</Text>
-                </Box>
-                <Box>
-                  <HStack>
-                    <Icon as={CalculatorIcon} color="gray.500" />
-                  <Text fontSize="sm" color="gray.500">Tax</Text>
-                  </HStack>
-                  <Text fontSize="md" fontWeight="medium">₹{customer.tax?.toLocaleString() || 'Not specified'}</Text>
-                </Box>
-                <Box>
-                  <HStack>
-                    <Icon as={ShieldIcon} color="gray.500" />
-                  <Text fontSize="sm" color="gray.500">Insurance</Text>
-                  </HStack>
-                  <Text fontSize="md" fontWeight="medium">₹{customer.insurance?.toLocaleString() || 'Not specified'}</Text>
-                </Box>
-                <Box>
-                  <HStack>
-                    <Icon as={TicketIcon} color="gray.500" />
-                  <Text fontSize="sm" color="gray.500">Booking Fee</Text>
-                  </HStack>
-                  <Text fontSize="md" fontWeight="medium">₹{customer.booking_fee?.toLocaleString() || 'Not specified'}</Text>
-                </Box>
-                <Box>
-                  <HStack>
-                    <Icon as={WrenchIcon} color="gray.500" />
-                  <Text fontSize="sm" color="gray.500">Accessories</Text>
-                  </HStack>
-                  <Text fontSize="md" fontWeight="medium">₹{customer.accessories?.toLocaleString() || 'Not specified'}</Text>
+                  <Text fontSize="md" fontWeight="medium">₹{(parseFloat(customer?.total_price || 0) - parseFloat(customer?.amount_paid || 0))?.toLocaleString() || '0'}</Text>
                 </Box>
               </SimpleGrid>
             </VStack>
             </Box>
 
             {/* Finance Information */}
-            {customer.payment_mode === 'Finance' && (
+            {customer?.payment_mode === 'Finance' && (
               <Box
                 bg="whiteAlpha.200"
                 p={4}
@@ -1769,28 +1698,28 @@ const CustomerDetails = () => {
                       <Icon as={BankIcon} color="gray.500" />
                     <Text fontSize="sm" color="gray.500">Finance Company</Text>
                     </HStack>
-                    <Text fontSize="md" fontWeight="medium">{customer.finance_company || 'Not specified'}</Text>
+                    <Text fontSize="md" fontWeight="medium">{customer?.finance_company || 'Not specified'}</Text>
                   </Box>
                   <Box>
                     <HStack>
                       <Icon as={MoneyIcon} color="gray.500" />
                     <Text fontSize="sm" color="gray.500">Finance Amount</Text>
                     </HStack>
-                    <Text fontSize="md" fontWeight="medium">₹{customer.finance_amount?.toLocaleString() || 'Not specified'}</Text>
+                    <Text fontSize="md" fontWeight="medium">₹{customer?.finance_amount?.toLocaleString() || 'Not specified'}</Text>
                   </Box>
                   <Box>
                     <HStack>
                       <Icon as={CalendarIcon} color="gray.500" />
                     <Text fontSize="sm" color="gray.500">EMI</Text>
                     </HStack>
-                    <Text fontSize="md" fontWeight="medium">₹{customer.emi?.toLocaleString() || 'Not specified'}</Text>
+                    <Text fontSize="md" fontWeight="medium">₹{customer?.emi?.toLocaleString() || 'Not specified'}</Text>
                   </Box>
                   <Box>
                     <HStack>
                       <Icon as={ClockIcon} color="gray.500" />
                     <Text fontSize="sm" color="gray.500">Tenure (months)</Text>
                     </HStack>
-                    <Text fontSize="md" fontWeight="medium">{customer.tenure || 'Not specified'}</Text>
+                    <Text fontSize="md" fontWeight="medium">{customer?.tenure || 'Not specified'}</Text>
                   </Box>
                 </SimpleGrid>
               </VStack>
@@ -1799,96 +1728,11 @@ const CustomerDetails = () => {
         </VStack>
               </SimpleGrid>
 
-      {/* Documents Section */}
-            <Box
-              bg="whiteAlpha.200"
-              p={4}
-              borderRadius="lg"
-              backdropFilter="blur(10px)"
-        border="1px solid"
-        borderColor="whiteAlpha.300"
-      >
-        <VStack align="start" spacing={4}>
-          <HStack>
-            <Icon as={ViewIcon} color="purple.500" />
-            <Heading size="sm">Document Images</Heading>
-          </HStack>
-          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} w="full">
-                <Box>
-              <HStack>
-                <Icon as={DocumentIcon} color="gray.500" />
-                <Text fontSize="sm" color="gray.500">Aadhar Front</Text>
-              </HStack>
-                  {images.aadhar_front ? (
-                    <Image
-                      src={images.aadhar_front}
-                      alt="Aadhar Front"
-                      borderRadius="md"
-                  w="full"
-                  h="200px"
-                      objectFit="cover"
-                      fallback={<Text>Error loading image</Text>}
-                  _hover={{
-                    transform: 'scale(1.02)',
-                    transition: 'all 0.2s',
-                  }}
-                    />
-                  ) : (
-                <Text fontSize="sm">Not uploaded</Text>
-                  )}
-                </Box>
-                <Box>
-              <HStack>
-                <Icon as={DocumentIcon} color="gray.500" />
-                <Text fontSize="sm" color="gray.500">Aadhar Back</Text>
-              </HStack>
-                  {images.aadhar_back ? (
-                    <Image
-                      src={images.aadhar_back}
-                      alt="Aadhar Back"
-                      borderRadius="md"
-                  w="full"
-                  h="200px"
-                      objectFit="cover"
-                      fallback={<Text>Error loading image</Text>}
-                  _hover={{
-                    transform: 'scale(1.02)',
-                    transition: 'all 0.2s',
-                  }}
-                    />
-                  ) : (
-                <Text fontSize="sm">Not uploaded</Text>
-                  )}
-                </Box>
-                <Box>
-              <HStack>
-                <Icon as={CameraIcon} color="gray.500" />
-                <Text fontSize="sm" color="gray.500">Passport Photo</Text>
-              </HStack>
-                  {images.passport_photo ? (
-                    <Image
-                      src={images.passport_photo}
-                      alt="Passport Photo"
-                      borderRadius="md"
-                  w="full"
-                  h="200px"
-                      objectFit="cover"
-                      fallback={<Text>Error loading image</Text>}
-                  _hover={{
-                    transform: 'scale(1.02)',
-                    transition: 'all 0.2s',
-                  }}
-                    />
-                  ) : (
-                <Text fontSize="sm">Not uploaded</Text>
-                  )}
-                </Box>
-              </SimpleGrid>
-        </VStack>
-            </Box>
+
+           
 
       {/* Delivery Photos Section */}
-      {customer.delivery_status && (
+      {customer?.delivery_status && (
             <Box
               bg="whiteAlpha.200"
               p={4}
@@ -2772,7 +2616,7 @@ const CustomerDetails = () => {
             bottom={0}
             overflowY="auto"
             pt={{ base: '80px', md: '120px' }}
-            pb={{ base: '80px', md: '40px' }}
+            pb={{ base: '120px', md: '80px' }} // Increased bottom padding
             px={{ base: 4, md: 6 }}
           >
             <AnimatePresence mode="wait">
@@ -2783,7 +2627,7 @@ const CustomerDetails = () => {
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ duration: 0.3 }}
               >
-            {renderBookingStatus()}
+                {renderBookingStatus()}
                 {/* Employee Details Box */}
                 <MotionCard
                   initial={{ opacity: 0, y: 20 }}
@@ -2793,9 +2637,9 @@ const CustomerDetails = () => {
                   overflow="hidden"
                 >
                   <CardBody p={0}>
-          <Box 
-            bg={cardBg} 
-            p={6} 
+                    <Box 
+                      bg={cardBg} 
+                      p={6} 
                       position="relative"
                       overflow="hidden"
                     >
@@ -2805,9 +2649,9 @@ const CustomerDetails = () => {
                           bg="whiteAlpha.200"
                           p={4}
                           borderRadius="lg"
-            backdropFilter="blur(10px)"
-            border="1px solid"
-            borderColor="whiteAlpha.300"
+                          backdropFilter="blur(10px)"
+                          border="1px solid"
+                          borderColor="whiteAlpha.300"
                           _hover={{
                             transform: 'translateY(-2px)',
                             boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',

@@ -208,6 +208,17 @@ export const customerApi = {
     }
   },
 
+  // Get employee by ID
+  getEmployeeById: async (id) => {
+    try {
+      const response = await api.get(`/admin/employees/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Get Employee Error:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
   // Update customer
   updateCustomer: async (id, customerData) => {
     try {
