@@ -3,8 +3,8 @@ const hostname = window.location.hostname;
 
 // Determine the API URL based on the hostname
 export const API_URL = hostname === 'localhost' 
-  ? 'http://localhost:3000'
-  : `http://${hostname}:3000`;
+  ? 'http://13.201.192.142:3000'
+  : 'http://13.201.192.142:3000';
 
 // Export other configuration values
 export const config = {
