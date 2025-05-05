@@ -550,7 +550,7 @@ const CustomerManagement = () => {
                       wordBreak="break-all" 
                       flex="1"
                     >
-                      http://13.201.192.142:3000/customer-details/{customer.id}
+                      https://tvs-dev-server.netlify.app/customer-details/{customer.id}
                     </Text>
                     <IconButton
                       icon={<CopyIcon />}
@@ -558,7 +558,7 @@ const CustomerManagement = () => {
                       variant="ghost"
                       colorScheme="red.600"
                       onClick={() => {
-                        const link = `http://13.201.192.142:3000/customer-details/${customer.id}`;
+                        const link = `https://tvs-dev-server.netlify.app/customer-details/${customer.id}`;
                         if (navigator.clipboard && window.isSecureContext) {
                           navigator.clipboard.writeText(link)
                             .then(() => {
